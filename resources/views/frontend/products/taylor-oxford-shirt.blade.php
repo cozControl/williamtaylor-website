@@ -1,31 +1,24 @@
 @extends('layouts.frontend')
 
+@section('route-bootstrap')
+  <script>
+   if (window.location.pathname === '/products/the-taylor-oxford-shirt') {
+    const productReplaceState = History.prototype.replaceState;
+    productReplaceState.call(window.history, window.history.state, '', '/product/the-taylor-oxford-shirt');
+    window.addEventListener('load', function () {
+     window.setTimeout(function () {
+      productReplaceState.call(window.history, window.history.state, '', '/products/the-taylor-oxford-shirt');
+     }, 1500);
+    }, { once: true });
+   }
+  </script>
+@endsection
+
 @section('content')
   <div id="root">
    <div class="min-h-screen flex flex-col bg-wt-offwhite">
     <header class="fixed top-0 left-0 right-0 z-40">
-     <div class="overflow-hidden transition-all duration-300 max-h-0 opacity-0">
-      <div class="bg-wt-oxblood text-wt-cream py-2 px-8 text-center relative z-50 overflow-hidden">
-       <div aria-hidden="true" class="absolute inset-0 wt-pattern-texture pointer-events-none" style='background-image: url("/website/images/eab6bab5d_bg.jpg"); background-size: 120px; opacity: 0.05;'>
-       </div>
-       <p class="relative font-label text-[10px] sm:text-xs tracking-widest uppercase truncate">
-        <span class="hidden sm:inline">
-         Free Shipping on Orders Over TZS 500,000  ·  Express Delivery in Dar es Salaam
-        </span>
-        <span class="sm:hidden">
-         Free Shipping Over TZS 500,000 · Express in Dar
-        </span>
-       </p>
-       <button aria-label="Close announcement" class="absolute right-3 top-1/2 -translate-y-1/2 text-wt-cream/60 hover:text-wt-cream transition-colors">
-        <svg class="lucide lucide-x" fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
-         <path d="M18 6 6 18">
-         </path>
-         <path d="m6 6 12 12">
-         </path>
-        </svg>
-       </button>
-      </div>
-     </div>
+     @include('frontend.partials.announcement')
      <nav class="frosted-nav transition-all duration-300 relative" style="box-shadow: rgba(0, 0, 0, 0.25) 0px 4px 30px;">
       <div class="max-w-screen-2xl mx-auto px-4 lg:px-12 h-14 lg:h-16 flex items-center justify-between gap-4">
        <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
@@ -313,7 +306,7 @@
             </circle>
            </svg>
            <p class="font-body text-xs font-light">
-            Free delivery in Dar es Salaam. 2–4 days nationwide.
+            Free delivery in Dar es Salaam. 2ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“4 days nationwide.
            </p>
           </div>
           <div class="flex items-center gap-3 text-gray-600">
@@ -360,7 +353,7 @@
         <div class="max-w-2xl">
          <div class="prose prose-sm max-w-none font-light text-gray-600">
           <p>
-           The Taylor Oxford Shirt is the cornerstone of the William Taylor collection. Crafted from our signature textured Italian cotton, this piece commands attention through restraint — an unbuttoned camp collar, a slightly oversized boxy cut, and clean crossover detail speak volumes without effort.
+           The Taylor Oxford Shirt is the cornerstone of the William Taylor collection. Crafted from our signature textured Italian cotton, this piece commands attention through restraint ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â an unbuttoned camp collar, a slightly oversized boxy cut, and clean crossover detail speak volumes without effort.
           </p>
           <p>
            Every stitch is finished by hand in our Dar es Salaam atelier. The result is a shirt that transcends seasons, moving effortlessly from a morning meeting to an evening gathering at the coast.
@@ -377,7 +370,7 @@
            <strong>
             The Detail:
            </strong>
-           Crossover front panel. No buttons, no fuss. A single interior label — gold on charcoal.
+           Crossover front panel. No buttons, no fuss. A single interior label ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â gold on charcoal.
           </p>
          </div>
         </div>
@@ -537,7 +530,7 @@
             </span>
            </p>
            <p class="font-label text-xs tracking-wider text-wt-gold uppercase mt-0.5">
-            Pre-Order · Ships 2026-08-15
+            Pre-Order ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Ships 2026-08-15
            </p>
           </div>
          </div>
@@ -546,281 +539,7 @@
       </div>
      </div>
     </main>
-    <footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">
-     <div aria-hidden="true" class="absolute inset-0 pointer-events-none wt-footer-pattern" style='background-image: url("/website/images/eab6bab5d_bg.jpg"); background-size: auto;'>
-     </div>
-     <div class="bg-wt-oxblood py-16 px-6">
-      <div class="max-w-xl mx-auto text-center">
-       <p class="font-label text-xs tracking-widest uppercase text-wt-gold mb-4">
-        Inner Circle
-       </p>
-       <h2 class="font-heading text-3xl text-wt-cream mb-3">
-        Sign the Ledger
-       </h2>
-       <p class="font-body text-sm text-wt-cream/60 font-light mb-8">
-        Be the first to access Limited Editions, private sales, and the latest from the atelier.
-       </p>
-       <form class="flex gap-0 max-w-sm mx-auto">
-        <input class="flex-1 bg-white/10 border border-wt-gold/40 text-wt-cream placeholder-wt-cream/40 px-4 py-3 font-body text-sm outline-none focus:border-wt-gold transition-colors" placeholder="Your email address" required="" type="email" value=""/>
-        <button class="btn-gold px-6 py-3 text-xs" type="submit">
-         Join
-        </button>
-       </form>
-      </div>
-     </div>
-     <div class="max-w-screen-xl mx-auto px-6 lg:px-12 py-16 relative z-10">
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-10 lg:gap-8">
-       <div class="col-span-2 md:col-span-3 lg:col-span-4">
-        <img alt="William Taylor" class="h-9 w-auto max-w-[170px] object-contain mb-5 mix-blend-screen" src="/website/images/8d99836ea_LOGO-3.png"/>
-        <p class="font-body text-sm text-wt-cream/70 font-light leading-relaxed mb-6 max-w-xs">
-         Crafted for the Modern Gentleman. Contemporary menswear designed in Tanzania, worn worldwide.
-        </p>
-        <div class="flex items-center gap-3">
-         <a class="w-9 h-9 border border-wt-gold/25 flex items-center justify-center text-wt-cream/50 hover:text-wt-oxblood hover:bg-wt-gold hover:border-wt-gold transition-all duration-300" href="https://instagram.com/williamtaylor" rel="noopener noreferrer" target="_blank">
-          <svg class="lucide lucide-instagram" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="15" xmlns="http://www.w3.org/2000/svg">
-           <rect height="20" rx="5" ry="5" width="20" x="2" y="2">
-           </rect>
-           <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z">
-           </path>
-           <line x1="17.5" x2="17.51" y1="6.5" y2="6.5">
-           </line>
-          </svg>
-         </a>
-         <a class="w-9 h-9 border border-wt-gold/25 flex items-center justify-center text-wt-cream/50 hover:text-wt-oxblood hover:bg-wt-gold hover:border-wt-gold transition-all duration-300" href="https://facebook.com" rel="noopener noreferrer" target="_blank">
-          <svg class="lucide lucide-facebook" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="15" xmlns="http://www.w3.org/2000/svg">
-           <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z">
-           </path>
-          </svg>
-         </a>
-         <a class="w-9 h-9 border border-wt-gold/25 flex items-center justify-center text-wt-cream/50 hover:text-wt-oxblood hover:bg-wt-gold hover:border-wt-gold transition-all duration-300" href="https://twitter.com" rel="noopener noreferrer" target="_blank">
-          <svg class="lucide lucide-twitter" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="15" xmlns="http://www.w3.org/2000/svg">
-           <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z">
-           </path>
-          </svg>
-         </a>
-         <a class="w-9 h-9 border border-wt-gold/25 flex items-center justify-center text-wt-cream/50 hover:text-wt-oxblood hover:bg-wt-gold hover:border-wt-gold transition-all duration-300" href="https://youtube.com" rel="noopener noreferrer" target="_blank">
-          <svg class="lucide lucide-youtube" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="15" xmlns="http://www.w3.org/2000/svg">
-           <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17">
-           </path>
-           <path d="m10 15 5-3-5-3z">
-           </path>
-          </svg>
-         </a>
-        </div>
-       </div>
-       <div class="lg:col-span-2">
-        <div class="mb-5">
-         <h4 class="font-label text-xs tracking-widest uppercase text-wt-gold mb-2">
-          Shop
-         </h4>
-         <div class="w-6 h-px bg-wt-gold/40">
-         </div>
-        </div>
-        <ul class="space-y-2.5">
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="/collections/mens-wear">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Men's Wear
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="/collections/unisex">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Unisex
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="/collections/accessories">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Accessories
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ route('limited-edition.index') }}">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Limited Edition
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ route('preorders.index') }}">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Pre-Order
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ route('products.index', ['sort' => 'newest']) }}">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           New Arrivals
-          </a>
-         </li>
-        </ul>
-       </div>
-       <div class="lg:col-span-2">
-        <div class="mb-5">
-         <h4 class="font-label text-xs tracking-widest uppercase text-wt-gold mb-2">
-          Atelier
-         </h4>
-         <div class="w-6 h-px bg-wt-gold/40">
-         </div>
-        </div>
-        <ul class="space-y-2.5">
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="/about">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           About Us
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="/membership">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Membership
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ route('gift-cards.index') }}">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Gift Cards
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ route('login') }}">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           My Account
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="/track-order">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Track Order
-          </a>
-         </li>
-        </ul>
-       </div>
-       <div class="lg:col-span-2">
-        <div class="mb-5">
-         <h4 class="font-label text-xs tracking-widest uppercase text-wt-gold mb-2">
-          Support
-         </h4>
-         <div class="w-6 h-px bg-wt-gold/40">
-         </div>
-        </div>
-        <ul class="space-y-2.5">
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="/contact">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Contact Us
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="/shipping">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Shipping
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="/returns">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Returns
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="/size-guide">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Size Guide
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="/faq">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           FAQ
-          </a>
-         </li>
-        </ul>
-       </div>
-       <div class="col-span-2 md:col-span-1 lg:col-span-2">
-        <div class="mb-5">
-         <h4 class="font-label text-xs tracking-widest uppercase text-wt-gold mb-2">
-          Visit
-         </h4>
-         <div class="w-6 h-px bg-wt-gold/40">
-         </div>
-        </div>
-        <ul class="space-y-3">
-         <li class="font-body text-sm text-wt-cream/70 font-light leading-relaxed">
-          Dar Village Mall
-          <br/>
-          Dar Es Salaam, Tanzania
-         </li>
-         <li>
-          <a class="font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="mailto:info@williamtaylor.co.tz">
-           info@williamtaylor.co.tz
-          </a>
-         </li>
-         <li>
-          <a class="font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="tel:+255656464876">
-           +255 656 464 876
-          </a>
-         </li>
-        </ul>
-        <div class="flex flex-wrap gap-x-3 gap-y-1 mt-5">
-         <a class="font-body text-xs text-wt-cream/40 hover:text-wt-gold transition-colors font-light" href="/privacy">
-          Privacy
-         </a>
-         <span class="text-wt-cream/20">
-          ·
-         </span>
-         <a class="font-body text-xs text-wt-cream/40 hover:text-wt-gold transition-colors font-light" href="/terms">
-          Terms
-         </a>
-         <span class="text-wt-cream/20">
-          ·
-         </span>
-         <a class="font-body text-xs text-wt-cream/40 hover:text-wt-gold transition-colors font-light" href="/admin">
-          Admin
-         </a>
-        </div>
-       </div>
-      </div>
-      <div class="mt-12 pt-8 border-t border-wt-gold/20 flex flex-col md:flex-row items-center justify-between gap-4">
-       <p class="font-label text-xs tracking-wider text-wt-cream/50 uppercase">
-        © 2026 William Taylor. All Rights Reserved.
-       </p>
-       <div class="flex items-center gap-3">
-        <span class="font-label text-xs tracking-wider text-wt-cream/40 uppercase">
-         We Accept
-        </span>
-        <span class="border border-wt-cream/20 px-2 py-1 font-label text-[10px] tracking-wider text-wt-cream/50 uppercase">
-         Lipa Number
-        </span>
-        <span class="border border-wt-cream/20 px-2 py-1 font-label text-[10px] tracking-wider text-wt-cream/50 uppercase">
-         M-Pesa
-        </span>
-        <span class="border border-wt-cream/20 px-2 py-1 font-label text-[10px] tracking-wider text-wt-cream/50 uppercase">
-         Visa
-        </span>
-        <span class="border border-wt-cream/20 px-2 py-1 font-label text-[10px] tracking-wider text-wt-cream/50 uppercase">
-         Mastercard
-        </span>
-       </div>
-      </div>
-     </div>
-    </footer>
+    @include('frontend.partials.footer')
     <div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">
      <div class="frosted-nav border-t border-wt-gold/20">
       <div class="flex items-center justify-around h-16 px-2">
@@ -898,12 +617,7 @@
       </div>
      </div>
     </div>
-    <a aria-label="Chat on WhatsApp" class="fixed bottom-20 lg:bottom-6 right-4 lg:right-6 z-30 w-12 h-12 lg:w-14 lg:h-14 bg-wt-gold shadow-xl flex items-center justify-center hover:bg-wt-oxblood transition-colors duration-300 group" href="https://wa.me/255656464876?text=Hello%20William%20Taylor%2C%20I%20have%20an%20enquiry." rel="noopener noreferrer" target="_blank">
-     <svg class="lucide lucide-message-circle text-wt-oxblood group-hover:text-wt-cream transition-colors" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z">
-      </path>
-     </svg>
-    </a>
+    @include('frontend.partials.whatsapp-action')
    </div>
    <div class="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]">
     <div class="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]">

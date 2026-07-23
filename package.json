@@ -4,7 +4,23 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "fidelity:install": "playwright install chromium",
+        "fidelity:capture": "node scripts/fidelity/homepage-fidelity.mjs capture",
+        "fidelity:compare": "node scripts/fidelity/homepage-fidelity.mjs compare",
+        "fidelity:homepage": "node scripts/fidelity/homepage-fidelity.mjs all",
+        "fidelity:collections": "node scripts/fidelity/homepage-fidelity.mjs all collections",
+        "fidelity:shop": "node scripts/fidelity/homepage-fidelity.mjs all shop",
+        "fidelity:pre-order": "node scripts/fidelity/homepage-fidelity.mjs all preorder",
+        "fidelity:limited-edition": "node scripts/fidelity/homepage-fidelity.mjs all limited-edition",
+        "fidelity:gift-cards": "node scripts/fidelity/homepage-fidelity.mjs all gift-cards",
+        "fidelity:login": "node scripts/fidelity/homepage-fidelity.mjs all login",
+        "fidelity:wishlist": "node scripts/fidelity/homepage-fidelity.mjs all wishlist",
+        "fidelity:taylor-oxford-shirt": "node scripts/fidelity/homepage-fidelity.mjs all taylor-oxford-shirt",
+        "fidelity:mercerized-cotton-polo": "node scripts/fidelity/homepage-fidelity.mjs all mercerized-cotton-polo",
+        "fidelity:dar-es-salaam-linen-suit": "node scripts/fidelity/homepage-fidelity.mjs all dar-es-salaam-linen-suit",
+        "fidelity:slim-tapered-chinos": "node scripts/fidelity/homepage-fidelity.mjs all slim-tapered-chinos",
+        "fidelity:executive-overcoat": "node scripts/fidelity/homepage-fidelity.mjs all executive-overcoat"
     },
     "dependencies": {
         "@laravel/passkeys": "^0.2.0",
@@ -18,5 +34,10 @@
         "@rollup/rollup-linux-x64-gnu": "4.9.5",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
         "lightningcss-linux-x64-gnu": "^1.29.1"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.61.1",
+        "pixelmatch": "^7.2.0",
+        "pngjs": "^7.0.0"
     }
 }
