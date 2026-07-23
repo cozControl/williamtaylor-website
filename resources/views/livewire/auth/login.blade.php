@@ -1,59 +1,133 @@
-<x-layouts::auth :title="__('Log in')">
-    <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Log in to your account')" :description="__('Enter your email and password below to log in')" />
+@extends('layouts.frontend')
 
-        <!-- Session Status -->
-        <x-auth-session-status class="text-center" :status="session('status')" />
-
-        <x-passkey-verify />
-
-        <form method="POST" action="{{ route('login.store') }}" class="flex flex-col gap-6">
-            @csrf
-
-            <!-- Email Address -->
-            <flux:input
-                name="email"
-                :label="__('Email address')"
-                :value="old('email')"
-                type="email"
-                required
-                autofocus
-                autocomplete="email"
-                placeholder="email@example.com"
-            />
-
-            <!-- Password -->
-            <div class="relative">
-                <flux:input
-                    name="password"
-                    :label="__('Password')"
-                    type="password"
-                    required
-                    autocomplete="current-password"
-                    :placeholder="__('Password')"
-                    viewable
-                />
-
-                @if (Route::has('password.request'))
-                    <flux:link class="absolute top-0 text-sm end-0" :href="route('password.request')" wire:navigate>
-                        {{ __('Forgot your password?') }}
-                    </flux:link>
-                @endif
-            </div>
-
-            <!-- Remember Me -->
-            <flux:checkbox name="remember" :label="__('Remember me')" :checked="old('remember')" />
-
-            <div class="flex items-center justify-end">
-                <flux:button variant="primary" type="submit" class="w-full" data-test="login-button">
-                    {{ __('Log in') }}
-                </flux:button>
-            </div>
-        </form>
-
-        <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
-            <span>{{ __('Don\'t have an account?') }}</span>
-            <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
-        </div>
+@section('content')
+  <div id="root">
+   <div class="min-h-screen flex items-center justify-center bg-wt-oxblood relative overflow-hidden px-4 py-12">
+    <div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at 50% 30%, rgba(201, 169, 98, 0.4), transparent 60%);">
     </div>
-</x-layouts::auth>
+    <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-wt-gold to-transparent">
+    </div>
+    <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-wt-gold to-transparent">
+    </div>
+    <div class="absolute w-1 h-1 bg-wt-gold rounded-full opacity-40" style="left: 15%; top: 20%;">
+    </div>
+    <div class="absolute w-1 h-1 bg-wt-gold rounded-full opacity-40" style="left: 30%; top: 45%;">
+    </div>
+    <div class="absolute w-1 h-1 bg-wt-gold rounded-full opacity-40" style="left: 45%; top: 70%;">
+    </div>
+    <div class="absolute w-1 h-1 bg-wt-gold rounded-full opacity-40" style="left: 60%; top: 20%;">
+    </div>
+    <div class="absolute w-1 h-1 bg-wt-gold rounded-full opacity-40" style="left: 75%; top: 45%;">
+    </div>
+    <div class="absolute w-1 h-1 bg-wt-gold rounded-full opacity-40" style="left: 90%; top: 70%;">
+    </div>
+    <div class="relative z-10 w-full max-w-md">
+     <div class="text-center mb-8">
+      <img alt="William Taylor" class="h-10 w-auto mx-auto mb-6 mix-blend-screen" src="/website/images/8d99836ea_LOGO-3.png"/>
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-full border border-wt-gold/40 mb-4">
+       <svg aria-hidden="true" class="lucide lucide-log-in w-5 h-5 text-wt-gold" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4">
+        </path>
+        <polyline points="10 17 15 12 10 7">
+        </polyline>
+        <line x1="15" x2="3" y1="12" y2="12">
+        </line>
+       </svg>
+      </div>
+      <p class="font-label text-[10px] tracking-[0.3em] uppercase text-wt-gold mb-2">
+       The Inner Circle
+      </p>
+      <h1 class="font-heading text-3xl text-wt-cream tracking-tight">
+       Welcome back
+      </h1>
+      <p class="font-body text-sm text-wt-cream/50 font-light mt-2">
+       Log in to your account
+      </p>
+     </div>
+     <div class="bg-wt-offwhite border border-wt-gold/30 shadow-2xl p-8 relative">
+      <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-wt-gold to-transparent">
+      </div>
+      <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 w-full h-12 text-sm font-medium mb-6">
+       <svg aria-hidden="true" class="w-5 h-5 mr-2" viewbox="0 0 24 24">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4">
+        </path>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853">
+        </path>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05">
+        </path>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335">
+        </path>
+       </svg>
+       Continue with Google
+      </button>
+      <div class="relative mb-6">
+       <div class="absolute inset-0 flex items-center">
+        <div class="w-full border-t border-border">
+        </div>
+       </div>
+       <div class="relative flex justify-center text-xs uppercase">
+        <span class="bg-card px-3 text-muted-foreground">
+         or
+        </span>
+       </div>
+      </div>
+      @if ($errors->any())
+       <div class="mb-4 text-xs text-primary" role="alert">
+        {{ $errors->first() }}
+       </div>
+      @endif
+      <form class="space-y-4" method="POST" action="{{ route('login.store') }}">
+       @csrf
+       <div class="space-y-2">
+        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="email">
+         Email
+        </label>
+        <div class="relative">
+         <svg aria-hidden="true" class="lucide lucide-mail absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+          <rect height="16" rx="2" width="20" x="2" y="4">
+          </rect>
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7">
+          </path>
+         </svg>
+         <input autocomplete="email" class="flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-10 h-12" id="email" name="email" placeholder="you@example.com" required="" autofocus autocomplete="email" type="email" value="{{ old('email') }}"/>
+        </div>
+       </div>
+       <div class="space-y-2">
+        <div class="flex items-center justify-between">
+         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" for="password">
+          Password
+         </label>
+         <a class="text-xs text-primary hover:underline" href="{{ route('password.request') }}">
+          Forgot password?
+         </a>
+        </div>
+        <div class="relative">
+         <svg aria-hidden="true" class="lucide lucide-lock absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+          <rect height="11" rx="2" ry="2" width="18" x="3" y="11">
+          </rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4">
+          </path>
+         </svg>
+         <input autocomplete="current-password" class="flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-10 h-12" id="password" name="password" placeholder="••••••••" required="" autocomplete="current-password" type="password"/>
+        </div>
+       </div>
+       <button class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 px-4 py-2 w-full h-12 font-medium" type="submit">
+        Log in
+       </button>
+      </form>
+     </div>
+     <p class="text-center font-body text-sm text-wt-cream/50 font-light mt-6">
+      Don't have an account?
+      <a class="text-primary font-medium hover:underline" href="{{ route('register') }}">
+       Create one
+      </a>
+     </p>
+    </div>
+   </div>
+   <div class="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]">
+    <div class="fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]">
+    </div>
+   </div>
+  </div>
+
+@endsection
