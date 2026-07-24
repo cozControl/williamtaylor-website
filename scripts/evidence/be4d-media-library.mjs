@@ -1,0 +1,17 @@
+import { chromium } from '@playwright/test';
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
+const baseUrl = 'http://127.0.0.1:8128';
+const password = process.env.BE4D_EVIDENCE_PASSWORD;
+const assetId = process.env.BE4D_ASSET_ID;
+const output = path.resolve('storage/app/evidence/be-4d');
+if (!password || !assetId) throw new Error('Controlled evidence fixture is missing.');
+await mkdir(output, { recursive: true });
+const browser = await chromium.launch({ headless: true });
+const findings = { generatedAt:new Date().toISOString(),browser:await browser.version(),viewports:['1440x900','768x1024','375x812'],consoleErrors:[],warnings:[],failedRequests:[],failedLocalAssets:[],overflow:{},checks:{},screenshots:[],intentionalAuthorizationResponses:[] };
+async function session(email){const context=await browser.newContext();const page=await context.newPage();page.on('console',m=>{if(m.type()==='error')findings.consoleErrors.push(m.text());if(m.type()==='warning')findings.warnings.push(m.text())});page.on('requestfailed',r=>findings.failedRequests.push(r.url()));const login=await context.request.get(`${baseUrl}/login`);const token=(await login.text()).match(/name="_token" value="([^"]+)"/)?.[1];await context.request.post(`${baseUrl}/login`,{form:{_token:token,email,password},maxRedirects:0});return{context,page}}
+async function capture(page,name,width,height){await page.setViewportSize({width,height});findings.overflow[`${name}:${width}`]=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);const file=path.join(output,`${name}-${width}x${height}.png`);await page.screenshot({path:file,fullPage:true});findings.screenshots.push(file.replaceAll('\\','/'))}
+const cms=await session('be4d.cms@example.test');await cms.page.goto(`${baseUrl}/admin/media`,{waitUntil:'networkidle'});findings.checks.mediaNavigationVisible=await cms.page.getByText('Media library',{exact:true}).count()>0;findings.checks.readyAndFailedVisible=(await cms.page.locator('main').innerText()).includes('Ready editorial')&&(await cms.page.locator('main').innerText()).includes('Failed upload');await capture(cms.page,'media-library',1440,900);await capture(cms.page,'media-library',375,812);await cms.page.goto(`${baseUrl}/admin/media/${assetId}`,{waitUntil:'domcontentloaded'});findings.checks.metadataFields=await cms.page.getByLabel('Internal title').count()===1;findings.checks.accessibilityField=await cms.page.getByLabel('Accessibility classification').count()===1;findings.checks.focalKeyboardInputs=await cms.page.getByLabel(/Focal X/).count()===1;findings.checks.noDeleteButton=await cms.page.getByRole('button',{name:/delete/i}).count()===0;await capture(cms.page,'ready-asset-detail',1440,900);await capture(cms.page,'ready-asset-detail',768,1024);await cms.context.close();
+const ordinary=await session('be4d.user@example.test');const response=await ordinary.page.goto(`${baseUrl}/admin/media`,{waitUntil:'networkidle'});findings.intentionalAuthorizationResponses.push({route:'/admin/media',status:response?.status()});await capture(ordinary.page,'ordinary-user-forbidden',1440,900);await ordinary.context.close();
+findings.failedRequests=findings.failedRequests.filter(url=>!url.includes('res.cloudinary.com'));findings.consoleErrors=findings.consoleErrors.filter(x=>!x.includes('ERR_NAME_NOT_RESOLVED')&&!x.includes('403 (Forbidden)'));await browser.close();await writeFile(path.join(output,'browser-findings.json'),JSON.stringify(findings,null,2)+'\n');console.log(JSON.stringify(findings,null,2));

@@ -4,7 +4,7 @@
 
 Use server-side policies backed by explicit permissions; UI hiding is convenience only. Start with roles as permission bundles, allow exceptional grants sparingly and show effective access. Current required defaults map as follows: **Super Administrator** has all permissions and **CMS Manager** may create/edit/review/approve/publish content. Preserve separation-of-duty capability for sensitive policies, pricing, campaign claims and settings.
 
-Suggested roles: Super Administrator, Site Administrator, Content Manager, Content Editor, SEO Manager, Catalogue Manager, Merchandiser, Media Manager, Marketing Manager, Reviewer/Approver, Customer Service and Read-only Analyst.
+Suggested roles: Super Administrator, Site Administrator, CMS Manager, Content Editor, SEO Manager, Catalogue Manager, Merchandiser, Media Manager, Marketing Manager, Approver, Customer Service and Read-only Analyst.
 
 Permission namespaces use resource/action, e.g. `pages.create`, `pages.edit`, `pages.review`, `pages.approve`, `pages.publish`, `pages.unpublish`, `pages.schedule`, `pages.archive`, `pages.restore`, `pages.delete`, plus `seo.manage`, `redirects.manage`, `navigation.manage`, `media.manage`, `products.manage`, `pricing.manage`, `inventory.view/manage`, `analytics.view`, `settings.manage`, `audit.view`, `users.manage`, `roles.manage`. Publish does not imply settings/permission management. Inventory and pricing permissions remain separate from catalogue copy.
 
@@ -19,7 +19,7 @@ Permission namespaces use resource/action, e.g. `pages.create`, `pages.edit`, `p
 | Merchandiser | Collections/relations/placements/campaign submissions |
 | Media Manager | Upload/metadata/replace/archive; delete under safeguards |
 | Marketing Manager | Campaigns/announcements/newsletter content/schedules |
-| Reviewer/Approver | Review/diff/notes/approve; publish only if explicitly granted |
+| Approver | Review/diff/notes/approve; publish only if explicitly granted |
 | Customer Service | Enquiries/appointments/limited customer data; no content publish |
 | Analyst | Read-only analytics/permitted audit views |
 
@@ -28,7 +28,7 @@ Permission namespaces use resource/action, e.g. `pages.create`, `pages.edit`, `p
 Draft → In review → Changes requested → Approved → Scheduled or Published → Unpublished → Archived. Archived can restore to Draft. Scheduled entries publish only the approved immutable revision. Editing an approved/published resource creates a new draft revision without mutating the live revision.
 
 - Authors save drafts and submit with a summary.
-- Reviewers annotate, compare revisions, request changes or approve.
+- Reviewers and Approvers annotate, compare revisions, request changes or approve.
 - Publishers publish/schedule after readiness validation; self-approval policy is configurable by resource sensitivity.
 - Emergency unpublish requires permission, reason, step-up confirmation and audit; public fallback/redirect behavior is previewed.
 - Expired campaigns automatically leave active placement, transition to expired/unpublished policy, invalidate caches and notify owners; underlying history remains.

@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Domain\Identity\Exceptions\FinalSuperAdministratorException;
+use App\Domain\Identity\Support\ControlledRoleMutation;
+use App\Domain\Identity\Support\RoleRegistry;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +17,7 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
@@ -30,16 +34,48 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements PasskeyUser
+class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    use HasRoles {
+        assignRole as private assignRoleThroughPackage;
+        removeRole as private removeRoleThroughPackage;
+        syncRoles as private syncRolesThroughPackage;
+    }
+
+    public function assignRole(mixed ...$roles): static
+    {
+        app(ControlledRoleMutation::class)->assertActive();
+
+        return $this->assignRoleThroughPackage(...$roles);
+    }
+
+    public function removeRole(mixed ...$roles): static
+    {
+        app(ControlledRoleMutation::class)->assertActive();
+
+        return $this->removeRoleThroughPackage(...$roles);
+    }
+
+    public function syncRoles(mixed ...$roles): static
+    {
+        app(ControlledRoleMutation::class)->assertActive();
+
+        return $this->syncRolesThroughPackage(...$roles);
+    }
+
+    public function delete()
+    {
+        if ($this->hasRole(RoleRegistry::SUPER_ADMINISTRATOR)
+            && static::query()->role(RoleRegistry::SUPER_ADMINISTRATOR)->count() <= 1) {
+            throw new FinalSuperAdministratorException;
+        }
+
+        return parent::delete();
+    }
+
     protected function casts(): array
     {
         return [
@@ -48,9 +84,6 @@ class User extends Authenticatable implements PasskeyUser
         ];
     }
 
-    /**
-     * Get the user's initials
-     */
     public function initials(): string
     {
         $initials = Str::initials($this->name, true);

@@ -1,0 +1,1 @@
+<section class="preview-section preview-cta"><h2>{{ $section['data']['heading'] }}</h2><p>{{ $section['data']['copy'] }}</p>@if($section['data']['primary_cta'])<a href="{{ $section['data']['primary_cta']['target'] }}">{{ $section['data']['primary_cta']['label'] }}</a>@endif</section>

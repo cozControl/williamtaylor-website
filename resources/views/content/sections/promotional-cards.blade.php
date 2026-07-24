@@ -1,0 +1,1 @@
+<section class="preview-section"><h2>{{ $section['data']['heading'] }}</h2><div class="preview-cards">@foreach($section['data']['cards'] as $card)<article><h3>{{ $card['heading'] }}</h3><p>{{ $card['copy'] }}</p></article>@endforeach</div></section>

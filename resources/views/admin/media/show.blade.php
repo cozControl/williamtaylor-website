@@ -1,0 +1,1 @@
+<x-admin.layout :title="$mediaAsset->internal_title" description="Editorial metadata, accessibility, usage, versions and lifecycle." eyebrow="Media" :breadcrumbs="['Media library' => route('admin.media.index'), $mediaAsset->internal_title => null]"><livewire:admin.media.media-detail :asset-id="$mediaAsset->id" /></x-admin.layout>

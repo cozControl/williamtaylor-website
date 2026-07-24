@@ -103,3 +103,17 @@ Date: 2026-07-23
 Frontend Phase 2 is complete: all supplied pages through `html/page_13.html` have stable Laravel routes and fidelity evidence under their bounded FE phases. ARCH-3A inspected the migrated frontend, shared regions, content/commerce decisions and Laravel 13/Livewire/Fortify foundation, then produced documentation-only proposals for CMS/content domains, administration UX, reusable media/Cloudinary, SEO, publishing/RBAC, future AI boundaries and a 20-phase implementation roadmap.
 
 ARCH-3A introduced no migrations, models, controllers, Livewire components, packages, dynamic routes, CMS screens, catalogue/commerce behavior, Cloudinary integration, SEO execution, API, payment/Pesapal or AI functionality. Imported assets and frontend fidelity markup were not changed. The next phase is architecture approval/technical decisions, followed only after approval by the separately authorized administration-shell phase.
+## ARCH-3B architecture approval and decision register
+
+Date: 2026-07-23
+
+ARCH-3B converted ARCH-3A recommendations into 24 complete Architecture Decision Records, an indexed decision register and a stakeholder approval report. All 24 ADRs were subsequently approved by the project stakeholder on 2026-07-23, subject to their recorded detailed confirmations. The corrected roadmap selects Option A: minimal identity/RBAC/audit foundation before a permission-aware administration shell, followed by full access-management screens.
+
+The package is documentation-only. It recommends MySQL 8, ULID/exact-money/UTC conventions, Livewire/Flux administration, gated Spatie RBAC, project-owned append-only audit, immutable publishing revisions, typed sections, Tiptap JSON with server-sanitized projection, an official-SDK Cloudinary adapter, contextual media metadata, Scout/database search, readiness-gated Redis, English-first locale readiness, domain-owned SEO/routes/truth, per-class retention, WCAG 2.2 AA and layered testing. CMS, media, SEO, catalogue, commerce, Pesapal and AI implementation remain deferred; AI remains post-launch.
+
+Validation evidence and final lock/checksum confirmation are recorded in `docs/architecture/ARCH-3B_APPROVAL_REPORT.md`. The next phase is not authorized by this record; it may be a separately bounded minimal identity/RBAC/audit foundation only after explicit stakeholder approval of its prerequisite ADRs.
+## ARCH-3B stakeholder architecture approval
+
+Date: 2026-07-23
+
+The project stakeholder approved ADR-001 through ADR-024 and the corrected backend sequence as architectural direction. Explicit legal, financial, provider, infrastructure and operational details remain unresolved only where each ADR says so. Implementation remains divided into separately authorized phases; material changes require a new superseding ADR. The approval retains the single Laravel deployable, constrained typed sections and sanitized rich text, Laravel-owned Cloudinary contract, separated domain truth, protected public fidelity, and post-launch-only AI boundaries.

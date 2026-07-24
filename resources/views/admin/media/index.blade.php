@@ -1,0 +1,1 @@
+<x-admin.layout title="Media library" description="Upload once, reuse many. Search and inspect verified images and videos." eyebrow="Content" :breadcrumbs="['Media library' => null]"><livewire:admin.media.media-library /></x-admin.layout>
