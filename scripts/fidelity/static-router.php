@@ -5,6 +5,7 @@ $requestPath = rawurldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: 
 
 $pageAliases = [
     '/' => '/index.html',
+    '/about' => '/index.html',
     '/collections' => '/html/page_2.html',
     '/shop' => '/html/page_3.html',
     '/pre-order' => '/html/page_4.html',
@@ -13,6 +14,7 @@ $pageAliases = [
     '/login' => '/html/page_7.html',
     '/wishlist' => '/html/page_8.html',
     '/product/the-taylor-oxford-shirt' => '/html/page_9.html',
+    '/product/taylor-oxford-shirt' => '/html/page_9.html',
     '/product/mercerized-cotton-polo' => '/html/page_10.html',
     '/product/dar-es-salaam-linen-suit' => '/html/page_11.html',
     '/product/slim-tapered-chinos' => '/html/page_12.html',
@@ -22,7 +24,7 @@ $pageAliases = [
 if (isset($pageAliases[$requestPath])) {
     $document = file_get_contents($documentRoot.$pageAliases[$requestPath]);
 
-    if (in_array($requestPath, ['/collections/limited-edition', '/product/the-taylor-oxford-shirt', '/product/mercerized-cotton-polo', '/product/dar-es-salaam-linen-suit', '/product/slim-tapered-chinos', '/product/executive-overcoat'], true)) {
+    if (in_array($requestPath, ['/collections/limited-edition', '/product/the-taylor-oxford-shirt', '/product/taylor-oxford-shirt', '/product/mercerized-cotton-polo', '/product/dar-es-salaam-linen-suit', '/product/slim-tapered-chinos', '/product/executive-overcoat'], true)) {
         $document = str_replace('<head>', '<head><base href="/">', $document);
     }
 
@@ -38,6 +40,8 @@ if (
     && str_starts_with($requestedFile, $documentRoot.DIRECTORY_SEPARATOR)
     && is_file($requestedFile)
 ) {
+    header('Cache-Control: public, max-age=3600, immutable');
+
     return false;
 }
 

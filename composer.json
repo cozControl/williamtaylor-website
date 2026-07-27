@@ -64,8 +64,12 @@
         "lint:check": [
             "pint --parallel --test"
         ],
+        "protected:check": [
+            "@php scripts/validation/protected-php-preservation.php"
+        ],
         "ci:check": [
             "Composer\\Config::disableProcessTimeout",
+            "@protected:check",
             "@test"
         ],
         "types:check": [

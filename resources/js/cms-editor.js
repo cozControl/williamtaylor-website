@@ -2,6 +2,7 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 
 const editors = new WeakMap();
+let unsavedWarningReady = false;
 
 function initializeRichText(root) {
     if (editors.has(root)) return;
@@ -80,16 +81,22 @@ function bootCmsEditors() {
                 select.value = '';
             }
         });
+    });
+    if (!unsavedWarningReady) {
         window.addEventListener('beforeunload', (event) => {
-            if (root.dataset.dirty === 'true') {
+            if (document.querySelector('[data-cms-editor][data-dirty="true"]')) {
                 event.preventDefault();
                 event.returnValue = '';
             }
         });
-    });
+        unsavedWarningReady = true;
+    }
 }
 
-document.addEventListener('livewire:init', bootCmsEditors);
+document.addEventListener('livewire:init', () => {
+    window.Livewire.hook('morph.updated', bootCmsEditors);
+    bootCmsEditors();
+});
 document.addEventListener('livewire:navigated', bootCmsEditors);
 if (document.readyState !== 'loading') bootCmsEditors();
 else document.addEventListener('DOMContentLoaded', bootCmsEditors);

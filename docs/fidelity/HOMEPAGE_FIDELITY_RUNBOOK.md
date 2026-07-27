@@ -1,4 +1,4 @@
-﻿# Homepage Frontend Fidelity Gate Runbook
+# Homepage Frontend Fidelity Gate Runbook
 
 ## Purpose
 
@@ -54,6 +54,24 @@ The static router serves the untouched `index.html` only at `/`, serves existing
 
 ## Commands
 
+Run the portable runtime preflight first:
+
+```powershell
+npm.cmd run fidelity:self-check
+```
+
+The preflight creates and checks ignored repository-local runtime paths under
+`storage/app/test-runtime/browser`, verifies the Playwright-managed Chromium
+executable, launches it, and records sanitized evidence under
+`storage/app/evidence/be6a1-browser`.
+
+The default ports can be overridden without changing the script:
+
+```powershell
+$env:FIDELITY_STATIC_PORT='4183'
+$env:FIDELITY_LARAVEL_PORT='8010'
+```
+
 Run the complete gate:
 
 ```powershell
@@ -76,16 +94,16 @@ npm.cmd run fidelity:compare
 
 Primary captures:
 
-- 375 Ã— 812
-- 768 Ã— 1024
-- 1440 Ã— 900
+- 375 × 812
+- 768 × 1024
+- 1440 × 900
 
 Breakpoint captures use a documented height of 900 pixels:
 
-- 639 Ã— 900 and 640 Ã— 900
-- 767 Ã— 900 and 768 Ã— 900
-- 1023 Ã— 900 and 1024 Ã— 900
-- 1279 Ã— 900 and 1280 Ã— 900
+- 639 × 900 and 640 × 900
+- 767 × 900 and 768 × 900
+- 1023 × 900 and 1024 × 900
+- 1279 × 900 and 1280 × 900
 
 Browser zoom is 100%, device scale factor is 1, locale is `en-US`, timezone is `Africa/Nairobi`, colour scheme is light, and reduced-motion preference is enabled.
 
@@ -115,17 +133,17 @@ Structure:
 
 ```text
 homepage/
-â”œâ”€â”€ static/
-â”‚   â””â”€â”€ <viewport>.png
-â”œâ”€â”€ laravel/
-â”‚   â””â”€â”€ <viewport>.png
-â”œâ”€â”€ diff/
-â”‚   â””â”€â”€ <viewport>.png
-â””â”€â”€ reports/
-    â”œâ”€â”€ capture.json
-    â”œâ”€â”€ comparison.json
-    â”œâ”€â”€ comparison.md
-    â””â”€â”€ capture-failure.json   # only when capture fails
+├── static/
+│   └── <viewport>.png
+├── laravel/
+│   └── <viewport>.png
+├── diff/
+│   └── <viewport>.png
+└── reports/
+    ├── capture.json
+    ├── comparison.json
+    ├── comparison.md
+    └── capture-failure.json   # only when capture fails
 ```
 
 `storage/app` already ignores generated files. Screenshots and reports are therefore not committed by default. This avoids noisy, platform-dependent binary changes while the baseline is awaiting approval. CI should upload the directory as a build artifact.
@@ -232,3 +250,14 @@ Targets: homepage `/` ? Laravel `/`; Collections static alias `/collections` (`h
 - `npm.cmd run fidelity:gift-cards`
 
 Limited Edition compares its native supplied route `/collections/limited-edition` with Laravel `/limited-edition`. The static router injects only a non-visual base URL for correct direct-load resolution of the source's relative assets. Use the same 11 viewports and review the generated screenshots, diffs, capture report and comparison report; thresholds and normalization remain unchanged.
+
+## BE-4H-A global chrome
+
+Run the existing baseline with PUBLIC_SITE_CONTENT_PROJECTION=false without changing thresholds. Enabled evidence must separately identify intentional governed text changes and confirm page bodies remain unchanged at 1440x900, 768x1024 and 375x812.
+
+## BE-4H-B regression
+
+The homepage remains an independent 11-size gate. The known mobile and 639-pixel dynamic-rendering variances must remain visible and classified.
+
+## Deterministic document-start freeze
+The harness injects identical animation and transition freeze CSS at document start for static and Laravel targets, then repeats readiness checks. Fresh contexts and cleared cookies are used. No production CSS is changed.

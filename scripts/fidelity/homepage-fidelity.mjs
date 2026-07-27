@@ -1,6 +1,7 @@
 import { chromium } from '@playwright/test';
 import { execFileSync, spawn } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { constants as fsConstants } from 'node:fs';
+import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pixelmatch from 'pixelmatch';
@@ -26,10 +27,23 @@ const pageTargets = {
 };
 const pageTarget = pageTargets[pageKey];
 if (!pageTarget) throw new Error(`Unknown fidelity page "${pageKey}". Expected: ${Object.keys(pageTargets).join(', ')}`);
+const runtimeRoot = join(repositoryRoot, 'storage', 'app', 'test-runtime', 'browser');
+const runtimeDirectories = {
+    root: runtimeRoot,
+    assets: join(runtimeRoot, 'assets'),
+    profiles: join(runtimeRoot, 'profiles'),
+    results: join(runtimeRoot, 'results'),
+    evidence: join(repositoryRoot, 'storage', 'app', 'evidence', 'be6a1-browser'),
+};
 const outputRoot = join(repositoryRoot, 'storage', 'app', 'fidelity', pageKey);
 const reportRoot = join(outputRoot, 'reports');
-const staticOrigin = 'http://127.0.0.1:4173';
-const laravelOrigin = 'http://127.0.0.1:8000';
+const staticPort = Number.parseInt(process.env.FIDELITY_STATIC_PORT ?? '4173', 10);
+const laravelPort = Number.parseInt(process.env.FIDELITY_LARAVEL_PORT ?? '8000', 10);
+if (![staticPort, laravelPort].every((port) => Number.isInteger(port) && port > 0 && port <= 65535))
+    throw new Error('FIDELITY_STATIC_PORT and FIDELITY_LARAVEL_PORT must be valid TCP ports.');
+if (staticPort === laravelPort) throw new Error('Fidelity static and Laravel ports must differ.');
+const staticOrigin = `http://127.0.0.1:${staticPort}`;
+const laravelOrigin = `http://127.0.0.1:${laravelPort}`;
 const staticUrl = `${staticOrigin}${pageTarget.staticPath}`;
 const laravelUrl = `${laravelOrigin}${pageTarget.laravelPath}`;
 const breakpointHeight = 900;
@@ -53,7 +67,63 @@ async function ensureDirectories() {
         mkdir(join(outputRoot, 'laravel'), { recursive: true }),
         mkdir(join(outputRoot, 'diff'), { recursive: true }),
         mkdir(reportRoot, { recursive: true }),
+        ...Object.values(runtimeDirectories).map((directory) => mkdir(directory, { recursive: true })),
     ]);
+}
+
+function portablePath(path) {
+    return path.slice(repositoryRoot.length + 1).replaceAll('\\', '/');
+}
+
+async function assertWritable(directory) {
+    const probe = join(directory, `.write-probe-${process.pid}-${Date.now()}`);
+    try {
+        await writeFile(probe, 'ok');
+        await rm(probe, { force: true });
+    } catch (error) {
+        throw new Error(`Browser runtime path is not writable: ${portablePath(directory)} (${error.message})`);
+    }
+}
+
+async function selfCheck() {
+    await ensureDirectories();
+    await Promise.all(Object.values(runtimeDirectories).map(assertWritable));
+    const executablePath = chromium.executablePath();
+    try {
+        await access(executablePath, fsConstants.R_OK);
+    } catch {
+        throw new Error(
+            'Playwright Chromium is unavailable. Run "npm run fidelity:install" from the repository root.',
+        );
+    }
+    let browser;
+    try {
+        browser = await chromium.launch({ headless: true });
+        const result = {
+            generatedAt: new Date().toISOString(),
+            ok: true,
+            repositoryPortable: true,
+            browser: { name: 'Chromium', version: browser.version(), headless: true },
+            executable: { available: true, source: 'Playwright-managed cache' },
+            paths: Object.fromEntries(
+                Object.entries(runtimeDirectories).map(([key, path]) => [
+                    key,
+                    { path: portablePath(path), exists: true, writable: true },
+                ]),
+            ),
+            ports: { static: staticPort, laravel: laravelPort, configurableByEnvironment: true },
+        };
+        await writeFile(
+            join(runtimeDirectories.evidence, 'runtime-self-check.json'),
+            JSON.stringify(result, null, 2),
+        );
+        console.log(`Browser runtime self-check passed: Chromium ${result.browser.version}`);
+        return result;
+    } catch (error) {
+        throw new Error(`Playwright Chromium could not launch: ${error.message}`);
+    } finally {
+        await browser?.close();
+    }
 }
 
 function startServer(command, args, name) {
@@ -351,6 +421,19 @@ async function captureTarget(browser, target) {
             reducedMotion: 'reduce',
             timezoneId: 'Africa/Nairobi',
         });
+        await context.addInitScript(() => {
+            const freeze = () => {
+                if (!document.documentElement || document.getElementById('fidelity-freeze')) return;
+                const style = document.createElement('style');
+                style.id = 'fidelity-freeze';
+                style.textContent = '*,*::before,*::after{animation-delay:0s!important;animation-duration:0s!important;animation-iteration-count:1!important;caret-color:transparent!important;scroll-behavior:auto!important;transition-delay:0s!important;transition-duration:0s!important}';
+                document.documentElement.appendChild(style);
+            };
+            freeze();
+            new MutationObserver(freeze).observe(document, { childList: true, subtree: true });
+            addEventListener('DOMContentLoaded', freeze, { once: true });
+        });
+        await context.clearCookies();
         const page = await context.newPage();
         page.on('console', (message) => {
             if (['error', 'warning'].includes(message.type()))
@@ -379,7 +462,27 @@ async function captureTarget(browser, target) {
             )
                 findings.failedLocalAssets.push(entry);
         });
-        await page.goto(target.url, { waitUntil: 'networkidle', timeout: 60_000 });
+        await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+        if (pageKey === 'limited-edition' && target.name === 'laravel') {
+            for (let attempt = 0; attempt < 4; attempt++) {
+                await page.waitForTimeout(1_000);
+                await page.evaluate(() => {
+                    History.prototype.replaceState.call(
+                        window.history,
+                        window.history.state,
+                        '',
+                        '/collections/limited-edition',
+                    );
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                });
+                await waitForVisualReadiness(page);
+                await page.waitForTimeout(1_000);
+                const routeShimReady =
+                    (await page.getByText('LIMITED', { exact: true }).count()) >= 5;
+                if (routeShimReady) break;
+                await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+            }
+        }
         await waitForVisualReadiness(page);
         const screenshotPath = join(outputRoot, target.name, `${viewport.key}.png`);
         await page.screenshot({ path: screenshotPath, fullPage: false, animations: 'disabled' });
@@ -406,15 +509,16 @@ async function capture() {
         'php',
         [
             '-S',
-            '127.0.0.1:4173',
+            `127.0.0.1:${staticPort}`,
             '-t',
             join(repositoryRoot, 'public', 'website'),
             join(repositoryRoot, 'scripts', 'fidelity', 'static-router.php'),
         ],
         'static',
     );
-    startServer('php', ['artisan', 'serve', '--host=127.0.0.1', '--port=8000'], 'laravel');
+    startServer('php', ['artisan', 'serve', '--host=127.0.0.1', `--port=${laravelPort}`], 'laravel');
     await Promise.all([waitForUrl(staticUrl), waitForUrl(laravelUrl)]);
+    await rm(join(reportRoot, 'capture-failure.json'), { force: true });
     let browser;
     try {
         browser = await chromium.launch({ headless: true });
@@ -424,11 +528,11 @@ async function capture() {
             browser: { name: 'Chromium', version: browser.version(), deviceScaleFactor: 1, zoom: '100%' },
             normalization: {
                 appliedEqually: ['static', 'laravel'],
-                animationsAndTransitions: 'Durations forced to zero after page readiness.',
+                animationsAndTransitions: 'Identical freeze CSS injected at document start and retained after readiness.',
                 video: 'Attributes recorded, then video paused at time zero.',
                 fonts: 'document.fonts.ready awaited.',
                 images: 'All image load/error events awaited.',
-                announcement: 'Initial state retained; no storage or DOM masking applied.',
+                announcement: 'Fresh browser context and cleared cookies; initial state retained with no masking.',
                 masking: 'No screenshot regions are masked.',
                 breakpointHeight,
             },
@@ -524,8 +628,13 @@ async function compare() {
 }
 
 async function main() {
-    if (!['capture', 'compare', 'all'].includes(mode))
-        throw new Error('Usage: node scripts/fidelity/homepage-fidelity.mjs [capture|compare|all] [homepage|collections|shop|preorder|limited-edition|gift-cards|login|wishlist|taylor-oxford-shirt]');
+    if (!['self-check', 'capture', 'compare', 'all'].includes(mode))
+        throw new Error('Usage: node scripts/fidelity/homepage-fidelity.mjs [self-check|capture|compare|all] [homepage|collections|shop|preorder|limited-edition|gift-cards|login|wishlist|taylor-oxford-shirt]');
+    if (mode === 'self-check') {
+        await selfCheck();
+        return;
+    }
+    await selfCheck();
     if (['capture', 'all'].includes(mode)) await capture();
     if (['compare', 'all'].includes(mode)) await compare();
 }

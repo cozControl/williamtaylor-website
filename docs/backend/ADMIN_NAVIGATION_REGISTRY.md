@@ -29,3 +29,10 @@ Media library is the sole BE-4D navigation addition under Content. It targets ad
 Pages is added before Media library in the Content group. It targets `admin.content.pages.index`, requires `pages.view`, and is hidden when authorization fails. No Articles, Services, Policies, FAQs, Navigation, Announcements, SEO, Products, Collections, or Campaigns destination was added.
 
 The effective navigation order is Dashboard; Content: Pages, Media library; Access: Users, Roles; Governance: Audit log; System: Settings.
+## BE-4F Content navigation
+
+Review queue is added after Pages in the Content group. It targets `admin.content.pages.review-queue`, requires `pages.review`, and is permission-filtered without role-name checks. The Content order is Pages, Review queue, Media library.
+
+## BE-4G Content navigation
+
+Site Content is added after Review queue in the Content group. It targets `admin.site-content.index`, requires `settings.view`, and is permission-filtered without role-name checks. The Content order is Pages, Review queue, Site Content, Media library. Site Content has no public storefront destination or projection.

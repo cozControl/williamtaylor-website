@@ -89,16 +89,16 @@ final class ContentAdministrationAndPreviewTest extends TestCase
             ->assertDontSee('Schedule');
     }
 
-    public function test_page_controls_never_expose_publish_review_approve_or_schedule(): void
+    public function test_page_editor_links_to_workflow_without_embedding_high_impact_actions(): void
     {
         $this->actingAs($this->cms)->get(route('admin.content.pages.edit', $this->page))
             ->assertOk()
             ->assertSee('Save draft')
             ->assertSee('Preview saved revision')
-            ->assertDontSee('Publish')
-            ->assertDontSee('Review')
-            ->assertDontSee('Approve')
-            ->assertDontSee('Schedule');
+            ->assertSee('Open review and publishing workflow')
+            ->assertDontSee('Designate published now')
+            ->assertDontSee('Approve candidate')
+            ->assertDontSee('Schedule approved revision');
     }
 
     public function test_expired_preview_signature_is_rejected_and_archived_editor_is_read_only(): void

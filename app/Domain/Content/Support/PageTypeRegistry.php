@@ -11,7 +11,7 @@ final class PageTypeRegistry
             'standard' => [
                 'label' => 'Standard page',
                 'description' => 'A structured informational or editorial page.',
-                'templates' => ['standard_page'],
+                'templates' => ['standard_page', 'about'],
                 'sections' => ['hero', 'editorial_split', 'promotional_cards', 'rich_text', 'cta'],
                 'min' => 1,
                 'max' => 12,

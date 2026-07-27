@@ -10,6 +10,7 @@ use App\Domain\Media\Models\MediaAsset;
 use App\Domain\Media\Models\MediaAssetVersion;
 use App\Domain\Media\Support\ReplacementFingerprint;
 use App\Domain\Media\Support\ReplacementProposalStore;
+use App\Domain\PublicProjection\Services\InvalidatePublicPagesUsingMedia;
 use App\Models\User;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -40,8 +41,9 @@ final class ReplaceMediaAsset
         app(ReplacementProposalStore::class)->forget($token);
     }
 
-    private function handleVerified(User $actor, MediaAsset $asset, VerifiedProviderAsset $verified, string $reason): void
+    public function handleVerified(User $actor, MediaAsset $asset, VerifiedProviderAsset $verified, string $reason): void
     {
+        Gate::forUser($actor)->authorize(PermissionRegistry::MEDIA_REPLACE);
         if (trim($reason) === '') {
             throw new InvalidArgumentException('Replacement reason is required.');
         }
@@ -56,5 +58,6 @@ final class ReplaceMediaAsset
             $asset->update(['provider_asset_id' => $verified->assetId, 'provider_public_id' => $verified->publicId, 'provider_version' => $verified->version, 'format' => $verified->format, 'mime_type' => $verified->mimeType, 'width' => $verified->width, 'height' => $verified->height, 'duration_ms' => $verified->durationMs, 'bytes' => $verified->bytes, 'checksum' => $verified->checksum]);
             $this->audit->handle('media.asset.replaced', $asset, $actor, ['version' => $current->version_number, 'provider_asset_id' => $current->provider_asset_id], ['version' => $next, 'provider_asset_id' => $verified->assetId], PermissionRegistry::MEDIA_REPLACE, $reason);
         }, 3);
+        DB::afterCommit(fn () => app(InvalidatePublicPagesUsingMedia::class)->handle($asset));
     }
 }

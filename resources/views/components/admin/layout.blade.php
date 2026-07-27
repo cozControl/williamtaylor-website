@@ -19,6 +19,9 @@
     <link rel="icon" href="/favicon.ico" sizes="any">
     @fonts
     @vite(['resources/css/admin.css', 'resources/css/admin-access.css', 'resources/css/admin-media.css', 'resources/js/admin.js', 'resources/js/media-upload-queue.js', 'resources/js/media-replacement.js'])
+    @if (request()->routeIs('admin.content.pages.*', 'admin.content.navigation.*', 'admin.content.announcements.*', 'admin.settings.*'))
+        @vite(['resources/css/admin-cms.css', 'resources/js/cms-editor.js'])
+    @endif
     @fluxAppearance
 </head>
 <body class="admin-body">

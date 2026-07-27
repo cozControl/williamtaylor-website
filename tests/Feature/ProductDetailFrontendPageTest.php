@@ -106,6 +106,7 @@ class ProductDetailFrontendPageTest extends TestCase
         $this->assertSame(0, substr_count($html, '<form action='));
         $this->assertSame(0, substr_count($html, 'wire:'));
     }
+
     public function test_fe_2g_slim_tapered_chinos_route_is_public_named_and_renders_source_content(): void
     {
         $this->assertTrue(Route::has('products.slim-tapered-chinos'));
@@ -149,6 +150,7 @@ class ProductDetailFrontendPageTest extends TestCase
         $this->assertSame(0, substr_count($html, '<form action='));
         $this->assertSame(0, substr_count($html, 'wire:'));
     }
+
     public function test_fe_2h_executive_overcoat_route_is_public_named_and_renders_source_content(): void
     {
         $this->assertTrue(Route::has('products.executive-overcoat'));

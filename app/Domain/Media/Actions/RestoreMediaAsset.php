@@ -7,6 +7,7 @@ use App\Domain\Identity\Support\PermissionRegistry;
 use App\Domain\Media\Contracts\MediaProvider;
 use App\Domain\Media\Enums\MediaAssetState;
 use App\Domain\Media\Models\MediaAsset;
+use App\Domain\PublicProjection\Services\InvalidatePublicPagesUsingMedia;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -26,5 +27,6 @@ final class RestoreMediaAsset
             $asset->update(['state' => MediaAssetState::Ready, 'archived_at' => null]);
             $this->audit->handle('media.asset.restored', $asset, $actor, ['state' => 'archived'], ['state' => 'ready'], PermissionRegistry::MEDIA_RESTORE);
         });
+        DB::afterCommit(fn () => app(InvalidatePublicPagesUsingMedia::class)->handle($asset));
     }
 }

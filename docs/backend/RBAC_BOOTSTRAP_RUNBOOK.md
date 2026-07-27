@@ -69,3 +69,14 @@ Run the registry alignment preview before applying the six media permissions to 
 ## BE-4E alignment
 
 Before deploying BE-4E to an existing environment, run the foundation registry alignment in preview mode. Confirm the exact six `pages.*` additions and CMS Manager bundle delta, then apply with an approved reason. Application preserves role assignments, runs transactionally and idempotently, and records `content.permission-registry.aligned`. It never creates or promotes a user. Run `php artisan rbac:audit` after application.
+## BE-4F alignment
+
+Preview the alignment and confirm the five publishing additions and CMS Manager bundle change. Apply explicitly with `php artisan rbac:align-foundation-registry --apply`, then run `php artisan rbac:audit`. The publishing delta records `content.publishing-permission-registry.aligned`; it does not create users or assign roles.
+
+## BE-4G alignment
+
+Preview the alignment and confirm the single `navigation.manage` addition plus the CMS Manager additions of `navigation.manage` and existing `settings.manage`. Apply explicitly with an approved reason, then run `php artisan rbac:audit`. The delta records `site-content.permission-registry.aligned`; it does not create users, assign roles or project Site Content to the public storefront.
+
+## Factory bootstrap
+
+BE-4H-0 adds Inventory Manager through the same preview-first registry alignment. Factory identity assignment occurs only through explicit factory:install --apply or scoped reset; registry provisioning never assigns a user automatically.

@@ -27,6 +27,14 @@ const findings = {
 async function session(email) {
     const context = await browser.newContext();
     const page = await context.newPage();
+    observe(page);
+    const login = await context.request.get(`${baseUrl}/login`);
+    const token = (await login.text()).match(/name="_token" value="([^"]+)"/)?.[1];
+    await context.request.post(`${baseUrl}/login`, { form: { _token: token, email, password }, maxRedirects: 0 });
+    return { context, page };
+}
+
+function observe(page) {
     page.on('console', message => {
         if (message.type() === 'error') findings.consoleErrors.push(message.text());
         if (message.type() === 'warning') findings.warnings.push(message.text());
@@ -35,10 +43,6 @@ async function session(email) {
         findings.failedRequests.push(request.url());
         if (request.url().startsWith(baseUrl)) findings.failedLocalAssets.push(request.url());
     });
-    const login = await context.request.get(`${baseUrl}/login`);
-    const token = (await login.text()).match(/name="_token" value="([^"]+)"/)?.[1];
-    await context.request.post(`${baseUrl}/login`, { form: { _token: token, email, password }, maxRedirects: 0 });
-    return { context, page };
 }
 
 async function capture(page, name, width, height) {
@@ -68,6 +72,9 @@ findings.checks.creationValidation = await cms.page.getByText('Correct the page 
 await capture(cms.page, 'page-create-validation', 375, 812);
 
 await cms.page.goto(`${baseUrl}/admin/content/pages/${pageId}/edit`, { waitUntil: 'networkidle' });
+const staleEditor = await cms.context.newPage();
+observe(staleEditor);
+await staleEditor.goto(`${baseUrl}/admin/content/pages/${pageId}/edit`, { waitUntil: 'networkidle' });
 findings.checks.editorRegions = await cms.page.locator('.cms-outline, .cms-canvas, .cms-context').count() === 3;
 findings.checks.richTextToolbar = await cms.page.getByRole('toolbar', { name: 'Rich text formatting' }).count() === 0;
 findings.checks.noPublishingControls = await cms.page.getByRole('button', { name: /^(Publish|Review|Approve|Schedule)$/i }).count() === 0;
@@ -95,14 +102,25 @@ await cms.page.getByRole('button', { name: 'Save draft' }).click();
 await cms.page.waitForTimeout(500);
 findings.checks.saveSuccess = await cms.page.getByText(/Draft revision .* saved immutably\./).count() > 0;
 await capture(cms.page, 'page-editor-save-success', 1440, 900);
+await staleEditor.getByLabel('Page title').fill('BE-4E Stale Editor Attempt');
+await staleEditor.getByRole('button', { name: 'Move section 2 up' }).click();
+await staleEditor.locator('[data-cms-editor][data-dirty="true"]').waitFor();
+await staleEditor.getByRole('button', { name: 'Save draft' }).click();
+await staleEditor.getByText('This page has a newer draft revision. Reload before saving; your unsaved fields remain available.').waitFor();
+findings.checks.staleRevisionConflict = true;
+findings.checks.unsavedChangeWarning = await staleEditor.evaluate(() => {
+    const event = new Event('beforeunload', { cancelable: true });
+    return window.dispatchEvent(event) === false && event.defaultPrevented;
+});
+await staleEditor.close();
 
 await cms.page.goto(`${baseUrl}/admin/content/pages/${pageId}`, { waitUntil: 'networkidle' });
 findings.checks.readOnlyHistory = await cms.page.getByText('Immutable revision history').count() > 0;
 await capture(cms.page, 'page-detail-history', 1440, 900);
 await cms.page.getByLabel('Reason').fill('Controlled archive evidence');
 await cms.page.getByRole('button', { name: 'Archive draft page' }).click();
-await cms.page.waitForTimeout(300);
-findings.checks.archivedReadOnly = await cms.page.getByText('Archived', { exact: true }).count() === 1
+await cms.page.getByText('Archived', { exact: true }).first().waitFor();
+findings.checks.archivedReadOnly = await cms.page.getByText('Archived', { exact: true }).count() > 0
     && await cms.page.getByRole('link', { name: 'Edit draft' }).count() === 0;
 await capture(cms.page, 'page-archived-read-only', 1440, 900);
 await cms.page.getByLabel('Reason').fill('Controlled restore evidence');
@@ -137,4 +155,4 @@ findings.failedRequests = [...new Set(findings.failedRequests)];
 findings.failedLocalAssets = [...new Set(findings.failedLocalAssets)];
 await browser.close();
 await writeFile(path.join(output, 'browser-findings.json'), `${JSON.stringify(findings, null, 2)}\n`);
-console.log(JSON.stringify(findings, null, 2));
+process.stdout.write(`${JSON.stringify(findings, null, 2)}\n`);

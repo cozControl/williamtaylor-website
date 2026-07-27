@@ -60,7 +60,7 @@ final class PageEditor extends Component
     #[Computed]
     public function page(): Page
     {
-        return Page::query()->with(['currentDraftRevision', 'revisions'])->findOrFail($this->pageId);
+        return Page::query()->with(['currentDraftRevision', 'revisions', 'publicationState.candidateRevision', 'publicationState.currentPublicRevision'])->findOrFail($this->pageId);
     }
 
     #[Computed]

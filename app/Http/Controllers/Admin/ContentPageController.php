@@ -17,6 +17,11 @@ final class ContentPageController
         return view('admin.content.pages.create');
     }
 
+    public function review(): View
+    {
+        return view('admin.content.pages.review');
+    }
+
     public function show(Page $page): View
     {
         return view('admin.content.pages.show', ['page' => $page]);

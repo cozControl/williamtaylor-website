@@ -17,6 +17,7 @@ final class TransformationProfiles
             'hero_desktop' => ['width' => 1920, 'height' => 900, 'crop' => 'fill', 'quality' => 'auto', 'format' => 'auto'],
             'hero_mobile' => ['width' => 750, 'height' => 1000, 'crop' => 'fill', 'quality' => 'auto', 'format' => 'auto'],
             'editorial_content' => ['width' => 1400, 'height' => 1400, 'crop' => 'limit', 'quality' => 'auto', 'format' => 'auto'],
+            'site_logo' => ['width' => 680, 'height' => 160, 'crop' => 'fit', 'quality' => 'auto', 'format' => 'auto'],
             'social_open_graph' => ['width' => 1200, 'height' => 630, 'crop' => 'fill', 'quality' => 'auto', 'format' => 'auto'],
             'video_poster' => ['width' => 1280, 'height' => 720, 'crop' => 'fill', 'quality' => 'auto', 'format' => 'jpg'],
         ];

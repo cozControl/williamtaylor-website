@@ -9,13 +9,27 @@ use Symfony\Component\HtmlSanitizer\HtmlSanitizerConfig;
 
 final class SymfonyRichTextSanitizer implements RichTextSanitizer
 {
+    private const MAX_DOCUMENT_BYTES = 200000;
+
+    private const MAX_DEPTH = 32;
+
+    private const MAX_NODES = 2000;
+
+    private const MAX_TEXT_LENGTH = 20000;
+
     private const NODES = ['doc', 'paragraph', 'heading', 'bulletList', 'orderedList', 'listItem', 'blockquote', 'text'];
 
     private const MARKS = ['bold', 'italic', 'link'];
 
     public function sanitize(array $document): array
     {
-        $normalized = $this->node($document, true);
+        $encoded = json_encode($document, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if (strlen($encoded) > self::MAX_DOCUMENT_BYTES) {
+            throw new InvalidArgumentException('Rich text document exceeds the allowed size.');
+        }
+
+        $nodeCount = 0;
+        $normalized = $this->node($document, true, 0, $nodeCount);
         $html = $this->render($normalized);
         $config = (new HtmlSanitizerConfig)
             ->allowElement('p')
@@ -39,8 +53,13 @@ final class SymfonyRichTextSanitizer implements RichTextSanitizer
      * @param  array<string, mixed>  $node
      * @return array<string, mixed>
      */
-    private function node(array $node, bool $root = false): array
+    private function node(array $node, bool $root, int $depth, int &$nodeCount): array
     {
+        $nodeCount++;
+        if ($depth > self::MAX_DEPTH || $nodeCount > self::MAX_NODES) {
+            throw new InvalidArgumentException('Rich text document exceeds the structural limits.');
+        }
+
         $type = $node['type'] ?? null;
         if (! is_string($type) || ! in_array($type, self::NODES, true) || ($root && $type !== 'doc')) {
             throw new InvalidArgumentException('Rich text contains an unsupported node.');
@@ -53,11 +72,18 @@ final class SymfonyRichTextSanitizer implements RichTextSanitizer
             $normalized['attrs'] = ['level' => (int) $node['attrs']['level']];
         }
         if ($type === 'text') {
-            $normalized['text'] = mb_substr((string) ($node['text'] ?? ''), 0, 20000);
+            $text = (string) ($node['text'] ?? '');
+            if (mb_strlen($text) > self::MAX_TEXT_LENGTH) {
+                throw new InvalidArgumentException('Rich text node exceeds the allowed text length.');
+            }
+            $normalized['text'] = $text;
             $normalized['marks'] = $this->marks(is_array($node['marks'] ?? null) ? $node['marks'] : []);
         } else {
             $content = is_array($node['content'] ?? null) ? $node['content'] : [];
-            $normalized['content'] = array_map(fn (mixed $child): array => $this->node(is_array($child) ? $child : []), array_values($content));
+            $normalized['content'] = [];
+            foreach (array_values($content) as $child) {
+                $normalized['content'][] = $this->node(is_array($child) ? $child : [], false, $depth + 1, $nodeCount);
+            }
         }
 
         return $normalized;

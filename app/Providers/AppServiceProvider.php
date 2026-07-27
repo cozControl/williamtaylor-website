@@ -7,6 +7,9 @@ use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Domain\Identity\Support\RoleRegistry;
 use App\Domain\Media\Contracts\MediaProvider;
+use App\Domain\PublicProjection\Services\ResolvePublicSiteChrome;
+use App\Domain\Publishing\Contracts\PublicationPolicy;
+use App\Domain\Publishing\Support\CodeOwnedPublicationPolicy;
 use App\Infrastructure\Content\SymfonyRichTextSanitizer;
 use App\Infrastructure\Media\Cloudinary\CloudinaryMediaProvider;
 use App\Infrastructure\Media\Testing\DeterministicMediaProvider;
@@ -17,6 +20,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -26,6 +30,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ControlledRoleMutation::class);
         $this->app->singleton(RichTextSanitizer::class, SymfonyRichTextSanitizer::class);
+        $this->app->singleton(PublicationPolicy::class, CodeOwnedPublicationPolicy::class);
+        $this->app->singleton(ResolvePublicSiteChrome::class);
         $this->app->bind(MediaProvider::class, function () {
             if (config('media.provider') === 'deterministic') {
                 if (app()->environment('production')) {
@@ -43,6 +49,14 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureAuthorization();
+        $this->configurePublicSiteContent();
+    }
+
+    private function configurePublicSiteContent(): void
+    {
+        View::composer(['frontend.*', 'layouts.frontend'], function ($view): void {
+            $view->with('publicSiteChrome', app(ResolvePublicSiteChrome::class)->resolve());
+        });
     }
 
     private function configureAuthorization(): void

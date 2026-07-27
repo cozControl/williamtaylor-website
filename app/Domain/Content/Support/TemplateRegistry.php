@@ -9,6 +9,7 @@ final class TemplateRegistry
     {
         return [
             'standard_page' => ['label' => 'Standard page', 'description' => 'Single-column editorial content with approved structured sections.', 'preview' => 'content.preview.standard'],
+            'about' => ['label' => 'About', 'description' => 'Code-owned Our Story composition for the /about projection pilot.', 'preview' => 'content.preview.standard'],
             'editorial_landing' => ['label' => 'Editorial landing', 'description' => 'Responsive landing composition grounded in the supplied storefront.', 'preview' => 'content.preview.editorial-landing'],
         ];
     }

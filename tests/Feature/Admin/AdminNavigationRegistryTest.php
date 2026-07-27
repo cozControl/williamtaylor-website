@@ -26,7 +26,7 @@ class AdminNavigationRegistryTest extends TestCase
     {
         $items = app(AdminNavigationRegistry::class)->all();
 
-        $this->assertSame(['dashboard', 'pages', 'media', 'users', 'roles', 'audit', 'settings'], array_column($items, 'key'));
+        $this->assertSame(['dashboard', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'users', 'roles', 'audit', 'settings'], array_column($items, 'key'));
 
         foreach ($items as $item) {
             $this->assertTrue(Route::has($item->routeName));
@@ -46,7 +46,7 @@ class AdminNavigationRegistryTest extends TestCase
 
         $this->assertSame([], $registry->visibleFor(null));
         $this->assertSame([], $registry->visibleFor($ordinary));
-        $this->assertSame(['dashboard', 'pages', 'media', 'audit', 'settings'], array_column($registry->visibleFor($cms), 'key'));
-        $this->assertSame(['dashboard', 'pages', 'media', 'users', 'roles', 'audit', 'settings'], array_column($registry->visibleFor($super), 'key'));
+        $this->assertSame(['dashboard', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'audit', 'settings'], array_column($registry->visibleFor($cms), 'key'));
+        $this->assertSame(['dashboard', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'users', 'roles', 'audit', 'settings'], array_column($registry->visibleFor($super), 'key'));
     }
 }

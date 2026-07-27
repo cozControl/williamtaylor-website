@@ -41,7 +41,7 @@ class AdminAccessBoundaryTest extends TestCase
         $this->grantRole($user, RoleRegistry::CMS_MANAGER);
 
         $response = $this->actingAs($user)->get(route('admin.dashboard'))->assertOk();
-        $response->assertSee('Audit log')->assertSee('Settings');
+        $response->assertSee('Audit log')->assertSee('Site settings');
         $response->assertDontSee('href="'.route('admin.access.users.index').'"', false);
         $response->assertDontSee('href="'.route('admin.access.roles.index').'"', false);
 

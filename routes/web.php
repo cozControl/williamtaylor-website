@@ -1,10 +1,12 @@
 <?php
 
 use App\Domain\Identity\Support\PermissionRegistry;
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\PagePreviewController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
+Route::get('about', AboutController::class)->name('about');
 
 Route::view('collections', 'frontend.collections')->name('collections.index');
 Route::view('shop', 'frontend.shop')->name('products.index');

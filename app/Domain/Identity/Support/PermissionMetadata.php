@@ -29,7 +29,53 @@ final class PermissionMetadata
             PermissionRegistry::PAGES_PREVIEW => ['label' => 'Preview draft pages', 'area' => 'Content', 'description' => 'Open authenticated short-lived previews of immutable revisions.'],
             PermissionRegistry::PAGES_ARCHIVE => ['label' => 'Archive pages', 'area' => 'Content', 'description' => 'Archive an active draft while preserving revision history.'],
             PermissionRegistry::PAGES_RESTORE => ['label' => 'Restore pages', 'area' => 'Content', 'description' => 'Restore a compatible archived page to active draft.'],
+            PermissionRegistry::PAGES_REVIEW => ['label' => 'Review pages', 'area' => 'Content publishing', 'description' => 'Inspect submitted revisions and request editorial changes.'],
+            PermissionRegistry::PAGES_APPROVE => ['label' => 'Approve pages', 'area' => 'Content publishing', 'description' => 'Approve a ready immutable candidate revision.'],
+            PermissionRegistry::PAGES_PUBLISH => ['label' => 'Publish pages', 'area' => 'Content publishing', 'description' => 'Designate an approved revision as internally published.'],
+            PermissionRegistry::PAGES_SCHEDULE => ['label' => 'Schedule pages', 'area' => 'Content publishing', 'description' => 'Schedule or cancel publication of an approved revision.'],
+            PermissionRegistry::PAGES_UNPUBLISH => ['label' => 'Unpublish pages', 'area' => 'Content publishing', 'description' => 'Remove the internal published designation with a reason.'],
+            PermissionRegistry::ANNOUNCEMENTS_APPROVE => ['label' => 'Approve announcements', 'area' => 'Announcements', 'description' => 'Approve announcements through the governed typed Site Content workflow.'],
+            PermissionRegistry::ANNOUNCEMENTS_ARCHIVE => ['label' => 'Archive announcements', 'area' => 'Announcements', 'description' => 'Archive announcements through the governed typed Site Content workflow.'],
+            PermissionRegistry::ANNOUNCEMENTS_CREATE => ['label' => 'Create announcements', 'area' => 'Announcements', 'description' => 'Create announcements through the governed typed Site Content workflow.'],
+            PermissionRegistry::ANNOUNCEMENTS_EDIT => ['label' => 'Edit announcements', 'area' => 'Announcements', 'description' => 'Edit announcements through the governed typed Site Content workflow.'],
+            PermissionRegistry::ANNOUNCEMENTS_PREVIEW => ['label' => 'Preview announcements', 'area' => 'Announcements', 'description' => 'Preview announcements through the governed typed Site Content workflow.'],
+            PermissionRegistry::ANNOUNCEMENTS_PUBLISH => ['label' => 'Publish announcements', 'area' => 'Announcements', 'description' => 'Publish announcements through the governed typed Site Content workflow.'],
+            PermissionRegistry::ANNOUNCEMENTS_RESTORE => ['label' => 'Restore announcements', 'area' => 'Announcements', 'description' => 'Restore announcements through the governed typed Site Content workflow.'],
+            PermissionRegistry::ANNOUNCEMENTS_REVIEW => ['label' => 'Review announcements', 'area' => 'Announcements', 'description' => 'Review announcements through the governed typed Site Content workflow.'],
+            PermissionRegistry::ANNOUNCEMENTS_SCHEDULE => ['label' => 'Schedule announcements', 'area' => 'Announcements', 'description' => 'Schedule announcements through the governed typed Site Content workflow.'],
+            PermissionRegistry::ANNOUNCEMENTS_UNPUBLISH => ['label' => 'Unpublish announcements', 'area' => 'Announcements', 'description' => 'Unpublish announcements through the governed typed Site Content workflow.'],
+            PermissionRegistry::ANNOUNCEMENTS_VIEW => ['label' => 'View announcements', 'area' => 'Announcements', 'description' => 'View announcements through the governed typed Site Content workflow.'],
+            PermissionRegistry::NAVIGATION_APPROVE => ['label' => 'Approve navigation', 'area' => 'Navigation', 'description' => 'Approve navigation through the governed typed Site Content workflow.'],
+            PermissionRegistry::NAVIGATION_EDIT => ['label' => 'Edit navigation', 'area' => 'Navigation', 'description' => 'Edit navigation through the governed typed Site Content workflow.'],
+            PermissionRegistry::NAVIGATION_PREVIEW => ['label' => 'Preview navigation', 'area' => 'Navigation', 'description' => 'Preview navigation through the governed typed Site Content workflow.'],
+            PermissionRegistry::NAVIGATION_PUBLISH => ['label' => 'Publish navigation', 'area' => 'Navigation', 'description' => 'Publish navigation through the governed typed Site Content workflow.'],
+            PermissionRegistry::NAVIGATION_REVIEW => ['label' => 'Review navigation', 'area' => 'Navigation', 'description' => 'Review navigation through the governed typed Site Content workflow.'],
+            PermissionRegistry::NAVIGATION_SCHEDULE => ['label' => 'Schedule navigation', 'area' => 'Navigation', 'description' => 'Schedule navigation through the governed typed Site Content workflow.'],
+            PermissionRegistry::NAVIGATION_UNPUBLISH => ['label' => 'Unpublish navigation', 'area' => 'Navigation', 'description' => 'Unpublish navigation through the governed typed Site Content workflow.'],
+            PermissionRegistry::NAVIGATION_VIEW => ['label' => 'View navigation', 'area' => 'Navigation', 'description' => 'View navigation through the governed typed Site Content workflow.'],
+            PermissionRegistry::SETTINGS_APPROVE => ['label' => 'Approve site settings', 'area' => 'Site settings', 'description' => 'Approve site settings through the governed typed Site Content workflow.'],
+            PermissionRegistry::SETTINGS_PREVIEW => ['label' => 'Preview site settings', 'area' => 'Site settings', 'description' => 'Preview site settings through the governed typed Site Content workflow.'],
+            PermissionRegistry::SETTINGS_PUBLISH => ['label' => 'Publish site settings', 'area' => 'Site settings', 'description' => 'Publish site settings through the governed typed Site Content workflow.'],
+            PermissionRegistry::SETTINGS_REVIEW => ['label' => 'Review site settings', 'area' => 'Site settings', 'description' => 'Review site settings through the governed typed Site Content workflow.'],
+            PermissionRegistry::SETTINGS_SCHEDULE => ['label' => 'Schedule site settings', 'area' => 'Site settings', 'description' => 'Schedule site settings through the governed typed Site Content workflow.'],
+            PermissionRegistry::SETTINGS_UNPUBLISH => ['label' => 'Unpublish site settings', 'area' => 'Site settings', 'description' => 'Unpublish site settings through the governed typed Site Content workflow.'],
+            PermissionRegistry::CAMPAIGN_CLAIMS_REVIEW => ['label' => 'Review Campaign claims', 'area' => 'Campaign claims', 'description' => 'Inspect bounded Campaign claim and evidence summaries.'],
+            PermissionRegistry::CAMPAIGN_CLAIMS_APPROVE => ['label' => 'Approve Campaign claims', 'area' => 'Campaign claims', 'description' => 'Approve a submitted factual Campaign claim under separation of duties.'],
+            PermissionRegistry::CAMPAIGN_CLAIMS_REJECT => ['label' => 'Reject Campaign claims', 'area' => 'Campaign claims', 'description' => 'Reject a submitted Campaign claim with a bounded reason.'],
+            PermissionRegistry::CAMPAIGN_CLAIMS_WITHDRAW_APPROVAL => ['label' => 'Withdraw Campaign claim approval', 'area' => 'Campaign claims', 'description' => 'Withdraw current Campaign claim approval with a bounded reason.'],
+            PermissionRegistry::PUBLICATION_EMERGENCY_UNPUBLISH => ['label' => 'Emergency unpublish', 'area' => 'Publication governance', 'description' => 'Immediately remove an existing public designation and force its code-owned static fallback.'],
         ];
+    }
+
+    public static function isSensitive(string $permission): bool
+    {
+        return in_array($permission, [
+            PermissionRegistry::CAMPAIGN_CLAIMS_REVIEW,
+            PermissionRegistry::CAMPAIGN_CLAIMS_APPROVE,
+            PermissionRegistry::CAMPAIGN_CLAIMS_REJECT,
+            PermissionRegistry::CAMPAIGN_CLAIMS_WITHDRAW_APPROVAL,
+            PermissionRegistry::PUBLICATION_EMERGENCY_UNPUBLISH,
+        ], true);
     }
 
     /** @return array{label: string, area: string, description: string} */

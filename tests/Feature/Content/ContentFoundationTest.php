@@ -43,8 +43,8 @@ final class ContentFoundationTest extends TestCase
     public function test_exact_page_permissions_and_cms_bundle_are_registered(): void
     {
         $pagePermissions = array_values(array_filter(PermissionRegistry::all(), fn (string $permission): bool => str_starts_with($permission, 'pages.')));
-        $this->assertSame(['pages.view', 'pages.create', 'pages.edit', 'pages.preview', 'pages.archive', 'pages.restore'], $pagePermissions);
-        $this->assertSame([], array_values(array_filter(PermissionRegistry::all(), fn (string $permission): bool => in_array($permission, ['pages.review', 'pages.approve', 'pages.publish', 'pages.schedule', 'pages.delete'], true))));
+        $this->assertSame(['pages.view', 'pages.create', 'pages.edit', 'pages.preview', 'pages.archive', 'pages.restore', 'pages.review', 'pages.approve', 'pages.publish', 'pages.schedule', 'pages.unpublish'], $pagePermissions);
+        $this->assertSame([], array_values(array_filter(PermissionRegistry::all(), fn (string $permission): bool => in_array($permission, ['pages.delete', 'pages.rollback', 'pages.force-publish', 'pages.manage-workflow'], true))));
         foreach ($pagePermissions as $permission) {
             $this->assertTrue($this->cms->can($permission));
         }

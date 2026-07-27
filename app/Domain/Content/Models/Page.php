@@ -2,11 +2,13 @@
 
 namespace App\Domain\Content\Models;
 
+use App\Domain\Publishing\Models\PagePublicationState;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -21,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property int $updated_by
  * @property Carbon|null $archived_at
  * @property ContentRevision|null $currentDraftRevision
+ * @property PagePublicationState|null $publicationState
  */
 final class Page extends Model
 {
@@ -48,6 +51,12 @@ final class Page extends Model
     public function currentDraftRevision(): BelongsTo
     {
         return $this->belongsTo(ContentRevision::class, 'current_draft_revision_id');
+    }
+
+    /** @return HasOne<PagePublicationState, $this> */
+    public function publicationState(): HasOne
+    {
+        return $this->hasOne(PagePublicationState::class);
     }
 
     /** @return BelongsTo<User, $this> */

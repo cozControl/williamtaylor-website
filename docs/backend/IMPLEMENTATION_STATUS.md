@@ -55,8 +55,60 @@ The direct upload queue, bounded retry/cancel behavior, safe confirmation recove
 
 Date: 2026-07-24
 
-Status: Implemented; final validation results are recorded in `BE-4E_COMPLETION_REPORT.md`.
+Status: Complete and validated through BE-4E.1. Final evidence is in `BE-4E_COMPLETION_REPORT.md`.
 
-BE-4E adds code-owned page/template/section registries, locale-aware draft Pages, immutable content revisions, restricted Tiptap JSON and server-sanitized HTML, revision-owned Media usages, optimistic concurrency, draft administration, reversible archive/restore, and authenticated short-lived immutable preview. Exactly six page permissions and one Pages navigation item were added.
+BE-4E provides the authorized draft-only typed CMS foundation: code-owned registries, ULID Pages, immutable revisions, restricted server-sanitized rich text, revision-owned Media usages, optimistic concurrency, draft administration, archive/restore, and protected immutable preview. BE-4E.1 corrected bounded sanitizer complexity, route-scoped CMS asset loading, Livewire editor initialization, current-DOM navigation protection, and validation harness defects.
 
-Public storefront routes and protected assets remain static. Publishing, review, approval, scheduling, navigation management, SEO execution, catalogue, commerce, localization UI, customer images, APIs, and AI were not started. BE-4F was not started.
+Full validation passes 142 tests/921 assertions, Larastan 0, 20/20 browser checks, 17 screenshots, 143 public viewport comparisons, audits/build/syntax/whitespace, clean-database RBAC, and 56/56 protected checksums. Public storefront routes remain static. Publishing and all later domains were not started. BE-4F remains separately authorized and unstarted.
+## BE-4F - Page publishing governance
+
+Date: 2026-07-24
+
+Status: Complete and validated.
+
+BE-4F adds separate draft, candidate, and designated-published pointers; immutable transition history; review, approval, publication, scheduling, cancellation, and unpublish actions; a permission-aware Review queue; typed comparisons; readiness and stale-state protection; and idempotent scheduled processing. Public CMS projection remains inactive and BE-4G has not started.
+
+## BE-4G - Governed global Site Content
+
+Date: 2026-07-25
+
+Status: Complete and validated.
+
+BE-4G adds one governed global Site Content aggregate for typed navigation, announcements, footer content, contact details, social profiles, WhatsApp and fixed settings. It includes immutable revisions and transitions, distinct review and approval, publishing, scheduling, cancellation, unpublishing, signed immutable preview, audit evidence, and permission-aware administration. It does not project data to the public storefront.
+
+The final evidence, validation results, assumptions and exclusions are recorded in `BE-4G_COMPLETION_REPORT.md`. SEO and all later domains remain unstarted. BE-4H requires separate authorization.
+
+## BE-4G.1 - Site Content architecture reconciliation
+
+Date: 2026-07-25
+Status: Complete and validated; BE-4G may close.
+
+The original combined aggregate is reconciled into independent primary navigation, footer navigation, announcement and site-profile resources with exact permissions, business-facing workspaces, type-owned self-approval policy, deterministic announcement collision handling and isolated validation tooling. Public projection and every later domain remain inactive. Browser evidence, full regression, homepage fidelity, 56/56 protected files and the current `willy` preservation guard pass. See `BE-4G-1_RECONCILIATION_REPORT.md`.
+
+## BE-4H-A
+
+Global Site Content public projection is implemented behind a default-off environment flag. CMS Page projection and BE-4H-B remain unstarted pending validation and separate authorization.
+
+## BE-4H-0
+
+Complete and validated. The real Cloudinary smoke sequence and all 43 required asset synchronizations pass using the trusted project CA bundle, and the final preview proves complete reuse with zero uploads, deferrals, or drift. BE-4H-B and BE-4I have not started.
+
+## BE-4H-B
+
+Complete and validated. The `/about` static baseline and single-route governed Page projection pilot pass behind the default-off `PUBLIC_PAGE_PROJECTION` flag. Factory v2 is explicit, the complete static fallback remains, and BE-4I has not started.
+
+- BE-4H-B.1 closed on 2026-07-25: routes reconciled 39 to 40, About geometry delta 0px, final suite 196/1324. BE-4I not started.
+
+## BE-4H-B.2
+
+Date: 2026-07-25
+Status: Complete and validated; BE-4H-B may close.
+
+The public designated-revision attribute was removed. Internal revision identity remains server-only and revision-aware for caching, while public HTML, live DOM, response headers and public JavaScript are clean. About browser evidence is exact at all three viewports, the final suite passes 197 tests and 1,343 assertions, homepage fidelity and 56/56 protected files pass, and `willy` is unchanged. `/about` remains the only projected Page. BE-4I remains unstarted.
+
+## BE-5A.2 - Product media usage and readiness
+
+Date: 2026-07-26
+Status: Complete and validated.
+
+Product-owned Media Usage now has fail-closed primary/gallery roles, accessible effective-alt rules, stale-safe assignment/update/reorder/removal, and Catalogue-readiness integration. Variant media remains intentionally unregistered. See `BE-5A-2_COMPLETION_REPORT.md`. BE-5B remains unstarted.

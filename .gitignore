@@ -6,6 +6,8 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/app/test-runtime
+/storage/app/evidence/be6a1-browser
 /vendor
 .env
 .env.backup

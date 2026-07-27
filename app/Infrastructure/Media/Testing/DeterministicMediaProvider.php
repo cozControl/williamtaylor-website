@@ -67,4 +67,19 @@ final class DeterministicMediaProvider implements MediaProvider
     {
         return ! str_contains($assetId, 'missing');
     }
+
+    public function synchronizeFactorySource(array $entry, string $publicId): VerifiedProviderAsset
+    {
+        $source = (string) $entry['source'];
+        $bytes = $entry['source_kind'] === 'local' ? filesize(base_path($source)) : 1024;
+        $checksum = $entry['sha256'] ?? hash('sha256', $source);
+
+        return new VerifiedProviderAsset(
+            'factory-'.substr(hash('sha256', $publicId), 0, 32), $publicId, '1',
+            (string) $entry['resource_type'], 'upload', pathinfo($source, PATHINFO_EXTENSION) ?: 'mp4',
+            (string) $entry['mime_type'], basename($source), null, null,
+            $entry['resource_type'] === 'video' ? 1000 : null, (int) $bytes, (string) $checksum,
+            ['factory' => true]
+        );
+    }
 }

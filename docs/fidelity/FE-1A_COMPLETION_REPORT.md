@@ -1,4 +1,4 @@
-﻿# WILLIAM-TAYLOR-FE-1A-R Completion Report
+# WILLIAM-TAYLOR-FE-1A-R Completion Report
 
 Date: 2026-07-23
 

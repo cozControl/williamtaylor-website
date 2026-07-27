@@ -74,9 +74,9 @@ return new class extends Migration
         Schema::create('media_usages', function (Blueprint $table): void {
             $table->ulid('id')->primary();
             $table->foreignUlid('media_asset_id')->constrained('media_assets')->restrictOnDelete();
-            $table->string('owner_type');
-            $table->string('owner_identifier');
-            $table->string('field_role');
+            $table->string('owner_type', 191);
+            $table->string('owner_identifier', 64);
+            $table->string('field_role', 100);
             $table->string('locale', 16)->nullable();
             $table->text('alt_text_override')->nullable();
             $table->boolean('decorative_override')->nullable();

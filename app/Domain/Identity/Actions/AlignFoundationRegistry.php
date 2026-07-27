@@ -171,6 +171,46 @@ final class AlignFoundationRegistry
                 );
             }
 
+            $publishingAdditions = array_values(array_intersect($plan->additions, [
+                PermissionRegistry::PAGES_REVIEW,
+                PermissionRegistry::PAGES_APPROVE,
+                PermissionRegistry::PAGES_PUBLISH,
+                PermissionRegistry::PAGES_SCHEDULE,
+                PermissionRegistry::PAGES_UNPUBLISH,
+            ]));
+            if ($publishingAdditions !== []) {
+                $this->audit->handle(
+                    action: 'content.publishing-permission-registry.aligned',
+                    resource: $superAdministrator,
+                    actor: null,
+                    before: ['publishing_permissions' => []],
+                    after: ['publishing_permissions' => $publishingAdditions, 'cms_manager_bundle' => RoleRegistry::permissionBundles()[RoleRegistry::CMS_MANAGER]],
+                    reason: $reason,
+                );
+            }
+
+            $siteContentPermissions = array_values(array_filter($plan->additions, static fn (string $permission): bool => str_starts_with($permission, 'navigation.')
+                || str_starts_with($permission, 'announcements.')
+                || in_array($permission, [
+                    PermissionRegistry::SETTINGS_PREVIEW,
+                    PermissionRegistry::SETTINGS_REVIEW,
+                    PermissionRegistry::SETTINGS_APPROVE,
+                    PermissionRegistry::SETTINGS_PUBLISH,
+                    PermissionRegistry::SETTINGS_SCHEDULE,
+                    PermissionRegistry::SETTINGS_UNPUBLISH,
+                ], true)
+            ));
+            if ($siteContentPermissions !== [] || in_array('navigation.manage', $plan->removals, true)) {
+                $this->audit->handle(
+                    action: 'site-content.permission-registry.aligned',
+                    resource: $superAdministrator,
+                    actor: null,
+                    before: ['retired_permissions' => array_values(array_intersect($plan->removals, ['navigation.manage']))],
+                    after: ['site_content_permissions' => $siteContentPermissions, 'cms_manager_bundle' => RoleRegistry::permissionBundles()[RoleRegistry::CMS_MANAGER]],
+                    reason: $reason,
+                );
+            }
+
             $this->audit->handle(
                 action: 'identity.permission-registry.aligned',
                 resource: $superAdministrator,

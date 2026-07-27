@@ -49,3 +49,41 @@ The media foundation is implemented through MediaProvider, ULID assets/versions/
 ## BE-4E implementation reference
 
 BE-4E completes only the draft-oriented first slice of phase 6: typed Pages, immutable draft revisions, restricted rich text, Media usages, secure preview, and archive/restore. Review, approval, publication, scheduling, public CMS rendering, services/policies/FAQ/editorial resources, navigation, SEO, and later domains remain separately authorized. See `docs/backend/BE-4E_COMPLETION_REPORT.md`.
+## BE-4E.1 closure reference
+
+BE-4E phase 6's draft-only slice is complete and validated. The 52-point evidence record, defects corrected, remaining deployment prerequisites, and hard exclusions are in `docs/backend/BE-4E_COMPLETION_REPORT.md`. Publishing and every later phase remain separately authorized; BE-4F was not started.
+## BE-4F implementation reference
+
+BE-4F completes the separately authorized page review, approval, scheduling, publishing and unpublishing workflow while keeping public CMS projection inactive. See `docs/backend/BE-4F_COMPLETION_REPORT.md`.
+
+## BE-4G implementation reference
+
+BE-4G implements phase 7 as one typed global Site Content aggregate with revision history, governed publication workflow, scheduling, secure preview and audit evidence. Public storefront projection remains inactive. SEO and later phases remain separately authorized. See `docs/backend/BE-4G_COMPLETION_REPORT.md`.
+
+- BE-4H-A: global Site Content public projection, default-off and independently reversible. BE-4H-B remains separately gated.
+
+## BE-4H-0 bootstrap
+
+The separately authorized factory baseline is implemented before any BE-4H-B or BE-4I work. It adds no public route or domain model for catalogue, inventory, pricing, commerce, SEO, localization, APIs, customer images, or AI.
+
+## BE-4H-B
+
+The first Page projection pilot is limited to the code-owned `/about` route and remains default-off. Catalogue work remains separately authorized.
+
+- BE-4H-B.1 reconciliation complete. BE-4I remains separately gated and unstarted.
+
+## BE-5A.2 implementation reference
+
+Product Media Usage is implemented with code-owned primary/gallery roles, stale-safe lifecycle actions, ordered galleries, accessible effective-alt resolution, and pure Catalogue-readiness checks. Variant media and BE-5B remain unstarted. See `docs/backend/BE-5A-2_COMPLETION_REPORT.md`.
+
+## BE-5B implementation reference
+
+BE-5B adds fail-closed Product badge classification, governed directional `related` Product relations, and the Product-only `homepage-featured-products` placement slot with deterministic stale-safe ordering and separate pure merchandising eligibility. No public projection, Collections, Campaigns, Pricing, Inventory, or Commerce behavior is included. See `docs/backend/BE-5B_COMPLETION_REPORT.md`.
+
+## BE-5C.1 implementation reference
+
+BE-5C.1 adds the Catalogue-owned curated Collection foundation: immutable revisions, reserved unique slugs, ordered Product memberships, card/hero Media Usage ownership, pure readiness, archive/restore, stale-safe mutations, bounded audit, and a private typed configuration cache. No Collection records, routes, UI, public projection, Campaigns, Pricing, Inventory, or Commerce behavior are included. See `docs/backend/BE-5C-1_COMPLETION_REPORT.md`.
+
+### BE-5C.2 — Campaigns, schedules and governed claims (closed 2026-07-26)
+
+Dedicated sensitive claim authority, independent approval, ordered Product targets, Campaign media, schedules, readiness/effective state, audit/cache controls, archive/restore, and full closeout validation are complete. See `docs/backend/BE-5C-2_COMPLETION_REPORT.md`. Phase 12 remains unstarted.

@@ -60,3 +60,6 @@ Approved by the project stakeholder on 2026-07-23 as architectural direction. Le
 ## BE-4E implementation reference
 
 Implemented with application-owned Tiptap Core/Starter Kit 3.28.0 and Symfony HTML Sanitizer 7.4.14 adapters. Canonical restricted JSON and server-sanitized semantic HTML projections are stored. Tables, uploads, arbitrary HTML, and media embeds remain unavailable.
+## BE-4E.1 closure reference
+
+BE-4E phase 6's draft-only slice is complete and validated. The 52-point evidence record, defects corrected, remaining deployment prerequisites, and hard exclusions are in `docs/backend/BE-4E_COMPLETION_REPORT.md`. Publishing and every later phase remain separately authorized; BE-4F was not started.

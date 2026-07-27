@@ -3,9 +3,12 @@
 @section('route-bootstrap')
   <script>
    if (window.location.pathname === '/limited-edition') {
-    window.history.replaceState(window.history.state, '', '/collections/limited-edition');
+    const routeReplaceState = History.prototype.replaceState;
+    routeReplaceState.call(window.history, window.history.state, '', '/collections/limited-edition');
     window.addEventListener('load', function () {
-     window.history.replaceState(window.history.state, '', '/limited-edition');
+     window.setTimeout(function () {
+      routeReplaceState.call(window.history, window.history.state, '', '/limited-edition');
+     }, 1500);
     }, { once: true });
    }
   </script>
@@ -19,7 +22,7 @@
      <nav class="frosted-nav transition-all duration-300 relative" style="box-shadow: rgba(0, 0, 0, 0.25) 0px 4px 30px;">
       <div class="max-w-screen-2xl mx-auto px-4 lg:px-12 h-14 lg:h-16 flex items-center justify-between gap-4">
        <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-        <button class="lg:hidden text-wt-cream hover:text-wt-gold transition-colors">
+        <button class="lg:hidden text-wt-cream hover:text-wt-gold transition-colors" @if($publicSiteChrome?->navigation) data-public-menu-open aria-label="Open menu" aria-controls="public-mobile-navigation" aria-expanded="false" @endif>
          <svg class="lucide lucide-menu" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
           <line x1="4" x2="20" y1="12" y2="12">
           </line>
@@ -36,7 +39,7 @@
          </svg>
         </button>
         <a class="flex-shrink-0" href="/">
-         <img alt="William Taylor" class="h-5 lg:h-7 w-auto mix-blend-screen" src="/website/images/8d99836ea_LOGO-3.png"/>
+         <img alt="{{ $publicSiteChrome?->profile?->brandName ?: 'William Taylor' }}" class="h-5 lg:h-7 w-auto mix-blend-screen" src="{{ $publicSiteChrome?->profile?->headerLogoUrl ?: '/website/images/8d99836ea_LOGO-3.png' }}"/>
         </a>
        </div>
        <div class="lg:hidden flex-1 text-center min-w-0 px-2">
@@ -44,7 +47,17 @@
          Collection
         </span>
        </div>
+       @if($publicSiteChrome?->navigation)
        <div class="hidden lg:flex items-center gap-8">
+        @foreach($publicSiteChrome->navigation->items as $item)
+         @if($item->visibility !== 'mobile')
+         <div class="relative">
+          <a class="font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200" href="{{ $item->link->url }}" @if($item->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $item->link->label }}</a>
+         </div>
+         @endif
+        @endforeach
+       </div>
+       @else       <div class="hidden lg:flex items-center gap-8">
         <div class="relative">
          <button class="flex items-center gap-1 font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200">
           Shop
@@ -75,6 +88,7 @@
          </a>
         </div>
        </div>
+       @endif
        <div class="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
         <div class="hidden sm:block">
          <button class="hidden lg:flex items-center border border-wt-gold/30 rounded-full overflow-hidden" title="Toggle currency">
@@ -133,6 +147,7 @@
        </div>
       </div>
      </nav>
+     @include('frontend.partials.projected-mobile-navigation')
     </header>
     <main class="flex-1 pt-14 lg:pt-16 pb-16 lg:pb-0">
      <div class="min-h-screen pt-0 bg-wt-oxblood">

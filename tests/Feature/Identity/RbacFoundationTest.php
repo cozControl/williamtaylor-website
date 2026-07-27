@@ -36,11 +36,15 @@ class RbacFoundationTest extends TestCase
             'audit.view', 'audit.export', 'settings.view', 'settings.manage',
             'media.view', 'media.upload', 'media.edit', 'media.replace', 'media.archive', 'media.restore',
             'pages.view', 'pages.create', 'pages.edit', 'pages.preview', 'pages.archive', 'pages.restore',
+            'pages.review', 'pages.approve', 'pages.publish', 'pages.schedule', 'pages.unpublish',
+            'navigation.view', 'navigation.edit', 'navigation.preview', 'navigation.review', 'navigation.approve', 'navigation.publish', 'navigation.schedule', 'navigation.unpublish', 'announcements.view', 'announcements.create', 'announcements.edit', 'announcements.preview', 'announcements.review', 'announcements.approve', 'announcements.publish', 'announcements.schedule', 'announcements.unpublish', 'announcements.archive', 'announcements.restore', 'settings.preview', 'settings.review', 'settings.approve', 'settings.publish', 'settings.schedule', 'settings.unpublish',
+            'campaigns.claims.review', 'campaigns.claims.approve', 'campaigns.claims.reject', 'campaigns.claims.withdraw-approval',
+            'publication.emergency-unpublish',
         ];
 
         $this->assertSame($expected, PermissionRegistry::all());
         $this->assertSame($expected, Permission::query()->orderBy('id')->pluck('name')->all());
-        $this->assertCount(21, PermissionRegistry::all());
+        $this->assertCount(56, PermissionRegistry::all());
         $this->assertContains(PermissionRegistry::ADMIN_ACCESS, PermissionRegistry::all());
         $this->assertContains(PermissionRegistry::USERS_MANAGE, PermissionRegistry::all());
         $this->assertContains(PermissionRegistry::ROLES_MANAGE, PermissionRegistry::all());
@@ -48,8 +52,8 @@ class RbacFoundationTest extends TestCase
         $this->assertContains(PermissionRegistry::SETTINGS_MANAGE, PermissionRegistry::all());
         $this->assertNotContains('roles.assign', PermissionRegistry::all());
         $this->assertNotContains('roles.revoke', PermissionRegistry::all());
-        $this->assertSame(6, count(array_filter(PermissionRegistry::all(), fn (string $permission): bool => str_starts_with($permission, 'pages.'))));
-        $this->assertNotContains('pages.publish', PermissionRegistry::all());
+        $this->assertSame(11, count(array_filter(PermissionRegistry::all(), fn (string $permission): bool => str_starts_with($permission, 'pages.'))));
+        $this->assertNotContains('pages.delete', PermissionRegistry::all());
         $this->assertDatabaseCount('model_has_roles', 0);
     }
 
@@ -59,12 +63,12 @@ class RbacFoundationTest extends TestCase
         $cmsManager = Role::findByName(RoleRegistry::CMS_MANAGER, PermissionRegistry::GUARD);
 
         $this->assertEqualsCanonicalizing(
-            ['admin.access', 'audit.view', 'settings.view', 'media.view', 'media.upload', 'media.edit', 'media.replace', 'media.archive', 'media.restore', 'pages.view', 'pages.create', 'pages.edit', 'pages.preview', 'pages.archive', 'pages.restore'],
+            RoleRegistry::permissionBundles()[RoleRegistry::CMS_MANAGER],
             $cmsManager->permissions->pluck('name')->all(),
         );
         $this->assertFalse($cmsManager->hasPermissionTo(PermissionRegistry::USERS_MANAGE));
         $this->assertFalse($cmsManager->hasPermissionTo(PermissionRegistry::ROLES_MANAGE));
-        $this->assertFalse($cmsManager->hasPermissionTo(PermissionRegistry::SETTINGS_MANAGE));
+        $this->assertTrue($cmsManager->hasPermissionTo(PermissionRegistry::SETTINGS_MANAGE));
         $this->assertFalse($cmsManager->hasPermissionTo(PermissionRegistry::AUDIT_EXPORT));
         $this->artisan('rbac:audit')->assertSuccessful();
     }

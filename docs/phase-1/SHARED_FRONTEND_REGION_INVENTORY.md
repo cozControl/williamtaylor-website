@@ -1,4 +1,4 @@
-﻿# FE-1B Shared Frontend Region Inventory
+# FE-1B Shared Frontend Region Inventory
 
 Date: 2026-07-23
 

@@ -18,7 +18,7 @@ final class RichTextAndSectionSecurityTest extends TestCase
     public function test_registries_are_code_owned_and_only_approved_values_exist(): void
     {
         $this->assertSame(['standard', 'landing'], array_keys(app(PageTypeRegistry::class)->all()));
-        $this->assertSame(['standard_page', 'editorial_landing'], array_keys(app(TemplateRegistry::class)->all()));
+        $this->assertSame(['standard_page', 'about', 'editorial_landing'], array_keys(app(TemplateRegistry::class)->all()));
         $this->assertSame(['hero', 'editorial_split', 'promotional_cards', 'rich_text', 'cta'], array_keys(app(SectionRegistry::class)->all()));
     }
 
@@ -90,5 +90,63 @@ final class RichTextAndSectionSecurityTest extends TestCase
             'schema_version' => 1,
             'data' => ['cards' => array_fill(0, 5, ['heading' => 'Card'])],
         ], 'landing');
+    }
+
+    public function test_adversarial_active_content_and_unsafe_links_are_rejected_or_escaped(): void
+    {
+        $invalid = [
+            json_decode('{"type":"doc","content":[{"type":"rawHtml","attrs":{"html":"<iframe></iframe>"}}]}', true, 512, JSON_THROW_ON_ERROR),
+            json_decode('{"type":"doc","content":[{"type":"file","attrs":{"url":"https://res.cloudinary.com/example/raw/upload/file.pdf"}}]}', true, 512, JSON_THROW_ON_ERROR),
+            json_decode('{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"x","marks":[{"type":"link","attrs":{"href":"data:text/html,unsafe"}}]}]}]}', true, 512, JSON_THROW_ON_ERROR),
+            json_decode('{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"x","marks":[{"type":"link","attrs":{"href":"//example.com"}}]}]}]}', true, 512, JSON_THROW_ON_ERROR),
+        ];
+
+        foreach ($invalid as $document) {
+            try {
+                app(RichTextSanitizer::class)->sanitize($document);
+                $this->fail('Unsafe rich text unexpectedly passed.');
+            } catch (InvalidArgumentException) {
+                $this->assertTrue(true);
+            }
+        }
+
+        $payload = '<script>alert(1)</script><style>.x{color:red}</style><iframe src="x"></iframe><form></form><svg onload="alert(1)"></svg>';
+        $result = app(RichTextSanitizer::class)->sanitize([
+            'type' => 'doc',
+            'content' => [[
+                'type' => 'paragraph',
+                'attrs' => ['class' => 'unsafe', 'style' => 'color:red', 'onclick' => 'alert(1)'],
+                'content' => [['type' => 'text', 'text' => $payload]],
+            ]],
+        ]);
+
+        foreach (['<script', '<style', '<iframe', '<form', '<svg', 'class=', 'style=', 'onclick='] as $unsafe) {
+            $this->assertStringNotContainsString($unsafe, $result['html']);
+        }
+        $this->assertStringContainsString('&lt;script&gt;', $result['html']);
+    }
+
+    public function test_deep_oversized_and_excessive_node_documents_are_rejected(): void
+    {
+        $deep = ['type' => 'paragraph', 'content' => []];
+        for ($index = 0; $index < 34; $index++) {
+            $deep = ['type' => 'blockquote', 'content' => [$deep]];
+        }
+
+        $documents = [
+            ['type' => 'doc', 'content' => [$deep]],
+            ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => str_repeat('x', 20001)]]]]],
+            ['type' => 'doc', 'content' => array_fill(0, 2001, ['type' => 'paragraph', 'content' => []])],
+            ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => str_repeat('x', 199000)]]]]],
+        ];
+
+        foreach ($documents as $document) {
+            try {
+                app(RichTextSanitizer::class)->sanitize($document);
+                $this->fail('Structurally excessive rich text unexpectedly passed.');
+            } catch (InvalidArgumentException) {
+                $this->assertTrue(true);
+            }
+        }
     }
 }

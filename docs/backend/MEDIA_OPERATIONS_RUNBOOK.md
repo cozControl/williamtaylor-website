@@ -9,3 +9,7 @@ During provider outage, disable new upload/replacement, preserve existing logica
 ## Upload and replacement operations
 
 Administrators may cancel active queue work and retry manually up to three times. Cancellation never deletes a confirmed asset. Unapplied provider uploads enter the documented reconciliation/orphan process. Run CLOUDINARY_STAGING_SMOKE_TEST.md before deployment; irreversible cleanup remains deferred.
+
+## Factory Media
+
+Use factory:media-sync for preview and --apply for explicit synchronization. Provider IDs are factory-versioned under the environment folder. Reset never deletes Cloudinary binaries.

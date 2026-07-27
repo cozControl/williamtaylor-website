@@ -5,11 +5,19 @@
      <div class="max-w-screen-xl mx-auto px-6 lg:px-12 py-16 relative z-10">
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-10 lg:gap-8">
        <div class="col-span-2 md:col-span-3 lg:col-span-4">
-        <img alt="William Taylor" class="h-9 w-auto max-w-[170px] object-contain mb-5 mix-blend-screen" src="/website/images/8d99836ea_LOGO-3.png"/>
+        <img alt="{{ $publicSiteChrome?->profile?->brandName ?: 'William Taylor' }}" class="h-9 w-auto max-w-[170px] object-contain mb-5 mix-blend-screen" src="{{ $publicSiteChrome?->profile?->footerLogoUrl ?: '/website/images/8d99836ea_LOGO-3.png' }}"/>
         <p class="font-body text-sm text-wt-cream/70 font-light leading-relaxed mb-6 max-w-xs">
-         Crafted for the Modern Gentleman. Contemporary menswear designed in Tanzania, worn worldwide.
+         {{ $publicSiteChrome?->profile?->footerDescription ?: 'Crafted for the Modern Gentleman. Contemporary menswear designed in Tanzania, worn worldwide.' }}
         </p>
+        @if($publicSiteChrome?->profile && $publicSiteChrome->profile->socialLinks)
         <div class="flex items-center gap-3">
+         @foreach($publicSiteChrome->profile->socialLinks as $social)
+         <a aria-label="{{ $social->label }}" class="w-9 h-9 border border-wt-gold/25 flex items-center justify-center text-wt-cream/50 hover:text-wt-oxblood hover:bg-wt-gold hover:border-wt-gold transition-all duration-300" href="{{ $social->url }}" rel="noopener noreferrer" target="_blank">
+          @include('frontend.partials.social-icon', ['platform' => $social->platform])
+         </a>
+         @endforeach
+        </div>
+        @else        <div class="flex items-center gap-3">
          <a class="w-9 h-9 border border-wt-gold/25 flex items-center justify-center text-wt-cream/50 hover:text-wt-oxblood hover:bg-wt-gold hover:border-wt-gold transition-all duration-300" href="https://instagram.com/williamtaylor" rel="noopener noreferrer" target="_blank">
           <svg class="lucide lucide-instagram" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="15" xmlns="http://www.w3.org/2000/svg">
            <rect height="20" rx="5" ry="5" width="20" x="2" y="2">
@@ -41,8 +49,23 @@
           </svg>
          </a>
         </div>
+        @endif
        </div>
+       @if($publicSiteChrome?->footerGroups)
+        @foreach($publicSiteChrome->footerGroups as $group)
        <div class="lg:col-span-2">
+        <div class="mb-5">
+         <h4 class="font-label text-xs tracking-widest uppercase text-wt-gold mb-2">{{ $group->label }}</h4>
+         <div class="w-6 h-px bg-wt-gold/40"></div>
+        </div>
+        <ul class="space-y-2.5">
+         @foreach($group->links as $link)
+         <li><a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ $link->url }}" @if($link->newTab) target="_blank" rel="noopener noreferrer" @endif><span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3"></span>{{ $link->label }}</a></li>
+         @endforeach
+        </ul>
+       </div>
+        @endforeach
+       @else       <div class="lg:col-span-2">
         <div class="mb-5">
          <h4 class="font-label text-xs tracking-widest uppercase text-wt-gold mb-2">
           Shop
@@ -187,6 +210,7 @@
          </li>
         </ul>
        </div>
+       @endif
        <div class="col-span-2 md:col-span-1 lg:col-span-2">
         <div class="mb-5">
          <h4 class="font-label text-xs tracking-widest uppercase text-wt-gold mb-2">
@@ -197,18 +221,16 @@
         </div>
         <ul class="space-y-3">
          <li class="font-body text-sm text-wt-cream/70 font-light leading-relaxed">
-          Dar Village Mall
-          <br/>
-          Dar Es Salaam, Tanzania
+          {{ $publicSiteChrome?->profile?->address ?: 'Dar Village Mall, Dar Es Salaam, Tanzania' }}
          </li>
          <li>
-          <a class="font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="mailto:info@williamtaylor.co.tz">
-           info@williamtaylor.co.tz
+          <a class="font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="mailto:{{ $publicSiteChrome?->profile?->email ?: 'info@williamtaylor.co.tz' }}">
+           {{ $publicSiteChrome?->profile?->email ?: 'info@williamtaylor.co.tz' }}
           </a>
          </li>
          <li>
-          <a class="font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="tel:+255656464876">
-           +255 656 464 876
+          <a class="font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="tel:{{ $publicSiteChrome?->profile?->telephone ?: '+255656464876' }}">
+           {{ $publicSiteChrome?->profile?->telephone ?: '+255 656 464 876' }}
           </a>
          </li>
         </ul>
@@ -225,7 +247,7 @@
          <span class="text-wt-cream/20">
           ·
          </span>
-         <a class="font-body text-xs text-wt-cream/40 hover:text-wt-gold transition-colors font-light" href="html/admin.html">
+         <a class="font-body text-xs text-wt-cream/40 hover:text-wt-gold transition-colors font-light" href="{{ route('admin.dashboard') }}">
           Admin
          </a>
         </div>
@@ -233,7 +255,7 @@
       </div>
       <div class="mt-12 pt-8 border-t border-wt-gold/20 flex flex-col md:flex-row items-center justify-between gap-4">
        <p class="font-label text-xs tracking-wider text-wt-cream/50 uppercase">
-        © 2026 William Taylor. All Rights Reserved.
+        {{ $publicSiteChrome?->profile?->copyright ?: '© 2026 William Taylor. All Rights Reserved.' }}
        </p>
        <div class="flex items-center gap-3">
         <span class="font-label text-xs tracking-wider text-wt-cream/40 uppercase">

@@ -24,7 +24,7 @@ class FoundationRegistryAlignmentTest extends TestCase
         $this->seedLegacyRegistry();
 
         $this->artisan('rbac:align-foundation-registry')
-            ->expectsOutputToContain('Additions: pages.archive')
+            ->expectsOutputToContain('announcements.approve')
             ->expectsOutputToContain('Removals: (none)')
             ->expectsOutputToContain('Preview complete. No mutation was performed')
             ->assertSuccessful();
@@ -48,8 +48,10 @@ class FoundationRegistryAlignmentTest extends TestCase
             Permission::query()->pluck('name')->all(),
         );
         $this->assertDatabaseMissing('permissions', ['name' => 'roles.assign']);
-        $this->assertSame(6, Permission::query()->where('name', 'like', 'pages.%')->count());
+        $this->assertSame(11, Permission::query()->where('name', 'like', 'pages.%')->count());
         $this->assertDatabaseHas('audit_records', ['action' => 'content.permission-registry.aligned']);
+        $this->assertDatabaseHas('audit_records', ['action' => 'content.publishing-permission-registry.aligned']);
+        $this->assertDatabaseHas('audit_records', ['action' => 'site-content.permission-registry.aligned']);
         $this->assertEqualsCanonicalizing(
             RoleRegistry::permissionBundles()[RoleRegistry::CMS_MANAGER],
             Role::findByName(RoleRegistry::CMS_MANAGER)->permissions->pluck('name')->all(),
@@ -67,13 +69,13 @@ class FoundationRegistryAlignmentTest extends TestCase
     public function test_unexpected_direct_assignment_aborts_alignment_without_mutation(): void
     {
         $this->seedLegacyRegistry();
-        Permission::query()->create(['name' => 'pages.publish', 'guard_name' => PermissionRegistry::GUARD]);
+        Permission::query()->create(['name' => 'pages.force-publish', 'guard_name' => PermissionRegistry::GUARD]);
         $user = User::factory()->create();
-        $user->givePermissionTo('pages.publish');
+        $user->givePermissionTo('pages.force-publish');
 
         $plan = app(AlignFoundationRegistry::class)->inspect();
         $this->assertSame([[
-            'permission' => 'pages.publish',
+            'permission' => 'pages.force-publish',
             'model_type' => User::class,
             'model_identifier' => (string) $user->getKey(),
         ]], $plan->directAssignments);
@@ -93,13 +95,13 @@ class FoundationRegistryAlignmentTest extends TestCase
 
         $this->assertSame($beforeRoles, $user->fresh()->getRoleNames()->all());
         $this->assertEqualsCanonicalizing(
-            ['admin.access', 'audit.view', 'settings.view', 'media.view', 'media.upload', 'media.edit', 'media.replace', 'media.archive', 'media.restore', 'pages.view', 'pages.create', 'pages.edit', 'pages.preview', 'pages.archive', 'pages.restore'],
+            RoleRegistry::permissionBundles()[RoleRegistry::CMS_MANAGER],
             $user->fresh()->getAllPermissions()->pluck('name')->all(),
         );
         $audit = AuditRecord::query()->where('action', 'identity.role-bundle.aligned')->sole();
         $this->assertNotContains('pages.view', $audit->before_summary['effective_permissions']);
         $this->assertEqualsCanonicalizing(
-            ['admin.access', 'audit.view', 'settings.view', 'media.view', 'media.upload', 'media.edit', 'media.replace', 'media.archive', 'media.restore', 'pages.view', 'pages.create', 'pages.edit', 'pages.preview', 'pages.archive', 'pages.restore'],
+            RoleRegistry::permissionBundles()[RoleRegistry::CMS_MANAGER],
             $audit->after_summary['effective_permissions'],
         );
     }
@@ -120,7 +122,7 @@ class FoundationRegistryAlignmentTest extends TestCase
         ]);
         $superAdministrator->syncPermissions($this->legacyPermissions());
         $cmsManager->syncPermissions([
-            'admin.access', 'audit.view', 'settings.view', 'media.view', 'media.upload',
+            'admin.access', 'audit.view', 'settings.view', 'settings.manage', 'media.view', 'media.upload',
             'media.edit', 'media.replace', 'media.archive', 'media.restore',
         ]);
     }

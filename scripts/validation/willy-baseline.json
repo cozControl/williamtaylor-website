@@ -1,0 +1,7 @@
+{
+    "path":  "willy",
+    "sha256":  "6feee109d13ac23f918e761bb2a996724a1dbcb7d9858e76e6875afe6d85963c",
+    "bytes":  401408,
+    "acceptedAt":  "2026-07-25T02:03:36Z",
+    "basis":  "Accepted BE-4G.1 baseline after a stale evidence server on port 8131 mutated the runtime database during the first corrected browser rerun; incident documented and future runs refuse occupied ports"
+}

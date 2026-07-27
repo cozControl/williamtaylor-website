@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\Media\Cloudinary;
 
+use App\Domain\Factory\Services\FactoryManifest;
 use App\Domain\Media\Contracts\MediaProvider;
 use App\Domain\Media\Data\UploadIntent;
 use App\Domain\Media\Data\VerifiedProviderAsset;
@@ -78,5 +79,34 @@ final class CloudinaryMediaProvider implements MediaProvider
         } catch (\Throwable) {
             return false;
         }
+    }
+
+    public function synchronizeFactorySource(array $entry, string $publicId): VerifiedProviderAsset
+    {
+        $source = (string) $entry['source'];
+        if (($entry['source_kind'] ?? null) === 'local') {
+            $source = base_path($source);
+        }
+        $response = $this->sdk()->uploadApi()->upload($source, [
+            'public_id' => $publicId,
+            'resource_type' => (string) $entry['resource_type'],
+            'overwrite' => false,
+            'unique_filename' => false,
+            'use_filename' => false,
+            'tags' => [FactoryManifest::VERSION, (string) $entry['logical_key']],
+        ]);
+        $result = $response->getArrayCopy();
+
+        return new VerifiedProviderAsset(
+            (string) $result['asset_id'], (string) $result['public_id'], (string) $result['version'],
+            (string) $result['resource_type'], (string) ($result['type'] ?? 'upload'),
+            strtolower((string) $result['format']), (string) ($result['resource_type'] === 'video' ? 'video/'.$result['format'] : 'image/'.$result['format']),
+            (string) ($result['original_filename'] ?? basename($source)),
+            isset($result['width']) ? (int) $result['width'] : null,
+            isset($result['height']) ? (int) $result['height'] : null,
+            isset($result['duration']) ? (int) round((float) $result['duration'] * 1000) : null,
+            (int) $result['bytes'], isset($result['etag']) ? (string) $result['etag'] : null,
+            ['factory_version' => FactoryManifest::VERSION]
+        );
     }
 }

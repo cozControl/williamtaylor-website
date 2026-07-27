@@ -48,6 +48,76 @@ final class PermissionRegistry
 
     public const PAGES_RESTORE = 'pages.restore';
 
+    public const PAGES_REVIEW = 'pages.review';
+
+    public const PAGES_APPROVE = 'pages.approve';
+
+    public const PAGES_PUBLISH = 'pages.publish';
+
+    public const PAGES_SCHEDULE = 'pages.schedule';
+
+    public const PAGES_UNPUBLISH = 'pages.unpublish';
+
+    public const NAVIGATION_VIEW = 'navigation.view';
+
+    public const NAVIGATION_EDIT = 'navigation.edit';
+
+    public const NAVIGATION_PREVIEW = 'navigation.preview';
+
+    public const NAVIGATION_REVIEW = 'navigation.review';
+
+    public const NAVIGATION_APPROVE = 'navigation.approve';
+
+    public const NAVIGATION_PUBLISH = 'navigation.publish';
+
+    public const NAVIGATION_SCHEDULE = 'navigation.schedule';
+
+    public const NAVIGATION_UNPUBLISH = 'navigation.unpublish';
+
+    public const ANNOUNCEMENTS_VIEW = 'announcements.view';
+
+    public const ANNOUNCEMENTS_CREATE = 'announcements.create';
+
+    public const ANNOUNCEMENTS_EDIT = 'announcements.edit';
+
+    public const ANNOUNCEMENTS_PREVIEW = 'announcements.preview';
+
+    public const ANNOUNCEMENTS_REVIEW = 'announcements.review';
+
+    public const ANNOUNCEMENTS_APPROVE = 'announcements.approve';
+
+    public const ANNOUNCEMENTS_PUBLISH = 'announcements.publish';
+
+    public const ANNOUNCEMENTS_SCHEDULE = 'announcements.schedule';
+
+    public const ANNOUNCEMENTS_UNPUBLISH = 'announcements.unpublish';
+
+    public const ANNOUNCEMENTS_ARCHIVE = 'announcements.archive';
+
+    public const ANNOUNCEMENTS_RESTORE = 'announcements.restore';
+
+    public const SETTINGS_PREVIEW = 'settings.preview';
+
+    public const SETTINGS_REVIEW = 'settings.review';
+
+    public const SETTINGS_APPROVE = 'settings.approve';
+
+    public const SETTINGS_PUBLISH = 'settings.publish';
+
+    public const SETTINGS_SCHEDULE = 'settings.schedule';
+
+    public const SETTINGS_UNPUBLISH = 'settings.unpublish';
+
+    public const CAMPAIGN_CLAIMS_REVIEW = 'campaigns.claims.review';
+
+    public const CAMPAIGN_CLAIMS_APPROVE = 'campaigns.claims.approve';
+
+    public const CAMPAIGN_CLAIMS_REJECT = 'campaigns.claims.reject';
+
+    public const CAMPAIGN_CLAIMS_WITHDRAW_APPROVAL = 'campaigns.claims.withdraw-approval';
+
+    public const PUBLICATION_EMERGENCY_UNPUBLISH = 'publication.emergency-unpublish';
+
     /** @return list<string> */
     public static function all(): array
     {
@@ -73,6 +143,41 @@ final class PermissionRegistry
             self::PAGES_PREVIEW,
             self::PAGES_ARCHIVE,
             self::PAGES_RESTORE,
+            self::PAGES_REVIEW,
+            self::PAGES_APPROVE,
+            self::PAGES_PUBLISH,
+            self::PAGES_SCHEDULE,
+            self::PAGES_UNPUBLISH,
+            self::NAVIGATION_VIEW,
+            self::NAVIGATION_EDIT,
+            self::NAVIGATION_PREVIEW,
+            self::NAVIGATION_REVIEW,
+            self::NAVIGATION_APPROVE,
+            self::NAVIGATION_PUBLISH,
+            self::NAVIGATION_SCHEDULE,
+            self::NAVIGATION_UNPUBLISH,
+            self::ANNOUNCEMENTS_VIEW,
+            self::ANNOUNCEMENTS_CREATE,
+            self::ANNOUNCEMENTS_EDIT,
+            self::ANNOUNCEMENTS_PREVIEW,
+            self::ANNOUNCEMENTS_REVIEW,
+            self::ANNOUNCEMENTS_APPROVE,
+            self::ANNOUNCEMENTS_PUBLISH,
+            self::ANNOUNCEMENTS_SCHEDULE,
+            self::ANNOUNCEMENTS_UNPUBLISH,
+            self::ANNOUNCEMENTS_ARCHIVE,
+            self::ANNOUNCEMENTS_RESTORE,
+            self::SETTINGS_PREVIEW,
+            self::SETTINGS_REVIEW,
+            self::SETTINGS_APPROVE,
+            self::SETTINGS_PUBLISH,
+            self::SETTINGS_SCHEDULE,
+            self::SETTINGS_UNPUBLISH,
+            self::CAMPAIGN_CLAIMS_REVIEW,
+            self::CAMPAIGN_CLAIMS_APPROVE,
+            self::CAMPAIGN_CLAIMS_REJECT,
+            self::CAMPAIGN_CLAIMS_WITHDRAW_APPROVAL,
+            self::PUBLICATION_EMERGENCY_UNPUBLISH,
         ];
     }
 

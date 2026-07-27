@@ -1,0 +1,45 @@
+{
+    "root": "database/factory",
+    "files": {
+        "william-taylor-factory-v2/about-page.php": {
+            "bytes": 2921,
+            "sha256": "80912ba8b044d06e79bcca56e944cfb1996cbc7d63dc3dd02cffc1ac0ad6a590"
+        },
+        "william-taylor-factory-v2/manifest.php": {
+            "bytes": 198,
+            "sha256": "e370c939dd49389107d3791ad245fa2fc2ab8dddd9164a94f74365634718b77b"
+        },
+        "william-taylor-v1/announcements.php": {
+            "bytes": 732,
+            "sha256": "610eb8b21503959d11a43f3994e2b64586f7b1c718e2180c1f3aa4b99f9c351e"
+        },
+        "william-taylor-v1/footer-navigation.php": {
+            "bytes": 3074,
+            "sha256": "253487c740343553b4583dd3df40616d9a897bbd5bbbd7a1b5426cc4068874b9"
+        },
+        "william-taylor-v1/manifest.php": {
+            "bytes": 249,
+            "sha256": "d6c11b90e7a2ca652255de8e992dedbb2fe5ed2e1fc6b71c417e028723e30bfb"
+        },
+        "william-taylor-v1/media.php": {
+            "bytes": 33999,
+            "sha256": "af54146156dfe1ca8ba42cbe2e247d3b9430962b0cee393dac6365dac68227c8"
+        },
+        "william-taylor-v1/primary-navigation.php": {
+            "bytes": 1271,
+            "sha256": "4e35279c4467a9fc2b0038124b2d7829e7ce368eb7b1f92839e298eb75c5d617"
+        },
+        "william-taylor-v1/roles.php": {
+            "bytes": 254,
+            "sha256": "2f3f9f2f5848651e1119000d6cba519a2c983ce75941d8cb17a09fda51172627"
+        },
+        "william-taylor-v1/site-profile.php": {
+            "bytes": 1582,
+            "sha256": "c6fce29de89652ab86b5b2ec0ab8ed2605d24f52276a5484e5679d55ab4ef40b"
+        },
+        "william-taylor-v1/users.php": {
+            "bytes": 401,
+            "sha256": "7e85f12bbb08ee0654f4f4fe343b1b0383e4bbfcfacf28de2d0acd4c256cc322"
+        }
+    }
+}

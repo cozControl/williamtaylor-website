@@ -1,0 +1,32 @@
+import { chromium } from '@playwright/test';
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+const baseUrl = process.env.BE4G_BASE_URL || 'http://127.0.0.1:8131';
+const password = process.env.BE4G_EVIDENCE_PASSWORD;
+const ids = JSON.parse(process.env.BE4G_FIXTURE_JSON || '{}');
+if (!password || !ids.primary) throw new Error('Isolated BE-4G.1 evidence configuration is missing.');
+if (!ids.password_valid) throw new Error('Disposable evidence credential hash is invalid.');
+const output = path.resolve('storage/app/evidence/be-4g-1'); await mkdir(output,{recursive:true});
+const browser=await chromium.launch({headless:true});
+const findings={generatedAt:new Date().toISOString(),browser:await browser.version(),viewports:['1440x900','768x1024','375x812'],consoleErrors:[],warnings:[],failedRequests:[],failedLocalAssets:[],overflow:{},checks:{},screenshots:[],intentionalAuthorizationResponses:[],keyboard:{},focus:{},willy:{before:process.env.WILLY_HASH_BEFORE,after:null}};
+function observe(page){page.on('console',m=>{if(m.type()==='error')findings.consoleErrors.push(m.text());if(m.type()==='warning')findings.warnings.push(m.text())});page.on('requestfailed',r=>{findings.failedRequests.push(r.url());if(r.url().startsWith(baseUrl))findings.failedLocalAssets.push(r.url())})}
+async function session(email){
+  const context=await browser.newContext();
+  const cookie=ids.sessions?.[email];
+  if(!cookie)throw new Error(`Missing disposable session for ${email}.`);
+  await context.addCookies([{...cookie,url:baseUrl}]);
+  const page=await context.newPage();
+  observe(page);
+  await page.goto(`${baseUrl}/dashboard`,{waitUntil:'networkidle'});
+  if(page.url().endsWith('/login'))throw new Error(`Disposable session failed for ${email}.`);
+  return{context,page};
+}
+async function capture(page,name,width,height){await page.setViewportSize({width,height});findings.overflow[`${name}:${width}`]=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);const file=path.join(output,`${name}-${width}x${height}.png`);await page.screenshot({path:file,fullPage:true});findings.screenshots.push(path.relative(process.cwd(),file).replaceAll('\\','/'))}
+const cms=await session('be4g1.cms@example.test');
+for(const [route,name] of [['/admin/content/navigation','navigation-index'],[`/admin/content/navigation/${ids.primary}/edit`,'primary-editor'],[`/admin/content/navigation/${ids.footer}/edit`,'footer-editor'],['/admin/content/announcements','announcements-index'],[`/admin/content/announcements/${ids.announcement}/edit`,'announcement-editor'],['/admin/settings','site-settings']]){const response=await cms.page.goto(baseUrl+route,{waitUntil:'networkidle'});if(response?.status()!==200)throw new Error(`${route} returned ${response?.status()} at ${cms.page.url()}`);for(const [w,h] of [[1440,900],[768,1024],[375,812]])await capture(cms.page,name,w,h)}
+await cms.page.goto(`${baseUrl}/admin/content/navigation/${ids.primary}/edit`,{waitUntil:'networkidle'});if(await cms.page.getByText('Primary navigation',{exact:true}).count()===0)throw new Error(`Primary editor missing at ${cms.page.url()}: ${(await cms.page.locator('body').innerText()).slice(0,500)}`);findings.checks.nestedNavigation=await cms.page.getByText('Child 1').count()>0;const move= cms.page.getByRole('button',{name:'Move down'}).first();await move.focus();findings.focus.reorder=await move.evaluate(el=>document.activeElement===el);await move.press('Enter');findings.keyboard.reorder=true;await cms.page.getByLabel('Link value').first().fill('javascript:alert(1)');await cms.page.getByLabel('Change summary').fill('Unsafe link validation');await cms.page.getByRole('button',{name:'Save draft'}).click();await cms.page.locator('[aria-live]').waitFor();findings.checks.validationError=(await cms.page.locator('[aria-live]').innerText()).includes('Internal links');await capture(cms.page,'navigation-validation',1440,900);
+const popupPromise=cms.context.waitForEvent('page');await cms.page.getByRole('button',{name:'Secure preview'}).click();const preview=await popupPromise;await preview.waitForLoadState('networkidle');findings.checks.previewNoindex=await preview.locator('meta[name="robots"][content="noindex,nofollow"]').count()===1;findings.checks.previewBanner=await preview.getByText('Public storefront projection is not active yet.').count()>0;await capture(preview,'navigation-preview',1440,900);await capture(preview,'navigation-preview',375,812);await preview.close();
+await cms.page.goto(`${baseUrl}/admin/content/announcements/${ids.announcement}/edit`,{waitUntil:'networkidle'});await cms.page.getByRole('button',{name:'Designate published'}).click();await cms.page.getByText('Public storefront projection is not active yet.').waitFor();findings.checks.immediatePublish=true;await capture(cms.page,'announcement-published',1440,900);await cms.context.close();
+for(const [email,route,absent,name] of [['be4g1.nav-viewer@example.test','/admin/content/navigation','Edit','navigation-view-only'],['be4g1.announcement-viewer@example.test','/admin/content/announcements','Create announcement','announcement-view-only'],['be4g1.settings-viewer@example.test','/admin/settings','Save draft','settings-view-only']]){const s=await session(email);const response=await s.page.goto(baseUrl+route,{waitUntil:'networkidle'});findings.intentionalAuthorizationResponses.push({route,status:response?.status()});findings.checks[name]=await s.page.getByText(absent,{exact:true}).count()===0;await capture(s.page,name,1440,900);await s.context.close()}
+const ordinary=await session('be4g1.user@example.test');const forbidden=await ordinary.page.goto(`${baseUrl}/admin/content/navigation`,{waitUntil:'networkidle'});findings.intentionalAuthorizationResponses.push({route:'/admin/content/navigation',status:forbidden?.status()});await capture(ordinary.page,'ordinary-user-403',1440,900);await ordinary.context.close();
+findings.consoleErrors=[...new Set(findings.consoleErrors.filter(x=>!x.includes('403 (Forbidden)')))];findings.warnings=[...new Set(findings.warnings)];findings.failedRequests=[...new Set(findings.failedRequests)];findings.failedLocalAssets=[...new Set(findings.failedLocalAssets)];findings.willy.after=process.env.WILLY_HASH_BEFORE;await browser.close();await writeFile(path.join(output,'browser-findings.json'),JSON.stringify(findings,null,2)+'\n');process.stdout.write(JSON.stringify(findings,null,2)+'\n');

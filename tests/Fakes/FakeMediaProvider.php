@@ -45,4 +45,13 @@ final class FakeMediaProvider implements MediaProvider
     {
         return $this->exists;
     }
+
+    public function synchronizeFactorySource(array $entry, string $publicId): VerifiedProviderAsset
+    {
+        return new VerifiedProviderAsset(
+            'factory-test-asset', $publicId, '1', (string) $entry['resource_type'], 'upload',
+            pathinfo((string) $entry['source'], PATHINFO_EXTENSION) ?: 'bin', (string) $entry['mime_type'],
+            basename((string) $entry['source']), null, null, null, 1, $entry['sha256'] ?? null,
+        );
+    }
 }

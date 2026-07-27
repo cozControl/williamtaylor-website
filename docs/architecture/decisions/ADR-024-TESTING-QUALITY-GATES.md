@@ -60,3 +60,6 @@ Approved by the project stakeholder on 2026-07-23 as architectural direction. Le
 ## BE-4E implementation reference
 
 BE-4E adds focused domain, sanitizer, authorization, revision, media-usage, preview-security, query-budget, responsive browser, build, audit, route, checksum, and public-regression gates. Evidence is documented in `docs/backend/BE-4E_COMPLETION_REPORT.md`.
+## BE-4E.1 closure reference
+
+BE-4E phase 6's draft-only slice is complete and validated. The 52-point evidence record, defects corrected, remaining deployment prerequisites, and hard exclusions are in `docs/backend/BE-4E_COMPLETION_REPORT.md`. Publishing and every later phase remain separately authorized; BE-4F was not started.
