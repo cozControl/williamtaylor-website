@@ -3,6 +3,7 @@
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Http\Controllers\Admin\ContentPageController;
 use App\Http\Controllers\Admin\MediaController;
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\RoleAccessController;
 use App\Http\Controllers\Admin\SiteContentController;
 use App\Http\Controllers\Admin\UserAccessController;
@@ -26,6 +27,15 @@ Route::prefix('admin')
         Route::post('/content/announcements', [SiteContentController::class, 'announcementStore'])->middleware('can:'.PermissionRegistry::ANNOUNCEMENTS_CREATE)->name('content.announcements.store');
         Route::get('/content/announcements/{siteContentResource}', [SiteContentController::class, 'announcementShow'])->middleware('can:'.PermissionRegistry::ANNOUNCEMENTS_VIEW)->name('content.announcements.show');
         Route::get('/content/announcements/{siteContentResource}/edit', [SiteContentController::class, 'announcementEdit'])->middleware('can:'.PermissionRegistry::ANNOUNCEMENTS_EDIT)->name('content.announcements.edit');
+        Route::get('/orders', [OrderController::class, 'index'])->middleware('can:'.PermissionRegistry::ORDERS_VIEW)->name('orders.index');
+        Route::get('/orders/create', [OrderController::class, 'create'])->middleware('can:'.PermissionRegistry::ORDERS_CREATE)->name('orders.create');
+        Route::post('/orders', [OrderController::class, 'store'])->middleware('can:'.PermissionRegistry::ORDERS_CREATE)->name('orders.store');
+        Route::get('/orders/{order}', [OrderController::class, 'show'])->middleware('can:'.PermissionRegistry::ORDERS_VIEW)->name('orders.show');
+        Route::post('/orders/{order}/transition', [OrderController::class, 'transition'])->middleware('can:'.PermissionRegistry::ORDERS_VIEW)->name('orders.transition');
+        Route::post('/orders/{order}/notes', [OrderController::class, 'note'])->middleware('can:'.PermissionRegistry::ORDERS_VIEW)->name('orders.notes.store');
+        Route::post('/orders/{order}/payment-status', [OrderController::class, 'payment'])->middleware('can:'.PermissionRegistry::ORDERS_VIEW)->name('orders.payment');
+        Route::get('/orders/{order}/summary', [OrderController::class, 'summary'])->middleware('can:'.PermissionRegistry::ORDERS_VIEW)->name('orders.summary');
+        Route::get('/orders/{order}/receipt', [OrderController::class, 'receipt'])->middleware('can:'.PermissionRegistry::ORDERS_RECEIPTS_VIEW)->name('orders.receipt');
         Route::get('/media', [MediaController::class, 'index'])->middleware('can:'.PermissionRegistry::MEDIA_VIEW)->name('media.index');
         Route::get('/media/{mediaAsset}', [MediaController::class, 'show'])->middleware('can:'.PermissionRegistry::MEDIA_VIEW)->name('media.show');
         Route::get('/access/users', [UserAccessController::class, 'index'])
@@ -48,3 +58,6 @@ Route::prefix('admin')
 Route::get('/preview/site-content/{siteContentResource}/{revision}', [SiteContentController::class, 'preview'])
     ->middleware(['auth', 'verified', 'can:'.PermissionRegistry::ADMIN_ACCESS, 'signed'])
     ->name('preview.site-content.show');
+Route::get('/preview/site-content/{siteContentResource}/{revision}/render', [SiteContentController::class, 'renderPreview'])
+    ->middleware(['auth', 'verified', 'can:'.PermissionRegistry::ADMIN_ACCESS, 'signed'])
+    ->name('preview.site-content.render');

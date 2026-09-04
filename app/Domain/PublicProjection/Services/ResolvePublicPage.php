@@ -11,16 +11,17 @@ use App\Domain\Publication\Support\RolloutModeResolver;
 use App\Domain\PublicProjection\Data\Page\PublicPageView;
 use App\Domain\PublicProjection\Registry\PublicPageRouteRegistry;
 use App\Domain\PublicProjection\Registry\PublicPageTemplateRegistry;
+use App\Support\Demo\DemoMode;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 final class ResolvePublicPage
 {
-    public function __construct(private PublicPageRouteRegistry $routes, private PublicPageTemplateRegistry $templates, private SectionRegistry $sections, private BuildPublicPageProjection $builder, private PublicPageProjectionCache $cache, private RolloutModeResolver $rollout) {}
+    public function __construct(private PublicPageRouteRegistry $routes, private PublicPageTemplateRegistry $templates, private SectionRegistry $sections, private BuildPublicPageProjection $builder, private PublicPageProjectionCache $cache, private RolloutModeResolver $rollout, private DemoMode $demo) {}
 
     public function resolve(string $key): ?PublicPageView
     {
-        if (! config('public_page_projection.enabled')) {
+        if (! config('public_page_projection.enabled') || ! $this->demo->configured()) {
             return null;
         }
         $mode = $this->rollout->resolve('page');

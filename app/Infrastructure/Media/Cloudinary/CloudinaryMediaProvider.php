@@ -6,10 +6,11 @@ use App\Domain\Factory\Services\FactoryManifest;
 use App\Domain\Media\Contracts\MediaProvider;
 use App\Domain\Media\Data\UploadIntent;
 use App\Domain\Media\Data\VerifiedProviderAsset;
+use App\Domain\Media\Exceptions\MediaUploadFailure;
 use App\Domain\Media\Support\TransformationProfiles;
+use Carbon\CarbonImmutable;
 use Cloudinary\Api\ApiUtils;
 use Cloudinary\Cloudinary;
-use RuntimeException;
 
 final class CloudinaryMediaProvider implements MediaProvider
 {
@@ -17,7 +18,7 @@ final class CloudinaryMediaProvider implements MediaProvider
     {
         $config = config('media.cloudinary');
         if (! is_array($config) || ! $config['cloud_name'] || ! $config['api_key'] || ! $config['api_secret']) {
-            throw new RuntimeException('Cloudinary media provider is not configured.');
+            throw new MediaUploadFailure('media.provider_configuration_invalid', 'Cloudinary media provider is not configured.');
         }
 
         return new Cloudinary(['cloud' => ['cloud_name' => $config['cloud_name'], 'api_key' => $config['api_key'], 'api_secret' => $config['api_secret']], 'url' => ['secure' => true]]);
@@ -27,8 +28,12 @@ final class CloudinaryMediaProvider implements MediaProvider
     {
         $this->sdk();
         $timestamp = (int) now()->timestamp;
-        $folder = (string) config('media.cloudinary.folder');
-        $parameters = ['timestamp' => $timestamp, 'folder' => $folder, 'public_id' => $request['public_id'], 'type' => 'upload'];
+        $parameters = [
+            'timestamp' => $timestamp,
+            'public_id' => $request['public_id'],
+            'type' => 'upload',
+            'context' => 'intent_reference='.(string) $request['intent_reference'],
+        ];
         $parameters['signature'] = ApiUtils::signParameters($parameters, (string) config('media.cloudinary.api_secret'));
         $parameters['api_key'] = (string) config('media.cloudinary.api_key');
 
@@ -38,17 +43,42 @@ final class CloudinaryMediaProvider implements MediaProvider
     public function verifyUploadResult(array $result): VerifiedProviderAsset
     {
         $this->sdk();
+        foreach (['asset_id', 'public_id', 'version', 'resource_type', 'format', 'bytes', 'signature', 'created_at'] as $field) {
+            if (! array_key_exists($field, $result) || $result[$field] === '') {
+                throw new MediaUploadFailure('media.provider_response_incomplete', 'Provider upload evidence is incomplete.');
+            }
+        }
         $signature = (string) ($result['signature'] ?? '');
-        $timestamp = (int) ($result['created_at_timestamp'] ?? 0);
-        if ($timestamp < now()->subMinutes(5)->timestamp || ! hash_equals(ApiUtils::signParameters(['public_id' => $result['public_id'] ?? '', 'version' => $result['version'] ?? ''], (string) config('media.cloudinary.api_secret')), $signature)) {
-            throw new RuntimeException('Provider upload evidence is invalid or stale.');
+        try {
+            $createdAt = CarbonImmutable::parse((string) $result['created_at']);
+        } catch (\Throwable $exception) {
+            throw new MediaUploadFailure('media.provider_timestamp_invalid', 'Provider timestamp is invalid.', $exception);
+        }
+        if ($createdAt->isBefore(now()->subMinutes(5)) || $createdAt->isAfter(now()->addMinute())) {
+            throw new MediaUploadFailure('media.provider_timestamp_invalid', 'Provider timestamp is outside the confirmation window.');
+        }
+        $expectedSignature = ApiUtils::signParameters([
+            'public_id' => (string) $result['public_id'],
+            'version' => (string) $result['version'],
+        ], (string) config('media.cloudinary.api_secret'));
+        if (! hash_equals($expectedSignature, $signature)) {
+            throw new MediaUploadFailure('media.provider_signature_invalid', 'Provider upload signature is invalid.');
         }
         $folder = rtrim((string) config('media.cloudinary.folder'), '/').'/';
         if (! str_starts_with((string) $result['public_id'], $folder)) {
-            throw new RuntimeException('Provider upload folder is invalid.');
+            throw new MediaUploadFailure('media.provider_folder_mismatch', 'Provider upload folder is invalid.');
         }
 
-        return new VerifiedProviderAsset((string) $result['asset_id'], (string) $result['public_id'], (string) $result['version'], (string) $result['resource_type'], (string) ($result['type'] ?? 'upload'), strtolower((string) $result['format']), (string) $result['mime_type'], (string) $result['original_filename'], isset($result['width']) ? (int) $result['width'] : null, isset($result['height']) ? (int) $result['height'] : null, isset($result['duration']) ? (int) round((float) $result['duration'] * 1000) : null, (int) $result['bytes'], $result['etag'] ?? null);
+        if (($result['type'] ?? 'upload') !== 'upload') {
+            throw new MediaUploadFailure('media.provider_delivery_type_invalid', 'Provider delivery type is invalid.');
+        }
+
+        $resourceType = (string) $result['resource_type'];
+        $format = strtolower((string) $result['format']);
+        $mimeFormat = $format === 'jpg' ? 'jpeg' : $format;
+        $mimeType = (string) ($result['mime_type'] ?? ($resourceType === 'video' ? 'video/'.$mimeFormat : 'image/'.$mimeFormat));
+
+        return new VerifiedProviderAsset((string) $result['asset_id'], (string) $result['public_id'], (string) $result['version'], $resourceType, (string) ($result['type'] ?? 'upload'), $format, $mimeType, (string) ($result['original_filename'] ?? $result['public_id']), isset($result['width']) ? (int) $result['width'] : null, isset($result['height']) ? (int) $result['height'] : null, isset($result['duration']) ? (int) round((float) $result['duration'] * 1000) : null, (int) $result['bytes'], $result['etag'] ?? null);
     }
 
     public function deliveryUrl(string $publicId, string $resourceType, string $profile, ?float $focalX = null, ?float $focalY = null): string

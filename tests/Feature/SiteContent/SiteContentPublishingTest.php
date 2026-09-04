@@ -121,7 +121,12 @@ final class SiteContentPublishingTest extends TestCase
         $unsigned = route('preview.site-content.show', [$primary, $primary->currentDraftRevision]);
         $this->actingAs($this->cms)->get($unsigned)->assertForbidden();
         $signed = URL::temporarySignedRoute('preview.site-content.show', now()->addMinute(), [$primary, $primary->currentDraftRevision]);
-        $this->actingAs($this->cms)->get($signed)->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')->assertSee('Public storefront projection is not active yet');
+        $response = $this->actingAs($this->cms)->get($signed)->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')
+            ->assertSee('Private storefront preview')->assertSee('<iframe', false)->assertDontSee('admin-sidebar', false);
+        preg_match('/src="([^"]+)"/', $response->getContent(), $matches);
+        $this->actingAs($this->cms)->get(html_entity_decode($matches[1]))
+            ->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')
+            ->assertSee('Shop')->assertSee('2026 Collection')->assertDontSee('admin-sidebar', false);
         $mismatch = URL::temporarySignedRoute('preview.site-content.show', now()->addMinute(), [$primary, $footer->currentDraftRevision]);
         $this->actingAs($this->cms)->get($mismatch)->assertNotFound();
     }

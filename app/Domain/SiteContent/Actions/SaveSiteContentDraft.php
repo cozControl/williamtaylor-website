@@ -5,6 +5,7 @@ namespace App\Domain\SiteContent\Actions;
 use App\Domain\Audit\Actions\RecordAuditEvent;
 use App\Domain\Content\Models\ContentRevision;
 use App\Domain\Media\Enums\MediaAssetState;
+use App\Domain\Media\Enums\MediaResourceType;
 use App\Domain\Media\Models\MediaAsset;
 use App\Domain\Media\Models\MediaUsage;
 use App\Domain\SiteContent\Models\SiteContent;
@@ -81,8 +82,11 @@ final class SaveSiteContentDraft
                 continue;
             }
             $asset = MediaAsset::query()->whereKey($assetId)->firstOrFail();
-            if ($asset->state !== MediaAssetState::Ready || $asset->archived_at !== null) {
-                throw new InvalidArgumentException('Only ready, active Media assets can be selected.');
+            if ($asset->state !== MediaAssetState::Ready || $asset->archived_at !== null || $asset->confirmed_at === null || $asset->resource_type !== MediaResourceType::Image) {
+                throw new InvalidArgumentException('Only confirmed, ready, active images can be selected.');
+            }
+            if (! $asset->is_decorative && (blank($asset->default_alt_text) || strip_tags((string) $asset->default_alt_text) !== $asset->default_alt_text)) {
+                throw new InvalidArgumentException('Selected informative Media requires meaningful plain-text alt text.');
             }
             MediaUsage::query()->create([
                 'id' => (string) Str::ulid(),
@@ -92,7 +96,7 @@ final class SaveSiteContentDraft
                 'field_role' => $role,
                 'locale' => $content->locale,
                 'alt_text_override' => null,
-                'decorative_override' => $role === 'footer_image',
+                'decorative_override' => $asset->is_decorative,
                 'sort_order' => 0,
             ]);
         }

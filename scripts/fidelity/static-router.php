@@ -1,5 +1,10 @@
 <?php
 
+$be6a1ReadinessNonce = getenv('BE6A1_READINESS_NONCE');
+if (is_string($be6a1ReadinessNonce) && $be6a1ReadinessNonce !== '') {
+    header('X-BE6A1-Readiness: '.$be6a1ReadinessNonce);
+}
+
 $documentRoot = realpath(__DIR__.'/../../public/website');
 $requestPath = rawurldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/');
 
@@ -13,7 +18,6 @@ $pageAliases = [
     '/gift-cards' => '/html/page_6.html',
     '/login' => '/html/page_7.html',
     '/wishlist' => '/html/page_8.html',
-    '/product/the-taylor-oxford-shirt' => '/html/page_9.html',
     '/product/taylor-oxford-shirt' => '/html/page_9.html',
     '/product/mercerized-cotton-polo' => '/html/page_10.html',
     '/product/dar-es-salaam-linen-suit' => '/html/page_11.html',
@@ -21,11 +25,21 @@ $pageAliases = [
     '/product/executive-overcoat' => '/html/page_13.html',
 ];
 
+$staticNormalizationRoutes = [
+    '/collections/limited-edition',
+    '/product/taylor-oxford-shirt',
+    '/product/mercerized-cotton-polo',
+    '/product/dar-es-salaam-linen-suit',
+    '/product/slim-tapered-chinos',
+    '/product/executive-overcoat',
+];
+
 if (isset($pageAliases[$requestPath])) {
     $document = file_get_contents($documentRoot.$pageAliases[$requestPath]);
 
-    if (in_array($requestPath, ['/collections/limited-edition', '/product/the-taylor-oxford-shirt', '/product/taylor-oxford-shirt', '/product/mercerized-cotton-polo', '/product/dar-es-salaam-linen-suit', '/product/slim-tapered-chinos', '/product/executive-overcoat'], true)) {
+    if (in_array($requestPath, $staticNormalizationRoutes, true)) {
         $document = str_replace('<head>', '<head><base href="/">', $document);
+        header('X-BE6A1-Static-Normalization: base-href-root-v1');
     }
 
     echo $document;

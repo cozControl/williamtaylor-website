@@ -88,6 +88,7 @@ function initializeUploadQueue(root) {
         });
         if (item.state === 'cancelled') return;
         item.result = JSON.parse(response);
+        item.result.mime_type ||= item.mime;
         state(item, 'uploaded');
         await confirm(item);
     }
@@ -113,7 +114,14 @@ function initializeUploadQueue(root) {
     async function confirm(item, override = false, reason = null) {
         state(item, 'confirming');
         try {
-            const result = await wire().call('confirmUpload', item.result, item.name.replace(/\.[^.]+$/, ''), null, override, reason);
+            const result = await wire().call('confirmUpload', {
+                intentReference: item.intent?.reference || '',
+                providerEvidence: item.result,
+                title: item.name.replace(/\.[^.]+$/, ''),
+                altText: null,
+                overrideDuplicate: override,
+                overrideReason: reason,
+            });
             if (item.state === 'cancelled') return;
             if (result.status === 'duplicate_detected') {
                 item.duplicate = result.candidate;
@@ -151,14 +159,13 @@ function initializeUploadQueue(root) {
             article.innerHTML = `<div><h3 id="${item.id}-name"></h3><p class="admin-upload-facts"></p></div><div class="admin-upload-status"><span class="admin-badge"></span><progress max="100"></progress><span class="admin-progress-text"></span></div><p class="admin-upload-error" role="alert"></p><div class="admin-upload-actions"></div><div class="admin-duplicate-panel" hidden></div>`;
             article.querySelector('h3').textContent = item.name;
             article.querySelector('.admin-upload-facts').textContent = `${item.mime || 'Unknown type'} - ${(item.bytes / 1024 / 1024).toFixed(2)} MB`;
-            article.querySelector('.admin-badge').textContent = item.state.replaceAll('_', ' ');
+            article.querySelector('.admin-badge').textContent = item.state === 'failed' ? 'Needs attention' : item.state.replaceAll('_', ' ');
             const progress = article.querySelector('progress'); progress.value = item.progress; progress.hidden = !['uploading', 'confirming', 'processing', 'completed'].includes(item.state);
             article.querySelector('.admin-progress-text').textContent = progress.hidden ? '' : item.state === 'uploading' ? `Uploading: ${item.progress}%` : item.state === 'confirming' ? 'Confirming securely' : item.state === 'processing' ? 'Processing' : 'Ready';
             const error = article.querySelector('.admin-upload-error'); error.textContent = item.error; error.hidden = !item.error;
             const actions = article.querySelector('.admin-upload-actions');
             if (activeStates.has(item.state)) actions.append(button(`Cancel ${item.name}`, () => cancel(item), 'admin-secondary-button'));
-            if (['failed', 'cancelled'].includes(item.state) && item.retries < 3) actions.append(button(`Retry ${item.name}`, () => retry(item), 'admin-primary-button'));
-            if (item.state === 'failed' && item.result) actions.append(button(`Retry confirmation for ${item.name}`, () => confirm(item), 'admin-secondary-button'));
+            if (['failed', 'cancelled'].includes(item.state) && item.retries < 3) actions.append(button(`Try upload again`, () => retry(item), 'admin-primary-button'));
             if (item.url) { const link = document.createElement('a'); link.href = item.url; link.textContent = 'Inspect media'; link.className = 'admin-row-link'; actions.append(link); }
             if (item.duplicate) renderDuplicate(article.querySelector('.admin-duplicate-panel'), item);
             list.append(article);
@@ -174,7 +181,7 @@ function initializeUploadQueue(root) {
         panel.querySelector('a').href = item.duplicate.url;
         const actions = panel.querySelector('.admin-upload-actions');
         actions.append(button('Reuse existing asset', async () => {
-            const result = await wire().call('reuseDuplicate', item.duplicate.id);
+            const result = await wire().call('reuseDuplicate', item.duplicate.id, item.intent?.reference || '');
             item.assetId = result.assetId; item.url = result.url; item.duplicate = null; item.progress = 100; state(item, 'completed');
         }, 'admin-primary-button'));
         actions.append(button('Create separate logical asset', async () => {

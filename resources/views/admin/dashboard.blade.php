@@ -6,8 +6,8 @@
     <section class="admin-foundation-banner" aria-labelledby="foundation-title">
         <div>
             <span class="admin-status">Foundation active</span>
-            <h2 id="foundation-title">Your administration workspace is ready.</h2>
-            <p>Navigation is filtered by your effective permissions. Management capabilities remain intentionally unavailable until separately authorized.</p>
+            <h2 id="foundation-title">Website overview</h2>
+            <p>Manage website content, media and customer Orders from the destinations available to your role.</p>
         </div>
         <div class="admin-role-context"><span>Access context</span><strong>{{ $roles->isEmpty() ? 'Permission-based access' : $roles->join(', ') }}</strong></div>
     </section>

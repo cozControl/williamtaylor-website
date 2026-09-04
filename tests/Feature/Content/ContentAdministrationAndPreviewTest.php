@@ -95,7 +95,7 @@ final class ContentAdministrationAndPreviewTest extends TestCase
             ->assertOk()
             ->assertSee('Save draft')
             ->assertSee('Preview saved revision')
-            ->assertSee('Open review and publishing workflow')
+            ->assertSee('Open review and publishing')
             ->assertDontSee('Designate published now')
             ->assertDontSee('Approve candidate')
             ->assertDontSee('Schedule approved revision');

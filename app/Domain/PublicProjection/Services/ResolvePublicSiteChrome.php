@@ -24,6 +24,10 @@ final class ResolvePublicSiteChrome
 {
     private ?PublicSiteChromeView $resolved = null;
 
+    private ?SiteContent $previewResource = null;
+
+    private ?ContentRevision $previewRevision = null;
+
     /** @var array<string, MediaAsset> */
     private array $mediaAssets = [];
 
@@ -39,7 +43,7 @@ final class ResolvePublicSiteChrome
             return $this->resolved;
         }
 
-        if (! config('public_site_content.enabled')) {
+        if (! config('public_site_content.enabled') && $this->previewRevision === null) {
             return $this->resolved = PublicSiteChromeView::fallback();
         }
 
@@ -51,9 +55,24 @@ final class ResolvePublicSiteChrome
         );
     }
 
+    public function preview(SiteContent $resource, ContentRevision $revision): PublicSiteChromeView
+    {
+        if ($revision->resource_type !== SiteContent::class || $revision->resource_id !== $resource->getKey()) {
+            throw new \InvalidArgumentException('Preview revision does not belong to this Site Content resource.');
+        }
+        $this->previewResource = $resource;
+        $this->previewRevision = $revision;
+        $this->resolved = null;
+
+        return $this->resolve();
+    }
+
     private function surface(string $type, callable $build): mixed
     {
         try {
+            if ($this->previewResource?->type === $type && $this->previewRevision instanceof ContentRevision) {
+                return $this->projectRevision($this->previewResource, $this->previewRevision, $build);
+            }
             $resource = SiteContent::query()
                 ->where('type', $type)
                 ->where('key', $type)
@@ -80,24 +99,14 @@ final class ResolvePublicSiteChrome
                 ->with('publicationState.currentPublicRevision')
                 ->get();
             $effective = [];
+            if ($this->previewResource?->type === SiteContentTypeRegistry::ANNOUNCEMENT && $this->previewRevision instanceof ContentRevision) {
+                $resources = $resources->reject(fn (SiteContent $resource): bool => $resource->is($this->previewResource));
+                $resources->prepend($this->previewResource);
+            }
             foreach ($resources as $resource) {
-                $projection = $this->project($resource, function (array $payload): ?PublicAnnouncementView {
-                    $now = CarbonImmutable::now('UTC');
-                    if (($payload['effective_from'] ?? null) && CarbonImmutable::parse($payload['effective_from'])->utc()->isAfter($now)) {
-                        return null;
-                    }
-                    if (($payload['effective_until'] ?? null) && ! CarbonImmutable::parse($payload['effective_until'])->utc()->isAfter($now)) {
-                        return null;
-                    }
-
-                    return new PublicAnnouncementView(
-                        message: $payload['message'],
-                        cta: $payload['cta'] ? $this->link($payload['cta'], $payload['cta_label'] ?: $payload['message']) : null,
-                        variant: $payload['variant'],
-                        dismissible: $payload['dismissible'],
-                        accessibilityLabel: $payload['accessibility_label'] ?: null,
-                    );
-                });
+                $projection = $resource->is($this->previewResource) && $this->previewRevision instanceof ContentRevision
+                    ? $this->projectRevision($resource, $this->previewRevision, fn (array $payload): ?PublicAnnouncementView => $this->announcementView($payload))
+                    : $this->project($resource, fn (array $payload): ?PublicAnnouncementView => $this->announcementView($payload));
                 if ($projection !== null) {
                     $effective[] = $projection;
                 }
@@ -112,6 +121,26 @@ final class ResolvePublicSiteChrome
 
             return null;
         }
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function announcementView(array $payload): ?PublicAnnouncementView
+    {
+        $now = CarbonImmutable::now('UTC');
+        if (($payload['effective_from'] ?? null) && CarbonImmutable::parse($payload['effective_from'])->utc()->isAfter($now)) {
+            return null;
+        }
+        if (($payload['effective_until'] ?? null) && ! CarbonImmutable::parse($payload['effective_until'])->utc()->isAfter($now)) {
+            return null;
+        }
+
+        return new PublicAnnouncementView(
+            message: $payload['message'],
+            cta: $payload['cta'] ? $this->link($payload['cta'], $payload['cta_label'] ?: $payload['message']) : null,
+            variant: $payload['variant'],
+            dismissible: $payload['dismissible'],
+            accessibilityLabel: $payload['accessibility_label'] ?: null,
+        );
     }
 
     private function project(SiteContent $resource, callable $build): mixed
@@ -150,6 +179,14 @@ final class ResolvePublicSiteChrome
 
             return $build($payload);
         }
+    }
+
+    private function projectRevision(SiteContent $resource, ContentRevision $revision, callable $build): mixed
+    {
+        $payload = $this->types->get($resource->type)->validate($revision->payload);
+        $this->mediaIdentity($resource->type, $payload);
+
+        return $build($payload);
     }
 
     /**

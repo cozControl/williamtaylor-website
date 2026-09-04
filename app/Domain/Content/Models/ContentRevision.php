@@ -2,10 +2,12 @@
 
 namespace App\Domain\Content\Models;
 
+use App\Domain\Media\Models\MediaUsage;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use LogicException;
 
@@ -43,6 +45,13 @@ final class ContentRevision extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /** @return HasMany<MediaUsage, $this> */
+    public function mediaUsages(): HasMany
+    {
+        return $this->hasMany(MediaUsage::class, 'owner_identifier')
+            ->where('owner_type', self::class);
     }
 
     protected static function booted(): void

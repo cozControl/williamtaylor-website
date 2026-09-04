@@ -2,15 +2,20 @@
 
 namespace App\Livewire\Admin\Media;
 
-use App\Domain\Media\Actions\ConfirmUploadedAsset;
+use App\Domain\Media\Actions\ConfirmUploadIntent;
 use App\Domain\Media\Actions\CreateUploadIntent;
+use App\Domain\Media\Contracts\MediaProvider;
+use App\Domain\Media\Data\MediaConfirmationPayload;
 use App\Domain\Media\Exceptions\ExactDuplicateMediaException;
+use App\Domain\Media\Exceptions\MediaUploadFailure;
 use App\Domain\Media\Models\MediaAsset;
+use App\Domain\Media\Models\MediaUploadIntent;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -31,6 +36,9 @@ final class MediaLibrary extends Component
     #[Url(except: '')]
     public string $state = '';
 
+    #[Url(except: '')]
+    public string $usage = '';
+
     #[Url(except: 'newest')]
     public string $sort = 'newest';
 
@@ -50,17 +58,28 @@ final class MediaLibrary extends Component
         RateLimiter::hit($key, 60);
         $intent = app(CreateUploadIntent::class)->handle($actor, $resourceType, $mimeType, $bytes);
 
-        return ['endpoint' => $intent->endpoint, 'parameters' => $intent->parameters, 'expiresAt' => $intent->expiresAt];
+        return ['endpoint' => $intent->endpoint, 'parameters' => $intent->parameters, 'expiresAt' => $intent->expiresAt, 'reference' => $intent->reference];
     }
 
     /**
-     * @param  array<string, mixed>  $providerResult
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    public function confirmUpload(array $providerResult, string $title, ?string $altText = null, bool $overrideDuplicate = false, ?string $overrideReason = null): array
+    public function confirmUpload(array $payload, ?string $legacyTitle = null, ?string $legacyAltText = null, bool $legacyOverrideDuplicate = false, ?string $legacyOverrideReason = null): array
     {
+        $intentReference = null;
         try {
-            $asset = app(ConfirmUploadedAsset::class)->handle($this->actor(), $providerResult, $title, $altText, $overrideDuplicate, $overrideReason);
+            $confirmation = MediaConfirmationPayload::fromLivewire($payload, $legacyTitle, $legacyAltText, $legacyOverrideDuplicate, $legacyOverrideReason);
+            $intentReference = $confirmation->intentReference;
+            $asset = app(ConfirmUploadIntent::class)->handle(
+                $this->actor(),
+                $confirmation->intentReference,
+                $confirmation->providerEvidence,
+                $confirmation->title,
+                $confirmation->altText,
+                $confirmation->overrideDuplicate,
+                $confirmation->overrideReason,
+            );
         } catch (ExactDuplicateMediaException $exception) {
             $candidate = $exception->candidate->loadCount('usages');
 
@@ -76,10 +95,21 @@ final class MediaLibrary extends Component
                 'usageCount' => $candidate->usages_count,
                 'url' => route('admin.media.show', $candidate),
             ]];
-        } catch (RuntimeException) {
+        } catch (RuntimeException $exception) {
+            $reference = 'WT-'.strtoupper(substr((string) str()->ulid(), -8));
+            Log::warning('Media upload confirmation failed.', [
+                'failure_code' => $exception instanceof MediaUploadFailure ? $exception->failureCode : 'media.provider_unavailable',
+                'intent_reference' => $intentReference,
+                'support_reference' => $reference,
+                'actor_id' => $this->actor()->getKey(),
+                'provider' => (string) config('media.provider'),
+                'occurred_at' => now('UTC')->toIso8601String(),
+            ]);
+
             return [
                 'status' => 'failed',
-                'message' => 'Secure provider confirmation failed. Retry confirmation or reselect the file.',
+                'message' => "We could not finish processing this upload. Try again. If the problem continues, provide support reference {$reference}.",
+                'reference' => $reference,
             ];
         }
         unset($this->assets);
@@ -88,10 +118,16 @@ final class MediaLibrary extends Component
     }
 
     /** @return array{status: string, assetId: string, url: string} */
-    public function reuseDuplicate(string $assetId): array
+    public function reuseDuplicate(string $assetId, string $intentReference = ''): array
     {
-        Gate::forUser($this->actor())->authorize('media.upload');
+        $actor = $this->actor();
+        Gate::forUser($actor)->authorize('media.upload');
         $asset = MediaAsset::query()->findOrFail($assetId);
+        MediaUploadIntent::query()
+            ->whereKey($intentReference)
+            ->where('actor_id', $actor->getKey())
+            ->whereNull('consumed_at')
+            ->update(['consumed_at' => now('UTC')]);
 
         return ['status' => 'completed', 'assetId' => $asset->getKey(), 'url' => route('admin.media.show', $asset)];
     }
@@ -108,7 +144,20 @@ final class MediaLibrary extends Component
             ->when($search !== '', fn (Builder $q) => $q->where(fn (Builder $s) => $s->where('internal_title', 'like', "%{$search}%")->orWhere('original_filename', 'like', "%{$search}%")->orWhere('default_alt_text', 'like', "%{$search}%")->orWhere('caption', 'like', "%{$search}%")->orWhere('credit', 'like', "%{$search}%")))
             ->when(in_array($this->type, ['image', 'video'], true), fn (Builder $q) => $q->where('resource_type', $this->type))
             ->when(in_array($this->state, ['ready', 'processing', 'failed', 'archived'], true), fn (Builder $q) => $q->where('state', $this->state))
+            ->when($this->usage === 'used', fn (Builder $q) => $q->has('usages'))
+            ->when($this->usage === 'unused', fn (Builder $q) => $q->doesntHave('usages'))
             ->orderBy($column, $direction)->orderBy('id')->paginate(18)->withQueryString();
+    }
+
+    public function thumbnailUrl(MediaAsset $asset): string
+    {
+        return app(MediaProvider::class)->deliveryUrl(
+            $asset->provider_public_id,
+            $asset->resource_type->value,
+            'admin_thumbnail',
+            $asset->focal_x === null ? null : (float) $asset->focal_x,
+            $asset->focal_y === null ? null : (float) $asset->focal_y,
+        );
     }
 
     public function providerConfigured(): bool

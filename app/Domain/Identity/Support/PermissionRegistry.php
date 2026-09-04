@@ -118,6 +118,28 @@ final class PermissionRegistry
 
     public const PUBLICATION_EMERGENCY_UNPUBLISH = 'publication.emergency-unpublish';
 
+    public const ORDERS_VIEW = 'orders.view';
+
+    public const ORDERS_CREATE = 'orders.create';
+
+    public const ORDERS_CONFIRM = 'orders.confirm';
+
+    public const ORDERS_PREPARE = 'orders.prepare';
+
+    public const ORDERS_MARK_READY = 'orders.mark-ready';
+
+    public const ORDERS_DISPATCH = 'orders.dispatch';
+
+    public const ORDERS_DELIVER = 'orders.deliver';
+
+    public const ORDERS_CANCEL = 'orders.cancel';
+
+    public const ORDERS_NOTES_CREATE = 'orders.notes.create';
+
+    public const ORDERS_PAYMENT_STATUS_MANAGE = 'orders.payment-status.manage';
+
+    public const ORDERS_RECEIPTS_VIEW = 'orders.receipts.view';
+
     /** @return list<string> */
     public static function all(): array
     {
@@ -178,7 +200,17 @@ final class PermissionRegistry
             self::CAMPAIGN_CLAIMS_REJECT,
             self::CAMPAIGN_CLAIMS_WITHDRAW_APPROVAL,
             self::PUBLICATION_EMERGENCY_UNPUBLISH,
-        ];
+            self::ORDERS_VIEW,
+            self::ORDERS_CREATE,
+            self::ORDERS_CONFIRM,
+            self::ORDERS_PREPARE,
+            self::ORDERS_MARK_READY,
+            self::ORDERS_DISPATCH,
+            self::ORDERS_DELIVER,
+            self::ORDERS_CANCEL,
+            self::ORDERS_NOTES_CREATE,
+            self::ORDERS_PAYMENT_STATUS_MANAGE,
+            self::ORDERS_RECEIPTS_VIEW,        ];
     }
 
     public static function contains(string $permission): bool

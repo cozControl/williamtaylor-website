@@ -12,7 +12,7 @@ class AccountFrontendPagesTest extends TestCase
             ->assertOk()
             ->assertSeeText('Welcome back')
             ->assertSee('/website/css/index-X8-QjRMe.css', false)
-            ->assertSee('/website/js/index-DxdnTNDA.js', false);
+            ->assertDontSee('/website/js/index-DxdnTNDA.js', false);
 
         $this->get(route('wishlist.index'))
             ->assertOk()

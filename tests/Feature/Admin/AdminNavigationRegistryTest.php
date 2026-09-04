@@ -26,7 +26,8 @@ class AdminNavigationRegistryTest extends TestCase
     {
         $items = app(AdminNavigationRegistry::class)->all();
 
-        $this->assertSame(['dashboard', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'users', 'roles', 'audit', 'settings'], array_column($items, 'key'));
+        $this->assertSame(['dashboard', 'settings', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'orders', 'users', 'roles', 'audit'], array_column($items, 'key'));
+        $this->assertSame(['Overview', 'Website', 'Commerce', 'Administration'], array_keys(app(AdminNavigationRegistry::class)->groupedVisibleFor($this->superAdministrator())));
 
         foreach ($items as $item) {
             $this->assertTrue(Route::has($item->routeName));
@@ -46,7 +47,15 @@ class AdminNavigationRegistryTest extends TestCase
 
         $this->assertSame([], $registry->visibleFor(null));
         $this->assertSame([], $registry->visibleFor($ordinary));
-        $this->assertSame(['dashboard', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'audit', 'settings'], array_column($registry->visibleFor($cms), 'key'));
-        $this->assertSame(['dashboard', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'users', 'roles', 'audit', 'settings'], array_column($registry->visibleFor($super), 'key'));
+        $this->assertSame(['dashboard', 'settings', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'audit'], array_column($registry->visibleFor($cms), 'key'));
+        $this->assertSame(['dashboard', 'settings', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'orders', 'users', 'roles', 'audit'], array_column($registry->visibleFor($super), 'key'));
+    }
+
+    private function superAdministrator(): User
+    {
+        $user = User::factory()->create();
+        app(ControlledRoleMutation::class)->run(fn () => $user->assignRole(RoleRegistry::SUPER_ADMINISTRATOR));
+
+        return $user;
     }
 }

@@ -16,6 +16,7 @@ use App\Domain\Media\Enums\MediaAssetState;
 use App\Domain\Media\Exceptions\ExactDuplicateMediaException;
 use App\Domain\Media\Jobs\ReconcileMediaAsset;
 use App\Domain\Media\Models\MediaAsset;
+use App\Domain\Media\Models\MediaUploadIntent;
 use App\Domain\Media\Support\MediaFilePolicy;
 use App\Domain\Media\Support\ReplacementProposalStore;
 use App\Infrastructure\Media\Testing\DeterministicMediaProvider;
@@ -76,7 +77,7 @@ class MediaWorkflowCloseoutTest extends TestCase
     {
         config(['media.provider' => 'deterministic', 'media.cloudinary.folder' => 'testing/media']);
         $provider = app(DeterministicMediaProvider::class);
-        $intent = $provider->createUploadIntent(['public_id' => 'testing/media/test', 'resource_type' => 'image']);
+        $intent = $provider->createUploadIntent(['public_id' => 'testing/media/test', 'resource_type' => 'image', 'intent_reference' => (string) str()->ulid()]);
         $valid = [...$intent->parameters, 'asset_id' => 'evidence-1', 'format' => 'jpg', 'mime_type' => 'image/jpeg', 'original_filename' => 'test.jpg', 'bytes' => 1000];
         $this->assertSame('evidence-1', $provider->verifyUploadResult($valid)->assetId);
 
@@ -114,11 +115,22 @@ class MediaWorkflowCloseoutTest extends TestCase
         $cms = $this->cms();
         $existing = $this->confirm($cms, $this->providerResult('asset-1', 'same-checksum'));
         $auditCount = AuditRecord::query()->count();
+        $intent = app(CreateUploadIntent::class)->handle($cms, 'image', 'image/jpeg', 500000);
+        $duplicateResult = $this->providerResult('asset-2', 'same-checksum');
+        $duplicateResult['public_id'] = $intent->parameters['public_id'];
         $component = Livewire::actingAs($cms)->test(MediaLibrary::class)
-            ->call('confirmUpload', $this->providerResult('asset-2', 'same-checksum'), 'Duplicate selection')
+            ->call('confirmUpload', [
+                'intentReference' => $intent->reference,
+                'providerEvidence' => $duplicateResult,
+                'title' => 'Duplicate selection',
+                'altText' => null,
+                'overrideDuplicate' => false,
+                'overrideReason' => null,
+            ])
             ->assertReturned(fn (array $result): bool => $result['status'] === 'duplicate_detected' && $result['candidate']['id'] === $existing->id);
-        $component->call('reuseDuplicate', $existing->id)
+        $component->call('reuseDuplicate', $existing->id, $intent->reference)
             ->assertReturned(fn (array $result): bool => $result['assetId'] === $existing->id);
+        $this->assertNotNull(MediaUploadIntent::query()->findOrFail($intent->reference)->consumed_at);
         $this->assertDatabaseCount('media_assets', 1);
         $this->assertSame($auditCount, AuditRecord::query()->count());
     }

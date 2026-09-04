@@ -9,6 +9,7 @@ use App\Domain\Media\Enums\AccessibilityClassification;
 use App\Domain\Media\Enums\MediaAssetState;
 use App\Domain\Media\Enums\MediaResourceType;
 use App\Domain\Media\Exceptions\ExactDuplicateMediaException;
+use App\Domain\Media\Exceptions\MediaUploadFailure;
 use App\Domain\Media\Models\MediaAsset;
 use App\Domain\Media\Models\MediaAssetVersion;
 use App\Domain\Media\Support\MediaFilePolicy;
@@ -30,7 +31,10 @@ final class ConfirmUploadedAsset
         $formats = $verified->resourceType === 'image' ? MediaFilePolicy::IMAGE_FORMATS : MediaFilePolicy::VIDEO_FORMATS;
         $max = $verified->resourceType === 'image' ? MediaFilePolicy::IMAGE_MAX_BYTES : MediaFilePolicy::VIDEO_MAX_BYTES;
         if (! in_array($verified->format, $formats, true) || $verified->bytes > $max || ! in_array($verified->resourceType, ['image', 'video'], true) || $verified->deliveryType !== 'upload') {
-            throw new RuntimeException('Uploaded media violates the approved file policy.');
+            throw new MediaUploadFailure(
+                ! in_array($verified->deliveryType, ['upload'], true) ? 'media.provider_delivery_type_invalid' : (! in_array($verified->format, $formats, true) ? 'media.provider_format_invalid' : 'media.provider_bytes_invalid'),
+                'Uploaded media violates the approved file policy.',
+            );
         }
 
         $duplicate = $verified->checksum === null ? null : MediaAsset::query()

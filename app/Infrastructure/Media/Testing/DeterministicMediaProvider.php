@@ -20,6 +20,7 @@ final class DeterministicMediaProvider implements MediaProvider
         return new UploadIntent('evidence://direct-upload', [
             'public_id' => $request['public_id'],
             'resource_type' => $request['resource_type'],
+            'intent_reference' => $request['intent_reference'],
             'expires_at' => $expires,
             'evidence_token' => $token,
         ], $expires);

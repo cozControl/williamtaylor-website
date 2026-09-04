@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Domain\Content\Models\ContentRevision;
+use App\Domain\PublicProjection\Services\ResolvePublicSiteChrome;
 use App\Domain\SiteContent\Actions\EnsureSiteContent;
 use App\Domain\SiteContent\Models\SiteContent;
 use App\Domain\SiteContent\Support\SiteContentTypeRegistry;
@@ -99,7 +100,22 @@ final class SiteContentController extends Controller
         Gate::authorize(app(SiteContentTypeRegistry::class)->get($siteContentResource->type)->permission('preview'));
         abort_unless($revision->resource_type === SiteContent::class && $revision->resource_id === $siteContentResource->getKey(), 404);
 
-        return response(view('admin.site-content.preview', ['siteContent' => $siteContentResource, 'revision' => $revision]))
+        return response(view('admin.site-content.preview', [
+            'siteContent' => $siteContentResource,
+            'revision' => $revision,
+            'renderUrl' => \URL::temporarySignedRoute('preview.site-content.render', now()->addMinutes(15), [$siteContentResource, $revision]),
+        ]))
+            ->header('Cache-Control', 'private, no-store, max-age=0')
+            ->header('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    public function renderPreview(SiteContent $siteContentResource, ContentRevision $revision, ResolvePublicSiteChrome $chrome): Response
+    {
+        Gate::authorize(app(SiteContentTypeRegistry::class)->get($siteContentResource->type)->permission('preview'));
+        abort_unless($revision->resource_type === SiteContent::class && $revision->resource_id === $siteContentResource->getKey(), 404);
+        $chrome->preview($siteContentResource, $revision);
+
+        return response(view('welcome'))
             ->header('Cache-Control', 'private, no-store, max-age=0')
             ->header('X-Robots-Tag', 'noindex, nofollow');
     }

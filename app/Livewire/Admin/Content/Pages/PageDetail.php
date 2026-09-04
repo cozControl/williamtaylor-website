@@ -7,6 +7,7 @@ use App\Domain\Content\Actions\CreatePagePreviewUrl;
 use App\Domain\Content\Actions\RestorePage;
 use App\Domain\Content\Models\ContentRevision;
 use App\Domain\Content\Models\Page;
+use App\Domain\Publication\Actions\RollbackToNewDraft;
 use App\Domain\Publishing\Actions\ApprovePageRevision;
 use App\Domain\Publishing\Actions\CancelScheduledPagePublication;
 use App\Domain\Publishing\Actions\PublishApprovedPageRevision;
@@ -139,6 +140,13 @@ final class PageDetail extends Component
     public function restore(RestorePage $action): void
     {
         $this->run(fn () => $action->handle($this->actor(), $this->page(), $this->reason), 'Page restored to active draft.');
+    }
+
+    public function rollback(string $revisionId, RollbackToNewDraft $action): void
+    {
+        $source = $this->page()->revisions->firstWhere('id', $revisionId);
+        abort_unless($source instanceof ContentRevision, 404);
+        $this->run(fn () => $action->handle($this->actor(), $this->page(), $source, $this->page()->current_draft_revision_id, $this->reason), 'Historical revision copied into a new immutable draft.');
     }
 
     public function render(): View

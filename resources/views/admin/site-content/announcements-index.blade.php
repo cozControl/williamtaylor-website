@@ -7,8 +7,8 @@
             <label>Schedule<select name="schedule"><option value="">All</option><option value="scheduled" @selected(request('schedule') === 'scheduled')>Scheduled</option></select></label>
             <button class="admin-secondary-button">Filter</button>
         </form>
-        <p>Each announcement owns its draft, candidate, schedule, published designation, archive state and audit history.</p>
-        <div class="admin-table-wrap"><table><thead><tr><th>Title</th><th>Lifecycle</th><th>Candidate</th><th>Scheduled</th><th>Actions</th></tr></thead><tbody>
+        <p>Each announcement has its own draft, review, schedule, published version and history.</p>
+        <div class="admin-table-wrap"><table><thead><tr><th>Title</th><th>Lifecycle</th><th>Review status</th><th>Scheduled</th><th>Actions</th></tr></thead><tbody>
             @forelse($announcements as $announcement)<tr><td>{{ $announcement->title }}</td><td>{{ $announcement->archived_at ? 'Archived' : 'Active' }}</td><td>{{ $announcement->publicationState?->candidate_state?->value ?? 'Draft' }}</td><td>{{ $announcement->publicationState?->scheduled_for?->timezone('Africa/Dar_es_Salaam')->format('Y-m-d H:i') ?? 'Not scheduled' }}</td><td><a href="{{ route('admin.content.announcements.show', $announcement) }}">Review</a> @can('announcements.edit')<a href="{{ route('admin.content.announcements.edit', $announcement) }}">Edit</a>@endcan</td></tr>
             @empty<tr><td colspan="5">No announcements match the filters.</td></tr>@endforelse
         </tbody></table></div>

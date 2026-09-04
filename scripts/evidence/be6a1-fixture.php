@@ -6,6 +6,8 @@ use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
 use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Domain\Identity\Support\RoleRegistry;
+use App\Domain\Publication\Support\PublicationResourceRegistry;
+use App\Domain\Publishing\Models\PagePublicationState;
 use App\Domain\SiteContent\Actions\EnsureSiteContent;
 use App\Domain\SiteContent\Actions\SaveSiteContentDraft;
 use App\Domain\SiteContent\Services\SiteContentWorkflow;
@@ -60,6 +62,21 @@ $otherPage = app(CreatePageDraft::class)->handle(
     'en',
     'standard_page',
 );
+
+$aboutPage = app(CreatePageDraft::class)->handle(
+    $cms,
+    'standard',
+    'BE-6A.1 Governed About',
+    'about',
+    'en',
+    'about',
+);
+PagePublicationState::query()->create([
+    'page_id' => $aboutPage->getKey(),
+    'current_public_revision_id' => $aboutPage->current_draft_revision_id,
+    'state_version' => 1,
+]);
+$aboutResourceKey = app(PublicationResourceRegistry::class)->get('page')->key;
 
 $ensure = app(EnsureSiteContent::class);
 $save = app(SaveSiteContentDraft::class);
@@ -140,5 +157,8 @@ echo json_encode([
         'page' => $page->getKey(),
         'revision' => $page->current_draft_revision_id,
         'footer' => $footer->getKey(),
+        'about' => $aboutPage->getKey(),
+        'about_revision' => $aboutPage->current_draft_revision_id,
+        'about_resource_key' => $aboutResourceKey,
     ],
 ], JSON_THROW_ON_ERROR);

@@ -23,6 +23,7 @@ final class AboutPageProjectionTest extends TestCase
     {
         parent::setUp();
         config([
+            'demo.enabled' => true,
             'publication_rollout.global_enabled' => true,
             'publication_rollout.resources.page' => 'enabled',
         ]);

@@ -6,7 +6,7 @@
         <div class="admin-field"><label for="review-sort">Sort</label><select id="review-sort" wire:model.live="sort"><option value="transition">Last transition</option><option value="schedule">Schedule</option><option value="title">Title</option></select></div>
     </section>
     @if($this->items->isEmpty())
-        <section class="admin-empty-state"><h2>No workflow items</h2><p>Submitted immutable revisions will appear here. Public storefront projection is not active in this phase.</p></section>
+        <section class="admin-empty-state"><h2>No pages waiting for review</h2><p>Submitted versions will appear here.</p></section>
     @else
         <div class="cms-page-list">
             @foreach($this->items as $item)
@@ -17,8 +17,8 @@
                         <p>/{{ $item->page->slug }} - {{ $types[$item->page->type]['label'] }} - {{ $item->page->locale }}</p>
                     </div>
                     <dl>
-                        <div><dt>Candidate</dt><dd>{{ $item->candidateRevision?->revision_number ?? 'None' }}</dd></div>
-                        <div><dt>Designated published</dt><dd>{{ $item->currentPublicRevision?->revision_number ?? 'None' }}</dd></div>
+                        <div><dt>Version in review</dt><dd>{{ $item->candidateRevision?->revision_number ?? 'None' }}</dd></div>
+                        <div><dt>Published version</dt><dd>{{ $item->currentPublicRevision?->revision_number ?? 'None' }}</dd></div>
                         <div><dt>Submitter</dt><dd>{{ $item->submitter?->name ?? 'None' }}</dd></div>
                         <div><dt>Schedule</dt><dd>{{ $item->scheduled_for?->timezone('Africa/Dar_es_Salaam')->format('Y-m-d H:i T') ?? 'None' }}</dd></div>
                         <div><dt>Newer draft</dt><dd>{{ $item->candidate_revision_id && $item->page->current_draft_revision_id !== $item->candidate_revision_id ? 'Yes' : 'No' }}</dd></div>

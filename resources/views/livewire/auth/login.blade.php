@@ -1,5 +1,9 @@
 @extends('layouts.frontend')
 
+@section('document-head')
+ @include('frontend.partials.login-document-head')
+@endsection
+
 @section('content')
   <div id="root">
    <div class="min-h-screen flex items-center justify-center bg-wt-oxblood relative overflow-hidden px-4 py-12">

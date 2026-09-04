@@ -2,6 +2,10 @@
 
 namespace App\Livewire\Admin\SiteContent;
 
+use App\Domain\Media\Contracts\MediaProvider;
+use App\Domain\Media\Enums\MediaAssetState;
+use App\Domain\Media\Enums\MediaResourceType;
+use App\Domain\Media\Models\MediaAsset;
 use App\Domain\SiteContent\Actions\ArchiveAnnouncement;
 use App\Domain\SiteContent\Actions\RestoreAnnouncement;
 use App\Domain\SiteContent\Actions\SaveSiteContentDraft;
@@ -56,7 +60,7 @@ final class Workspace extends Component
             $this->expectedRevisionId = $revision->getKey();
             $this->content = $revision->payload;
             $this->changeSummary = '';
-        }, 'Draft saved as an immutable revision.', $fingerprints);
+        }, 'Website settings saved as a draft.', $fingerprints);
     }
 
     public function submit(SiteContentWorkflow $workflow, SiteContentFingerprint $fingerprints): void
@@ -76,7 +80,7 @@ final class Workspace extends Component
 
     public function publish(SiteContentWorkflow $workflow, SiteContentFingerprint $fingerprints): void
     {
-        $this->run(fn () => $workflow->publish($this->actor(), $this->siteContent(), $this->fingerprint), 'Revision designated published. '.(config('public_site_content.enabled') ? 'Public storefront projection is enabled for global Site Content.' : 'Public storefront projection is disabled by environment configuration.'), $fingerprints);
+        $this->run(fn () => $workflow->publish($this->actor(), $this->siteContent(), $this->fingerprint), 'Changes published. '.(config('public_site_content.enabled') ? 'They are available to the live website.' : 'Website publishing is currently paused.'), $fingerprints);
     }
 
     public function cancelSchedule(SiteContentWorkflow $workflow, SiteContentFingerprint $fingerprints): void
@@ -166,7 +170,28 @@ final class Workspace extends Component
         $before = $state?->currentPublicRevision->payload ?? [];
         $after = $state?->candidateRevision->payload ?? $content->currentDraftRevision->payload;
 
-        return view('livewire.admin.site-content.workspace', compact('content', 'definition') + ['siteContent' => $content, 'comparison' => $definition->compare($before, $after)]);
+        $readyMedia = collect();
+        if ($content->type === SiteContentTypeRegistry::SITE_PROFILE) {
+            $provider = app(MediaProvider::class);
+            $readyMedia = MediaAsset::query()
+                ->where('state', MediaAssetState::Ready->value)
+                ->where('resource_type', MediaResourceType::Image->value)
+                ->whereNotNull('confirmed_at')
+                ->whereNull('archived_at')
+                ->orderBy('original_filename')
+                ->get()
+                ->filter(fn (MediaAsset $asset): bool => $asset->is_decorative || (filled($asset->default_alt_text) && strip_tags((string) $asset->default_alt_text) === $asset->default_alt_text))
+                ->map(fn (MediaAsset $asset): array => [
+                    'id' => (string) $asset->getKey(),
+                    'filename' => $asset->original_filename,
+                    'width' => $asset->width,
+                    'height' => $asset->height,
+                    'alt' => $asset->is_decorative ? 'Decorative image' : (string) $asset->default_alt_text,
+                    'thumbnail' => $provider->deliveryUrl($asset->provider_public_id, $asset->resource_type->value, 'admin_thumbnail', $asset->focal_x ? (float) $asset->focal_x : null, $asset->focal_y ? (float) $asset->focal_y : null),
+                ]);
+        }
+
+        return view('livewire.admin.site-content.workspace', compact('content', 'definition', 'readyMedia') + ['siteContent' => $content, 'comparison' => $definition->compare($before, $after)]);
     }
 
     private function reload(SiteContentFingerprint $fingerprints): void
