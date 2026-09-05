@@ -14,7 +14,7 @@ class ProductDetailFrontendPageTest extends TestCase
         $this->get(route('products.taylor-oxford-shirt'))
             ->assertOk()
             ->assertSeeText('The Taylor Oxford Shirt')
-            ->assertSeeText('TZS 245,000')
+            ->assertSeeText('TZS 285,000')
             ->assertSee('/website/css/index-X8-QjRMe.css', false)
             ->assertSee('/website/js/index-DxdnTNDA.js', false);
     }
@@ -36,9 +36,9 @@ class ProductDetailFrontendPageTest extends TestCase
         $this->assertSame(0, substr_count($html, 'wire:'));
     }
 
-    public function test_product_detail_does_not_register_dynamic_or_commerce_endpoints(): void
+    public function test_product_detail_registers_canonical_dynamic_route_without_commerce_mutations(): void
     {
-        $this->assertFalse(Route::has('products.show'));
+        $this->assertTrue(Route::has('products.show'));
         $this->assertFalse(Route::has('cart.store'));
         $this->assertFalse(Route::has('wishlist.store'));
         $this->assertFalse(Route::has('checkout.store'));

@@ -1,0 +1,7 @@
+<x-admin.layout title="Categories" description="Organize Products into the storefront's structural catalogue hierarchy." eyebrow="Catalogue" :breadcrumbs="['Categories' => null]">
+    <div class="admin-page-actions">@can('products.manage')<a class="admin-primary-button" href="{{ route('admin.product-categories.create') }}">New Category</a>@endcan</div>
+    <form class="admin-panel admin-form-grid" method="GET"><label>Search Categories<input name="search" value="{{ $search }}"></label><div class="admin-page-actions"><button class="admin-primary-button">Search</button><a class="admin-secondary-button" href="{{ route('admin.product-categories.index') }}">Clear</a></div></form>
+    <section class="admin-panel"><div class="admin-table-wrap"><table><thead><tr><th>Category</th><th>Parent</th><th>Visibility</th><th>Products</th><th>Order</th><th></th></tr></thead><tbody>
+        @forelse($categories as $category)<tr><td><strong>{{ $category->name }}</strong><br><small>/{{ $category->slug }}</small></td><td>{{ $category->parent?->name ?? 'Top level' }}</td><td>{{ $category->is_visible ? 'Visible' : 'Hidden' }}</td><td>{{ $category->products_count }}</td><td>{{ $category->position }}</td><td><a href="{{ route('admin.product-categories.edit', $category) }}">Edit</a></td></tr>@empty<tr><td colspan="6">No Categories match this search.</td></tr>@endforelse
+    </tbody></table></div>{{ $categories->links() }}</section>
+</x-admin.layout>

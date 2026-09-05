@@ -26,8 +26,10 @@ class AdminNavigationRegistryTest extends TestCase
     {
         $items = app(AdminNavigationRegistry::class)->all();
 
-        $this->assertSame(['dashboard', 'settings', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'orders', 'users', 'roles', 'audit'], array_column($items, 'key'));
-        $this->assertSame(['Overview', 'Website', 'Commerce', 'Administration'], array_keys(app(AdminNavigationRegistry::class)->groupedVisibleFor($this->superAdministrator())));
+        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'products', 'product-categories', 'collections', 'orders', 'users', 'roles', 'audit'], array_column($items, 'key'));
+        $groups = app(AdminNavigationRegistry::class)->groupedVisibleFor($this->superAdministrator());
+        $this->assertSame(['Overview', 'Catalogue', 'Website', 'Administration'], array_keys($groups));
+        $this->assertSame(['products', 'product-categories', 'collections'], array_column($groups['Catalogue'], 'key'));
 
         foreach ($items as $item) {
             $this->assertTrue(Route::has($item->routeName));
@@ -47,8 +49,11 @@ class AdminNavigationRegistryTest extends TestCase
 
         $this->assertSame([], $registry->visibleFor(null));
         $this->assertSame([], $registry->visibleFor($ordinary));
-        $this->assertSame(['dashboard', 'settings', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'audit'], array_column($registry->visibleFor($cms), 'key'));
-        $this->assertSame(['dashboard', 'settings', 'pages', 'page-review', 'navigation', 'announcements', 'media', 'orders', 'users', 'roles', 'audit'], array_column($registry->visibleFor($super), 'key'));
+        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'products', 'product-categories', 'collections', 'audit'], array_column($registry->visibleFor($cms), 'key'));
+        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'products', 'product-categories', 'collections', 'users', 'roles', 'audit'], array_column($registry->visibleFor($super), 'key'));
+
+        config(['demo.enabled' => true, 'demo.allowed_environments' => ['testing']]);
+        $this->assertContains('orders', array_column($registry->visibleFor($super), 'key'));
     }
 
     private function superAdministrator(): User

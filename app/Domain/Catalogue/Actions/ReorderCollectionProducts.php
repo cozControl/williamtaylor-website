@@ -17,29 +17,34 @@ final class ReorderCollectionProducts
 {
     public function __construct(private CollectionStateFingerprint $states, private CollectionConfigurationCache $cache, private RecordAuditEvent $audit) {}
 
-    /** @param list<string> $orderedIds */
-    public function handle(User $actor, Collection $collection, string $expected, array $orderedIds): void
+    /**
+     * @param  list<string>  $orderedIds
+     * @param  list<int>|null  $positions
+     */
+    public function handle(User $actor, Collection $collection, string $expected, array $orderedIds, ?array $positions = null): void
     {
-        DB::transaction(function () use ($actor, $collection, $expected, $orderedIds): void {
+        DB::transaction(function () use ($actor, $collection, $expected, $orderedIds, $positions): void {
             $locked = Collection::query()->lockForUpdate()->findOrFail($collection->id);
             $members = CollectionProduct::query()->active()->where('collection_id', $locked->id)->orderBy('position')->lockForUpdate()->get();
             if (! hash_equals($expected, $this->states->memberships($locked->id))) {
                 throw new StaleCatalogueState;
             }
-            if ($locked->archived_at || count($orderedIds) !== count(array_unique($orderedIds)) || $members->pluck('id')->sort()->values()->all() !== collect($orderedIds)->sort()->values()->all()) {
+            $nextPositions = $positions ?? array_keys($orderedIds);
+            if ($locked->archived_at || count($orderedIds) !== count(array_unique($orderedIds)) || count($nextPositions) !== count($orderedIds) || count($nextPositions) !== count(array_unique($nextPositions)) || $members->pluck('id')->sort()->values()->all() !== collect($orderedIds)->sort()->values()->all()) {
                 throw new InvalidArgumentException('A complete duplicate-free order for an active Collection is required.');
             }
-            if ($members->pluck('id')->all() === $orderedIds) {
+            if ($members->pluck('id')->all() === $orderedIds && $members->pluck('position')->all() === $nextPositions) {
                 return;
             }
             foreach ($orderedIds as $position => $id) {
                 CollectionProduct::query()->whereKey($id)->update(['position' => 60000 + $position, 'position_key' => CollectionOrderingKeys::active('temporary', $id)]);
             }
-            foreach ($orderedIds as $position => $id) {
+            foreach ($orderedIds as $index => $id) {
+                $position = $nextPositions[$index];
                 CollectionProduct::query()->whereKey($id)->update(['position' => $position, 'position_key' => CollectionOrderingKeys::active('position', (string) $position)]);
             }
             $locked->increment('lock_version');
-            $this->audit->handle('collection.products.reordered', $locked, $actor, null, ['membership_ids' => $orderedIds]);
+            $this->audit->handle('collection.products.reordered', $locked, $actor, null, ['membership_ids' => $orderedIds, 'positions' => $nextPositions]);
             DB::afterCommit(fn () => $this->cache->invalidate($locked->id));
         }, 3);
     }

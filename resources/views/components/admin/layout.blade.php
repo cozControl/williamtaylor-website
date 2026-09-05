@@ -23,8 +23,9 @@
         @vite(['resources/css/admin-cms.css', 'resources/js/cms-editor.js'])
     @endif
     @fluxAppearance
+    <x-admin.form-styles />
 </head>
-<body class="admin-body">
+<body class="admin-body" data-admin-ui-revision="ecom-home-1">
     <a class="admin-skip-link" href="#admin-main">Skip to main content</a>
     <div class="admin-shell">
         <aside class="admin-sidebar" aria-label="Primary administration">

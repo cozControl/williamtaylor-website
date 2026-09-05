@@ -36,6 +36,10 @@ final class PermissionRegistry
 
     public const MEDIA_RESTORE = 'media.restore';
 
+    public const PRODUCTS_VIEW = 'products.view';
+
+    public const PRODUCTS_MANAGE = 'products.manage';
+
     public const PAGES_VIEW = 'pages.view';
 
     public const PAGES_CREATE = 'pages.create';
@@ -159,6 +163,8 @@ final class PermissionRegistry
             self::MEDIA_REPLACE,
             self::MEDIA_ARCHIVE,
             self::MEDIA_RESTORE,
+            self::PRODUCTS_VIEW,
+            self::PRODUCTS_MANAGE,
             self::PAGES_VIEW,
             self::PAGES_CREATE,
             self::PAGES_EDIT,

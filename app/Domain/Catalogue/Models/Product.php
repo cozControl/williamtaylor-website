@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use LogicException;
 
@@ -22,7 +23,7 @@ final class Product extends Model
 
     protected function casts(): array
     {
-        return ['archived_at' => 'immutable_datetime', 'lock_version' => 'integer'];
+        return ['archived_at' => 'immutable_datetime', 'lock_version' => 'integer', 'base_price_minor' => 'integer', 'compare_at_price_minor' => 'integer'];
     }
 
     /** @return HasMany<ProductRevision, $this> */
@@ -47,6 +48,18 @@ final class Product extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class)->orderBy('position');
+    }
+
+    /** @return BelongsToMany<ProductCategory, $this> */
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductCategory::class, 'product_category_assignments')->withPivot(['is_primary', 'position'])->withTimestamps();
+    }
+
+    /** @return HasMany<ProductBadge, $this> */
+    public function badges(): HasMany
+    {
+        return $this->hasMany(ProductBadge::class);
     }
 
     /** @return BelongsTo<ProductVariant, $this> */

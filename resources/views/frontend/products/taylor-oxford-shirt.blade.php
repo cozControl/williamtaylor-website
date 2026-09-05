@@ -163,34 +163,35 @@
         <span class="text-gray-300">
          /
         </span>
-        <a class="text-gray-400 hover:text-wt-oxblood transition-colors uppercase" href="/collections/mens-wear">
-         Men's Shirts
+        <a class="text-gray-400 hover:text-wt-oxblood transition-colors uppercase" href="{{ ($oxfordProduct['category']['slug'] ?? null) ? url('/shop?category='.$oxfordProduct['category']['slug']) : '/collections/mens-wear' }}">
+         {{ $oxfordProduct['category']['name'] ?? "Men's Shirts" }}
         </a>
         <span class="text-gray-300">
          /
         </span>
         <span class="text-wt-oxblood uppercase">
-         The Taylor Oxford Shirt
+         {{ $oxfordProduct['title'] ?? 'The Taylor Oxford Shirt' }}
         </span>
        </div>
        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
         <div class="space-y-4">
+         @php
+          $oxfordImages = !empty($oxfordProduct['images']) ? $oxfordProduct['images'] : [
+           ['url' => '/website/images/0368482bc_image.jpg', 'alt' => 'The Taylor Oxford Shirt'],
+           ['url' => '/website/images/6d46d522f_image.jpg', 'alt' => 'The Taylor Oxford Shirt 2'],
+           ['url' => '/website/images/2946546dd_image.jpeg', 'alt' => 'The Taylor Oxford Shirt 3'],
+           ['url' => '/website/images/ee86da3ae_image.jpg', 'alt' => 'The Taylor Oxford Shirt 4'],
+          ];
+         @endphp
          <div class="aspect-[3/4] overflow-hidden bg-gray-100 relative group">
-          <img alt="The Taylor Oxford Shirt" class="w-full h-full object-cover object-top" src="/website/images/0368482bc_image.jpg" style="opacity: 1;"/>
+          <img id="product-main-image" alt="{{ $oxfordImages[0]['alt'] }}" class="w-full h-full object-cover object-top" src="{{ $oxfordImages[0]['url'] }}" style="opacity: 1;"/>
          </div>
-         <div class="flex gap-3 overflow-x-auto scrollbar-hide">
-          <button class="flex-shrink-0 w-20 h-24 overflow-hidden border-2 transition-all border-wt-gold">
-           <img alt="The Taylor Oxford Shirt 1" class="w-full h-full object-cover object-top" src="/website/images/0368482bc_image.jpg"/>
-          </button>
-          <button class="flex-shrink-0 w-20 h-24 overflow-hidden border-2 transition-all border-transparent hover:border-gray-300">
-           <img alt="The Taylor Oxford Shirt 2" class="w-full h-full object-cover object-top" src="/website/images/6d46d522f_image.jpg"/>
-          </button>
-          <button class="flex-shrink-0 w-20 h-24 overflow-hidden border-2 transition-all border-transparent hover:border-gray-300">
-           <img alt="The Taylor Oxford Shirt 3" class="w-full h-full object-cover object-top" src="/website/images/2946546dd_image.jpeg"/>
-          </button>
-          <button class="flex-shrink-0 w-20 h-24 overflow-hidden border-2 transition-all border-transparent hover:border-gray-300">
-           <img alt="The Taylor Oxford Shirt 4" class="w-full h-full object-cover object-top" src="/website/images/ee86da3ae_image.jpg"/>
-          </button>
+         <div id="product-gallery-thumbnails" class="flex gap-3 overflow-x-auto scrollbar-hide">
+          @foreach($oxfordImages as $image)
+           <button type="button" data-product-gallery class="flex-shrink-0 w-20 h-24 overflow-hidden border-2 transition-all {{ $loop->first ? 'border-wt-gold' : 'border-transparent hover:border-gray-300' }}">
+            <img alt="{{ $image['alt'] }}" class="w-full h-full object-cover object-top" src="{{ $image['url'] }}"/>
+           </button>
+          @endforeach
          </div>
         </div>
         <div class="space-y-6">
@@ -202,41 +203,43 @@
            BESTSELLER
           </span>
          </div>
+         @if(!$oxfordProduct || !empty($oxfordProduct['options']['colour']))
          <div>
           <h1 class="font-heading text-3xl lg:text-4xl text-wt-oxblood leading-tight">
-           The Taylor Oxford Shirt
+           {{ $oxfordProduct['title'] ?? 'The Taylor Oxford Shirt' }}
           </h1>
           <p class="font-label text-xs tracking-widest text-gray-400 uppercase mt-1">
-           SKU: WT-SH-001
+           SKU: <span id="product-sku">{{ collect($oxfordProduct['variants'] ?? [])->firstWhere('id', $oxfordProduct['default_variant_id'] ?? null)['sku'] ?? 'SKU unavailable' }}</span>
           </p>
          </div>
          <div class="flex items-baseline gap-4">
           <p class="font-heading text-2xl text-wt-oxblood">
-           TZS 285,000
+          <span id="product-price">{{ $oxfordProduct['price'] ?? 'TZS 285,000' }}</span>
           </p>
          </div>
          <p class="font-body text-sm text-gray-600 font-light leading-relaxed">
-          Hand-finished camp collar shirt in textured Italian cotton. Crossover drape with a refined boxy silhouette.
+          {{ $oxfordProduct['short_description'] ?? 'Hand-finished camp collar shirt in textured Italian cotton. Crossover drape with a refined boxy silhouette.' }}
          </p>
          <div>
           <p class="font-label text-xs tracking-widest uppercase text-wt-oxblood mb-3">
            Colour:
-           <span class="text-gray-500">
+           <span id="product-colour-label" class="text-gray-500">
             Ivory
            </span>
           </p>
           <div class="flex gap-2">
-           <button class="w-8 h-8 rounded-full border-2 transition-all border-wt-gold scale-110" style="background-color: rgb(245, 240, 232);" title="Ivory">
-           </button>
-           <button class="w-8 h-8 rounded-full border-2 transition-all border-gray-200 hover:border-gray-400" style="background-color: rgb(26, 26, 26);" title="Noir">
-           </button>
+           @foreach(($oxfordProduct['options']['colour'] ?? [['id' => 'ivory', 'key' => 'ivory', 'label' => 'Ivory'], ['id' => 'noir', 'key' => 'noir', 'label' => 'Noir']]) as $colour)
+            <button type="button" data-product-option="colour" data-value-id="{{ $colour['id'] }}" class="w-8 h-8 rounded-full border-2 transition-all {{ $loop->first ? 'border-wt-gold scale-110' : 'border-gray-200 hover:border-gray-400' }}" style="background-color: {{ $colour['swatch_hex'] ?? ($colour['key'] === 'ivory' ? 'rgb(245, 240, 232)' : 'rgb(26, 26, 26)') }};" title="{{ $colour['label'] }}"></button>
+           @endforeach
           </div>
          </div>
+         @endif
+         @if(!$oxfordProduct || !empty($oxfordProduct['options']['size']))
          <div>
           <div class="flex items-center justify-between mb-3">
            <p class="font-label text-xs tracking-widest uppercase text-wt-oxblood">
             Size:
-            <span class="text-red-500">
+            <span id="product-size-label" class="text-red-500">
              Select a size
             </span>
            </p>
@@ -245,29 +248,12 @@
            </button>
           </div>
           <div class="flex flex-wrap gap-2">
-           <button class="px-4 py-2 font-label text-xs border transition-all border-gray-300 text-gray-700 hover:border-wt-oxblood">
-            XS
-           </button>
-           <button class="px-4 py-2 font-label text-xs border transition-all border-gray-300 text-gray-700 hover:border-wt-oxblood">
-            S
-           </button>
-           <button class="px-4 py-2 font-label text-xs border transition-all border-gray-300 text-gray-700 hover:border-wt-oxblood">
-            M
-           </button>
-           <button class="px-4 py-2 font-label text-xs border transition-all border-gray-300 text-gray-700 hover:border-wt-oxblood">
-            L
-           </button>
-           <button class="px-4 py-2 font-label text-xs border transition-all border-gray-300 text-gray-700 hover:border-wt-oxblood">
-            XL
-           </button>
-           <button class="px-4 py-2 font-label text-xs border transition-all border-gray-300 text-gray-700 hover:border-wt-oxblood">
-            XXL
-           </button>
-           <button class="px-4 py-2 font-label text-xs border transition-all border-gray-300 text-gray-700 hover:border-wt-oxblood">
-            3XL
-           </button>
+           @foreach(($oxfordProduct['options']['size'] ?? collect(['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'])->map(fn ($size) => ['id' => strtolower($size), 'key' => strtolower($size), 'label' => $size])->all()) as $size)
+            <button type="button" data-product-option="size" data-value-id="{{ $size['id'] }}" class="px-4 py-2 font-label text-xs border transition-all border-gray-300 text-gray-700 hover:border-wt-oxblood">{{ $size['label'] }}</button>
+           @endforeach
           </div>
          </div>
+         @endif
          <div class="flex items-center gap-4">
           <p class="font-label text-xs tracking-widest uppercase text-wt-oxblood">
            Quantity
@@ -368,6 +354,13 @@
         </div>
         <div class="max-w-2xl">
          <div class="prose prose-sm max-w-none font-light text-gray-600">
+          @if($oxfordProduct)
+           {!! $oxfordProduct['description_html'] !!}
+           @if($oxfordProduct['materials'])<p><strong>The Fabric:</strong> {{ $oxfordProduct['materials'] }}</p>@endif
+           @if($oxfordProduct['fit'])<p><strong>The Fit:</strong> {{ $oxfordProduct['fit'] }}</p>@endif
+           @if($oxfordProduct['care'])<p><strong>Care:</strong> {{ $oxfordProduct['care'] }}</p>@endif
+           @if($oxfordProduct['features'])<ul>@foreach($oxfordProduct['features'] as $feature)<li>{{ $feature }}</li>@endforeach</ul>@endif
+          @else
           <p>
            The Taylor Oxford Shirt is the cornerstone of the William Taylor collection. Crafted from our signature textured Italian cotton, this piece commands attention through restraint ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â an unbuttoned camp collar, a slightly oversized boxy cut, and clean crossover detail speak volumes without effort.
           </p>
@@ -388,6 +381,7 @@
            </strong>
            Crossover front panel. No buttons, no fuss. A single interior label ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â gold on charcoal.
           </p>
+          @endif
          </div>
         </div>
        </div>
@@ -641,4 +635,50 @@
    </div>
   </div>
 
+@if($catalogueProduct)
+<script type="application/json" id="product-bootstrap-data">@json($catalogueProduct)</script>
+@endif
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+ const main = document.getElementById('product-main-image');
+ const gallery = document.getElementById('product-gallery-thumbnails');
+ const bindGallery = function () { document.querySelectorAll('[data-product-gallery]').forEach(function (button) {
+  button.onclick = function () {
+   const image = button.querySelector('img');
+   main.src = image.src; main.alt = image.alt;
+   document.querySelectorAll('[data-product-gallery]').forEach(function (item) { item.classList.remove('border-wt-gold'); item.classList.add('border-transparent'); });
+   button.classList.add('border-wt-gold'); button.classList.remove('border-transparent');
+  };
+ }); };
+ bindGallery();
+ const selected = {};
+ const dataNode = document.getElementById('product-bootstrap-data');
+ const productData = dataNode ? JSON.parse(dataNode.textContent) : null;
+ document.querySelectorAll('[data-product-option]').forEach(function (button) {
+  button.addEventListener('click', function () {
+   const key = button.dataset.productOption;
+   selected[key] = button.dataset.valueId;
+   document.querySelectorAll('[data-product-option="' + key + '"]').forEach(function (item) { item.classList.remove('border-wt-gold', 'scale-110', 'bg-wt-oxblood', 'text-white'); });
+   button.classList.add('border-wt-gold');
+   if (key === 'colour') { button.classList.add('scale-110'); document.getElementById('product-colour-label').textContent = button.title; }
+   if (key === 'colour' && productData && productData.colour_images[button.dataset.valueId] && productData.colour_images[button.dataset.valueId].length) {
+    const images = productData.colour_images[button.dataset.valueId];
+    main.src = images[0].url; main.alt = images[0].alt;
+    gallery.replaceChildren(...images.map(function (image, index) { const button = document.createElement('button'); button.type = 'button'; button.dataset.productGallery = ''; button.className = 'flex-shrink-0 w-20 h-24 overflow-hidden border-2 transition-all '+(index === 0 ? 'border-wt-gold' : 'border-transparent hover:border-gray-300'); const thumbnail = document.createElement('img'); thumbnail.src = image.url; thumbnail.alt = image.alt; thumbnail.className = 'w-full h-full object-cover object-top'; button.appendChild(thumbnail); return button; }));
+    bindGallery();
+   }
+   if (key === 'size') { button.classList.add('bg-wt-oxblood', 'text-white'); document.getElementById('product-size-label').textContent = button.textContent.trim(); }
+   if (productData) {
+    const selectedValues = Object.values(selected);
+    const variant = productData.variants.find(function (item) { return selectedValues.length === item.values.length && selectedValues.every(function (value) { return item.values.includes(value); }); });
+    if (variant) { document.getElementById('product-sku').textContent = variant.sku || 'SKU unavailable'; document.getElementById('product-price').textContent = variant.price; }
+   }
+  });
+ });
+ if (productData) {
+  const initial = productData.variants.find(function (item) { return item.id === productData.default_variant_id; });
+  (initial?.values || []).forEach(function (value) { document.querySelector('[data-product-option][data-value-id="'+CSS.escape(value)+'"]')?.click(); });
+ }
+});
+</script>
 @endsection

@@ -16,6 +16,7 @@ use App\Domain\SiteContent\Support\SiteContentTypeRegistry;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Livewire\Component;
@@ -53,14 +54,24 @@ final class Workspace extends Component
         $this->reload($fingerprints);
     }
 
-    public function save(SaveSiteContentDraft $action, SiteContentFingerprint $fingerprints): void
+    public function save(SaveSiteContentDraft $action, SiteContentWorkflow $workflow, SiteContentFingerprint $fingerprints): void
     {
-        $this->run(function () use ($action): void {
-            $revision = $action->handle($this->actor(), $this->siteContent(), $this->expectedRevisionId, $this->content, $this->changeSummary);
+        $this->run(function () use ($action, $workflow): void {
+            $revision = DB::transaction(function () use ($action, $workflow) {
+                $content = $this->siteContent();
+                $revision = $action->handle($this->actor(), $content, $this->expectedRevisionId, $this->content, $this->changeSummary ?: 'Saved from the website editor');
+                $workflow->makeCurrentDraftEffective($this->actor(), $content->fresh());
+
+                return $revision;
+            }, 3);
             $this->expectedRevisionId = $revision->getKey();
             $this->content = $revision->payload;
             $this->changeSummary = '';
-        }, 'Website settings saved as a draft.', $fingerprints);
+        }, match ($this->siteContent()->type) {
+            SiteContentTypeRegistry::PRIMARY_NAVIGATION, SiteContentTypeRegistry::FOOTER_NAVIGATION => 'Navigation updated.',
+            SiteContentTypeRegistry::ANNOUNCEMENT => 'Announcement saved.',
+            default => 'Site settings saved.',
+        }, $fingerprints);
     }
 
     public function submit(SiteContentWorkflow $workflow, SiteContentFingerprint $fingerprints): void

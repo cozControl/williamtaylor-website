@@ -17,8 +17,9 @@
   <meta content="summary_large_image" name="twitter:card"/>
   <meta content="William Taylor - Contemporary Menswear" name="twitter:title"/>
   <!-- Avenir & Marion are system fonts; fallbacks are handled in CSS -->
-  <script crossorigin="" src="/website/js/index-DxdnTNDA.js" type="module">
-  </script>
+  @if($loadImportedStorefrontRuntime ?? true)
+   <script crossorigin="" src="/website/js/index-DxdnTNDA.js" type="module"></script>
+  @endif
   <link crossorigin="" href="/website/css/index-X8-QjRMe.css" rel="stylesheet"/>
   <script type="module">
    if (window.self === window.top && ["http:", "https:"].includes(window.location.protocol)) {

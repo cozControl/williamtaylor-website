@@ -13,11 +13,13 @@ use App\Domain\SiteContent\Models\SiteContent;
 use App\Domain\SiteContent\Support\EvidenceDatabaseGuard;
 use App\Domain\SiteContent\Support\SiteContentTypeDefinition;
 use App\Domain\SiteContent\Support\SiteContentTypeRegistry;
+use App\Livewire\Admin\SiteContent\Workspace;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use Livewire\Livewire;
 use RuntimeException;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
@@ -135,6 +137,23 @@ final class SiteContentArchitectureTest extends TestCase
         $this->actingAs($this->cms)->get(route('admin.content.announcements.index'))->assertOk();
         $this->actingAs($this->cms)->get(route('admin.settings.index'))->assertOk();
         $this->get('/')->assertOk()->assertDontSee('Public storefront projection is not active yet');
+    }
+
+    public function test_site_settings_save_is_direct_audited_and_effective(): void
+    {
+        $profile = $this->resource('site_profile');
+        $payload = $profile->currentDraftRevision->payload;
+        $payload['brand']['name'] = 'William Taylor Direct';
+
+        Livewire::actingAs($this->cms)
+            ->test(Workspace::class, ['siteContent' => $profile])
+            ->set('content', $payload)
+            ->call('save')
+            ->assertSee('Site settings saved.');
+
+        $profile->refresh()->load('publicationState');
+        $this->assertSame($profile->current_draft_revision_id, $profile->publicationState->current_public_revision_id);
+        $this->assertDatabaseHas('audit_records', ['action' => 'site-content.saved-live']);
     }
 
     public function test_evidence_database_guard_refuses_willy_memory_and_empty_paths(): void

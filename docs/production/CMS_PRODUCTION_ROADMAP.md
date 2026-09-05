@@ -3,6 +3,8 @@
 Date: 2026-09-04  
 Status: recommendation; no implementation
 
+> **Ecommerce-first reset (ECOM-PROD-ARCH-1):** this roadmap remains as historical planning evidence, but its governance-first sequence is superseded by `docs/ecommerce/ECOMMERCE_IMPLEMENTATION_ROADMAP.md`. William Taylor is primarily ecommerce. The exact storefront is the template contract, and ordinary content/catalogue work uses direct validated Save with audit/history hidden behind the workflow.
+
 Each phase must use focused tests first. Full audit and fidelity matrices remain separately authorized.
 
 | Phase | Goal and dependencies | Reuse / new work | Admin / frontend / migrations | Security and risk | Acceptance | Complexity |
@@ -30,5 +32,7 @@ Each phase must use focused tests first. Full audit and fidelity matrices remain
 Media and basic Admin usability are first because every credible content/catalogue demonstration depends on them. Homepage/global ownership follows to deliver visible client value. Pages then closes the existing About pilot. Catalogue and merchandising precede Pricing; Pricing and Inventory precede Cart/Checkout. Inventory reservations are designed with Cart/Order boundaries before checkout is activated. Payments, customer self-service and communications build on an idempotent production Order intake.
 
 ## Immediate next phase
+
+Current direction: first physically close Upload -> READY -> thumbnail. Then authorize **ECOM-PROD-1 - Oxford Shirt vertical slice** so one existing Product, Media, Colour/Size Variants and SKUs drive the unchanged Product template through direct-save Admin. Pricing follows before Shop-wide migration; Inventory follows before Cart/Checkout.
 
 Start **CMS-PROD-1 — Admin UX and Media recovery**. Its scope should include a safe provider-confirmation diagnostic taxonomy, one supported local-development strategy, responsive form/control repair, smaller ready-media selectors, client wording, and a focused end-to-end upload/thumbnail/select test. It must not silently switch production media storage or weaken signed confirmation.

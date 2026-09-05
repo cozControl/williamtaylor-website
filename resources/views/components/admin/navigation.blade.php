@@ -1,8 +1,15 @@
 @props(['groups', 'currentRoute' => null])
 <nav {{ $attributes->merge(['aria-label' => 'Administration']) }}>
     @foreach ($groups as $group => $items)
-        <section class="admin-nav-group" aria-labelledby="admin-nav-{{ str($group)->slug() }}">
-            <h2 id="admin-nav-{{ str($group)->slug() }}" class="admin-nav-heading">{{ $group }}</h2>
+        @php($groupActive = collect($items)->contains(fn ($item) => $item->isActive($currentRoute)) || ($group === 'Catalogue' && request()->routeIs('admin.catalogue.*')))
+        <section class="admin-nav-group" @if($groupActive) data-group-active="true" @endif aria-labelledby="admin-nav-{{ str($group)->slug() }}">
+            <h2 id="admin-nav-{{ str($group)->slug() }}" class="admin-nav-heading">
+                @if($group === 'Catalogue')
+                    <a href="{{ route('admin.catalogue.index') }}" @if(request()->routeIs('admin.catalogue.*')) aria-current="page" @endif>{{ $group }}</a>
+                @else
+                    {{ $group }}
+                @endif
+            </h2>
             <ul role="list">
                 @foreach ($items as $item)
                     <li>

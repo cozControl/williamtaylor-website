@@ -9,6 +9,7 @@ use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
 use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Domain\Identity\Support\RoleRegistry;
+use App\Livewire\Admin\Content\Pages\PageEditor;
 use App\Livewire\Admin\Content\Pages\PageIndex;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,7 +53,7 @@ final class ContentAdministrationAndPreviewTest extends TestCase
         Livewire::actingAs($this->cms)->test(PageIndex::class)
             ->assertSee('Editorial story')
             ->set('search', 'missing')
-            ->assertSee('No matching draft pages')
+            ->assertSee('No matching pages')
             ->set('search', '')
             ->set('type', 'standard')
             ->set('sort', 'unsafe_column')
@@ -89,16 +90,33 @@ final class ContentAdministrationAndPreviewTest extends TestCase
             ->assertDontSee('Schedule');
     }
 
-    public function test_page_editor_links_to_workflow_without_embedding_high_impact_actions(): void
+    public function test_page_editor_exposes_direct_save_and_optional_preview_without_governance_actions(): void
     {
         $this->actingAs($this->cms)->get(route('admin.content.pages.edit', $this->page))
             ->assertOk()
-            ->assertSee('Save draft')
-            ->assertSee('Preview saved revision')
-            ->assertSee('Open review and publishing')
+            ->assertSee('Save page')
+            ->assertSee('Preview')
+            ->assertSee('Visible')
+            ->assertSee('Hidden')
+            ->assertDontSee('Open review and publishing')
             ->assertDontSee('Designate published now')
             ->assertDontSee('Approve candidate')
             ->assertDontSee('Schedule approved revision');
+    }
+
+    public function test_page_save_updates_content_and_visibility_without_review(): void
+    {
+        Livewire::actingAs($this->cms)
+            ->test(PageEditor::class, ['pageId' => $this->page->id])
+            ->set('title', 'Updated information')
+            ->set('visible', true)
+            ->call('save')
+            ->assertSee('Page saved.');
+
+        $this->page->refresh()->load('publicationState');
+        $this->assertSame('Updated information', $this->page->title);
+        $this->assertSame($this->page->current_draft_revision_id, $this->page->publicationState->current_public_revision_id);
+        $this->assertDatabaseHas('audit_records', ['action' => 'content.page.saved-visible']);
     }
 
     public function test_expired_preview_signature_is_rejected_and_archived_editor_is_read_only(): void

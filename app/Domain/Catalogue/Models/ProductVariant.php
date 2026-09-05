@@ -21,7 +21,7 @@ final class ProductVariant extends Model
 
     protected function casts(): array
     {
-        return ['archived_at' => 'immutable_datetime', 'lock_version' => 'integer', 'position' => 'integer'];
+        return ['archived_at' => 'immutable_datetime', 'lock_version' => 'integer', 'position' => 'integer', 'price_override_minor' => 'integer', 'compare_at_price_override_minor' => 'integer'];
     }
 
     /** @return BelongsTo<Product, $this> */

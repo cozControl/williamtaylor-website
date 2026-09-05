@@ -36,6 +36,8 @@ final class RoleRegistry
                 PermissionRegistry::MEDIA_REPLACE,
                 PermissionRegistry::MEDIA_ARCHIVE,
                 PermissionRegistry::MEDIA_RESTORE,
+                PermissionRegistry::PRODUCTS_VIEW,
+                PermissionRegistry::PRODUCTS_MANAGE,
                 PermissionRegistry::PAGES_VIEW,
                 PermissionRegistry::PAGES_CREATE,
                 PermissionRegistry::PAGES_EDIT,

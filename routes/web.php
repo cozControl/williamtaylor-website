@@ -2,13 +2,17 @@
 
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\PagePreviewController;
+use App\Http\Controllers\StorefrontCollectionController;
+use App\Http\Controllers\StorefrontProductController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome')->name('home');
+Route::get('/', HomepageController::class)->name('home');
 Route::get('about', AboutController::class)->name('about');
 
 Route::view('collections', 'frontend.collections')->name('collections.index');
+Route::get('collections/{collection:slug}', StorefrontCollectionController::class)->name('collections.show');
 Route::view('shop', 'frontend.shop')->name('products.index');
 Route::view('pre-order', 'frontend.pre-order')->name('preorders.index');
 Route::view('limited-edition', 'frontend.limited-edition')->name('limited-edition.index');
@@ -16,16 +20,18 @@ Route::view('gift-cards', 'frontend.gift-cards')->name('gift-cards.index');
 Route::view('wishlist', 'frontend.wishlist')->name('wishlist.index');
 
 Route::prefix('products')->name('products.')->group(function () {
-    Route::view('the-taylor-oxford-shirt', 'frontend.products.taylor-oxford-shirt')
+    Route::get('the-taylor-oxford-shirt', StorefrontProductController::class)
+        ->defaults('product', 'the-taylor-oxford-shirt')
         ->name('taylor-oxford-shirt');
-    Route::view('mercerized-cotton-polo', 'frontend.products.mercerized-cotton-polo')
+    Route::get('mercerized-cotton-polo', StorefrontProductController::class)->defaults('product', 'mercerized-cotton-polo')
         ->name('mercerized-cotton-polo');
-    Route::view('the-dar-es-salaam-linen-suit', 'frontend.products.dar-es-salaam-linen-suit')
+    Route::get('the-dar-es-salaam-linen-suit', StorefrontProductController::class)->defaults('product', 'the-dar-es-salaam-linen-suit')
         ->name('dar-es-salaam-linen-suit');
-    Route::view('slim-tapered-chinos', 'frontend.products.slim-tapered-chinos')
+    Route::get('slim-tapered-chinos', StorefrontProductController::class)->defaults('product', 'slim-tapered-chinos')
         ->name('slim-tapered-chinos');
-    Route::view('the-executive-overcoat', 'frontend.products.executive-overcoat')
+    Route::get('the-executive-overcoat', StorefrontProductController::class)->defaults('product', 'the-executive-overcoat')
         ->name('executive-overcoat');
+    Route::get('{product:slug}', [StorefrontProductController::class, 'show'])->where('product', '[a-z0-9-]+')->name('show');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

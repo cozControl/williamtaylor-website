@@ -27,7 +27,14 @@ final class CatalogueReadinessEvaluator
             $f[] = 'missing_current_revision';
         } elseif ($revision->product_id !== $p->id) {
             $f[] = 'invalid_revision_ownership';
-        }$options = $p->options()->active()->with('values')->get();
+        }
+        if ($p->base_price_minor === null) {
+            $f[] = 'missing_product_price';
+        }
+        if (! $p->categories()->wherePivot('is_primary', true)->exists()) {
+            $f[] = 'missing_primary_category';
+        }
+        $options = $p->options()->active()->with('values')->get();
         if ($options->count() > 2 || $options->contains(fn ($o) => ! in_array($o->key, ['colour', 'size'], true))) {
             $f[] = 'invalid_option_configuration';
         }$variants = $p->variants()->active()->with('values')->get();
@@ -40,7 +47,7 @@ final class CatalogueReadinessEvaluator
             }
         }if ($variants->isNotEmpty() && ! $p->defaultVariant) {
             $f[] = 'missing_default_variant';
-        } elseif ($p->defaultVariant && ($p->defaultVariant->product_id !== $p->id || $p->defaultVariant->archived_at)) {
+        } elseif ($p->defaultVariant && ($p->defaultVariant->product_id !== $p->id || $p->defaultVariant->archived_at || blank($p->defaultVariant->sku))) {
             $f[] = 'invalid_default_variant';
         }
 

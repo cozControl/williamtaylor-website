@@ -19,7 +19,7 @@ final class ProductOptionValue extends Model
 
     protected function casts(): array
     {
-        return ['archived_at' => 'immutable_datetime', 'position' => 'integer'];
+        return ['archived_at' => 'immutable_datetime', 'position' => 'integer', 'is_active' => 'boolean'];
     }
 
     /** @return BelongsTo<ProductOption, $this> */

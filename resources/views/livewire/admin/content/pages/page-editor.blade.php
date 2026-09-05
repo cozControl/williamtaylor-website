@@ -1,9 +1,8 @@
 <div class="cms-editor" data-cms-editor data-dirty="{{ $dirty ? 'true' : 'false' }}" x-on:open-page-preview.window="window.open($event.detail.url, '_blank', 'noopener')">
-    <div id="draft-feedback" tabindex="-1" class="admin-feedback {{ $feedbackType === 'error' ? 'is-error' : '' }}" role="status" aria-live="assertive" @if(!$feedback) hidden @endif>{{ $feedback }}</div>
+    <div id="page-feedback" tabindex="-1" class="admin-feedback {{ $feedbackType === 'error' ? 'is-error' : '' }}" role="status" aria-live="assertive" @if(!$feedback) hidden @endif>{{ $feedback }}</div>
     <div class="cms-editor-actions">
-        <button class="admin-primary-button" type="button" wire:click="save">Save draft</button>
-        @can(\App\Domain\Identity\Support\PermissionRegistry::PAGES_PREVIEW)<button class="admin-secondary-button" type="button" wire:click="preview">Preview saved revision</button>@endcan
-        <span>Revision {{ $this->page->currentDraftRevision->revision_number }}</span>
+        <button class="admin-primary-button" type="button" wire:click="save">Save page</button>
+        @can(\App\Domain\Identity\Support\PermissionRegistry::PAGES_PREVIEW)<button class="admin-secondary-button" type="button" wire:click="preview">Preview</button>@endcan
     </div>
     <div class="cms-editor-grid">
         <aside class="admin-panel cms-outline" aria-label="Page section outline">
@@ -35,8 +34,7 @@
             @endif
         </section>
         <aside class="admin-panel cms-context">
-            <h2>Draft context</h2><div class="admin-field"><label for="editor-title">Page title</label><input id="editor-title" wire:model="title"></div><div class="admin-field"><label for="editor-slug">Draft slug</label><input id="editor-slug" wire:model="slug"><small>No redirect is created when a draft slug changes.</small></div><div class="admin-field"><label for="editor-template">Template</label><select id="editor-template" wire:model="templateKey">@foreach($templates as $key=>$definition)<option value="{{ $key }}">{{ $definition['label'] }}</option>@endforeach</select></div><div class="admin-field"><label>Locale<input value="English (en)" readonly></label></div><div class="admin-field"><label for="change-summary">Change summary</label><textarea id="change-summary" wire:model="changeSummary" maxlength="2000"></textarea></div>
-            <dl><dt>State</dt><dd>Active draft</dd><dt>Draft reference</dt><dd>{{ substr($expectedRevisionId,0,10) }}</dd><dt>Workflow</dt><dd>{{ str_replace('_', ' ', $this->page->publicationState?->candidate_state?->value ?? ($this->page->publicationState?->current_public_revision_id ? 'published' : 'draft')) }}</dd><dt>Version in review</dt><dd>{{ $this->page->publicationState?->candidateRevision?->revision_number ?? 'None' }}</dd><dt>Published version</dt><dd>{{ $this->page->publicationState?->currentPublicRevision?->revision_number ?? 'None' }}</dd></dl><a class="admin-secondary-button" href="{{ route('admin.content.pages.show', $this->page) }}">Open review and publishing</a>
+            <h2>Page details</h2><div class="admin-field"><label for="editor-title">Page title</label><input id="editor-title" wire:model="title"></div><div class="admin-field"><label for="editor-slug">Slug</label><input id="editor-slug" wire:model="slug"></div><div class="admin-field"><label for="editor-template">Type</label><select id="editor-template" wire:model="templateKey">@foreach($templates as $key=>$definition)<option value="{{ $key }}">{{ $definition['label'] }}</option>@endforeach</select></div><div class="admin-field"><label>Status<select wire:model="visible"><option value="1">Visible</option><option value="0">Hidden</option></select></label></div><div class="admin-field"><label>Language<input value="English (en)" readonly></label></div><div class="admin-field"><label for="change-summary">Change note <small>Optional</small></label><textarea id="change-summary" wire:model="changeSummary" maxlength="2000"></textarea></div>
         </aside>
     </div>
 </div>

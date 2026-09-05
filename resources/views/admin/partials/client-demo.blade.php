@@ -39,6 +39,7 @@
     </section>
 @endcan
 
+@if (app(\App\Support\Demo\DemoMode::class)->configured())
 @can(\App\Domain\Identity\Support\PermissionRegistry::ORDERS_VIEW)
     <section class="admin-panel" aria-labelledby="customer-orders-title">
         <div class="admin-section-heading"><p>Customer Orders</p><h2 id="customer-orders-title">Manage Customer Orders</h2></div>
@@ -46,3 +47,4 @@
         <a class="admin-primary-button" href="{{ route('admin.orders.index') }}">Open Customer Orders</a>
     </section>
 @endcan
+@endif

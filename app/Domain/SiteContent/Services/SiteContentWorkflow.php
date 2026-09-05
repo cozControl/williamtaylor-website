@@ -135,6 +135,36 @@ final class SiteContentWorkflow
         }, 3);
     }
 
+    public function makeCurrentDraftEffective(User $actor, SiteContent $content): SiteContentPublicationState
+    {
+        $editPermission = $this->permission($content, 'edit');
+        $publishPermission = $this->permission($content, 'publish');
+        Gate::forUser($actor)->authorize($editPermission);
+        Gate::forUser($actor)->authorize($publishPermission);
+
+        return DB::transaction(function () use ($actor, $content, $publishPermission): SiteContentPublicationState {
+            [$locked, $state] = $this->lock($content);
+            $revision = $this->revision($locked->current_draft_revision_id, $locked);
+            $this->schema->validate($locked->type, $revision->payload);
+            $from = $state->candidate_state !== null
+                ? $state->candidate_state->value
+                : ($state->current_public_revision_id ? 'published' : 'draft');
+            $state->forceFill([
+                'current_public_revision_id' => $revision->getKey(),
+                'candidate_revision_id' => null,
+                'candidate_state' => null,
+                'submitted_by' => null,
+                'approved_by' => null,
+                'approved_at' => null,
+                'scheduled_by' => null,
+                'scheduled_for' => null,
+            ]);
+            $this->transition($state, $locked, $revision, $actor, $from, 'published', 'site-content.saved-live', $publishPermission);
+
+            return $state->fresh();
+        }, 3);
+    }
+
     public function schedule(User $actor, SiteContent $content, CarbonInterface $at, string $fingerprint): SiteContentPublicationState
     {
         $permission = $this->permission($content, 'schedule');

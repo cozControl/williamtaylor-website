@@ -34,8 +34,10 @@ final class UpdateProductVariant
         ?string $label,
         int $position,
         ?array $combination = null,
+        ?int $priceOverrideMinor = null,
+        ?int $compareAtPriceOverrideMinor = null,
     ): ProductVariant {
-        return DB::transaction(function () use ($actor, $product, $variant, $expectedProduct, $expectedVariant, $sku, $barcode, $label, $position, $combination): ProductVariant {
+        return DB::transaction(function () use ($actor, $product, $variant, $expectedProduct, $expectedVariant, $sku, $barcode, $label, $position, $combination, $priceOverrideMinor, $compareAtPriceOverrideMinor): ProductVariant {
             $lockedProduct = Product::query()->lockForUpdate()->findOrFail($product->id);
             $lockedVariant = ProductVariant::query()->lockForUpdate()->findOrFail($variant->id);
 
@@ -59,6 +61,8 @@ final class UpdateProductVariant
                 'editorial_label' => trim((string) $label) ?: null,
                 'position' => $position,
                 'combination_fingerprint' => $lockedVariant->combination_fingerprint,
+                'price_override_minor' => $priceOverrideMinor,
+                'compare_at_price_override_minor' => $compareAtPriceOverrideMinor,
             ];
 
             if ($combination !== null) {

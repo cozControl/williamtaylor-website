@@ -129,6 +129,59 @@ final class PagePublishingWorkflow
         }, 3);
     }
 
+    public function makeCurrentDraftVisible(User $actor, Page $page): PagePublicationState
+    {
+        Gate::forUser($actor)->authorize(PermissionRegistry::PAGES_EDIT);
+        Gate::forUser($actor)->authorize(PermissionRegistry::PAGES_PUBLISH);
+
+        return DB::transaction(function () use ($actor, $page): PagePublicationState {
+            [$locked, $state] = $this->lock($page);
+            $this->assertActive($locked);
+            $revision = ContentRevision::query()->whereKey($locked->current_draft_revision_id)->lockForUpdate()->firstOrFail();
+            abort_unless($revision->resource_type === Page::class && $revision->resource_id === $locked->getKey(), 404);
+            $this->readiness->ensureReady($locked, $revision);
+            $from = $this->label($state);
+            $state->forceFill([
+                'current_public_revision_id' => $revision->getKey(),
+                'candidate_revision_id' => null,
+                'candidate_state' => null,
+                'submitted_by' => null,
+                'approved_by' => null,
+                'approved_at' => null,
+                'scheduled_by' => null,
+                'scheduled_for' => null,
+            ]);
+            $this->transition($state, $locked, $revision, $actor, $from, 'published', 'content.page.saved-visible', PermissionRegistry::PAGES_PUBLISH);
+            $pageId = (string) $locked->getKey();
+            DB::afterCommit(function () use ($locked, $revision, $pageId): void {
+                event(new PageRevisionPublished($locked->getKey(), $revision->getKey()));
+                $this->publicPageCache->invalidate($pageId);
+            });
+
+            return $state->fresh();
+        }, 3);
+    }
+
+    public function makeHidden(User $actor, Page $page): PagePublicationState
+    {
+        Gate::forUser($actor)->authorize(PermissionRegistry::PAGES_EDIT);
+        Gate::forUser($actor)->authorize(PermissionRegistry::PAGES_UNPUBLISH);
+
+        return DB::transaction(function () use ($actor, $page): PagePublicationState {
+            [$locked, $state] = $this->lock($page);
+            if ($state->current_public_revision_id === null) {
+                return $state;
+            }
+            $revision = ContentRevision::query()->whereKey($state->current_public_revision_id)->lockForUpdate()->firstOrFail();
+            $state->current_public_revision_id = null;
+            $this->transition($state, $locked, $revision, $actor, 'published', 'hidden', 'content.page.saved-hidden', PermissionRegistry::PAGES_UNPUBLISH);
+            $pageId = (string) $locked->getKey();
+            DB::afterCommit(fn () => $this->publicPageCache->invalidate($pageId));
+
+            return $state->fresh();
+        }, 3);
+    }
+
     public function schedule(User $actor, Page $page, CarbonInterface $scheduledForUtc, string $fingerprint): PagePublicationState
     {
         Gate::forUser($actor)->authorize(PermissionRegistry::PAGES_SCHEDULE);

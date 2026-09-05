@@ -10,8 +10,10 @@ use App\Domain\Content\Support\SectionRegistry;
 use App\Domain\Content\Support\TemplateRegistry;
 use App\Domain\Media\Enums\MediaAssetState;
 use App\Domain\Media\Models\MediaAsset;
+use App\Domain\Publishing\Services\PagePublishingWorkflow;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -41,6 +43,8 @@ final class PageEditor extends Component
 
     public bool $dirty = false;
 
+    public bool $visible = true;
+
     public function mount(string $pageId): void
     {
         $page = Page::query()->with('currentDraftRevision')->findOrFail($pageId);
@@ -50,6 +54,7 @@ final class PageEditor extends Component
         $this->slug = $page->slug;
         $this->templateKey = $page->template_key;
         $this->sections = $page->currentDraftRevision->payload['sections'];
+        $this->visible = $page->publicationState?->current_public_revision_id !== null;
     }
 
     public function updated(): void
@@ -116,10 +121,20 @@ final class PageEditor extends Component
         $this->dirty = true;
     }
 
-    public function save(SavePageDraftRevision $action): void
+    public function save(SavePageDraftRevision $action, PagePublishingWorkflow $workflow): void
     {
         try {
-            $revision = $action->handle($this->actor(), $this->page(), $this->expectedRevisionId, $this->title, $this->slug, $this->templateKey, $this->sections, $this->changeSummary);
+            $revision = DB::transaction(function () use ($action, $workflow) {
+                $page = $this->page();
+                $revision = $action->handle($this->actor(), $page, $this->expectedRevisionId, $this->title, $this->slug, $this->templateKey, $this->sections, $this->changeSummary);
+                if ($this->visible) {
+                    $workflow->makeCurrentDraftVisible($this->actor(), $page->fresh());
+                } else {
+                    $workflow->makeHidden($this->actor(), $page->fresh());
+                }
+
+                return $revision;
+            }, 3);
         } catch (StaleDraftException $exception) {
             $this->error($exception->getMessage());
             $this->dispatch('draft-conflict');
@@ -130,7 +145,7 @@ final class PageEditor extends Component
         $this->changeSummary = '';
         $this->dirty = false;
         unset($this->page);
-        $this->success('Draft revision '.$revision->revision_number.' saved immutably.');
+        $this->success('Page saved.');
     }
 
     public function preview(CreatePagePreviewUrl $action): void

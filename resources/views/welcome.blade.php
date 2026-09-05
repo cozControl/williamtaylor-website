@@ -6,33 +6,33 @@
     @include('frontend.partials.header')
     <main class="flex-1 pb-16 lg:pb-0">
      <div class="w-full">
-      <section class="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
+      <section data-homepage-hero class="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
        <div class="absolute inset-0 transition-opacity duration-1500" style="opacity: 1;">
-        <img alt="" class="w-full h-full object-cover object-top" src="/website/images/306170464_Screenshot2026-07-10at215946.png"/>
+        <img alt="" class="w-full h-full object-cover object-top" src="{{ $homepageHero['background_url'] }}"/>
        </div>
        <div class="relative z-10 text-center px-6 max-w-5xl mx-auto" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 300;'>
         <p class="text-xs tracking-[0.3em] uppercase text-wt-gold mb-6" style="opacity: 1; transform: none;">
-         Tanzania · 2026 Collection
+         {{ $homepageHero['eyebrow'] }}
         </p>
         <h1 class="text-wt-cream mb-4" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-size: clamp(3rem, 10vw, 7rem); line-height: 1; letter-spacing: -0.02em; font-weight: 300; opacity: 1; transform: none;'>
-         William Taylor
+         {{ $homepageHero['title'] }}
         </h1>
         <p class="text-wt-cream mb-10" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-size: clamp(1rem, 3vw, 1.75rem); font-style: italic; font-weight: 300; opacity: 1; transform: none;'>
-         Contemporary Menswear
+         {{ $homepageHero['subtitle'] }}
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center" style="opacity: 1; transform: none;">
-         <a class="btn-gold px-12 py-4 text-sm inline-flex items-center gap-2" href="{{ route('products.index', ['sort' => 'newest']) }}" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 400;'>
+         <a class="btn-gold px-12 py-4 text-sm inline-flex items-center gap-2" href="{{ $homepageHero['primary_cta_url'] }}" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 400;'>
           <span aria-hidden="true" class="inline-flex items-center justify-center bg-wt-oxblood rounded-full flex-shrink-0" style="width: 20px; height: 20px;">
            <img alt="" class="mix-blend-screen object-contain" src="/website/images/cf030fe26_ICONlight.png" style="width: 14px; height: 14px;"/>
           </span>
-          Shop New Arrivals
+          {{ $homepageHero['primary_cta_label'] }}
          </a>
-         <a class="border border-wt-cream text-wt-cream hover:bg-wt-cream hover:text-wt-oxblood transition-all duration-300 px-12 py-4 text-xs tracking-widest uppercase" href="{{ route('collections.index') }}" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 400;'>
-          Explore Collections
+         <a class="border border-wt-cream text-wt-cream hover:bg-wt-cream hover:text-wt-oxblood transition-all duration-300 px-12 py-4 text-xs tracking-widest uppercase" href="{{ $homepageHero['secondary_cta_url'] }}" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 400;'>
+          {{ $homepageHero['secondary_cta_label'] }}
          </a>
         </div>
        </div>
-       <div class="absolute bottom-24 lg:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-wt-cream/60" style="opacity: 1;">
+       <div data-homepage-hero-scroll class="absolute bottom-24 lg:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-wt-cream/60{{ $homepageHero['scroll_indicator_enabled'] ? '' : ' hidden' }}" style="opacity: 1;">
         <span class="font-label text-[10px] tracking-[0.2em] uppercase">
          Scroll
         </span>
@@ -1543,4 +1543,37 @@
    </div>
   </div>
 
+<script type="application/json" id="homepage-hero-data">@json($homepageHero)</script>
+<script>
+(() => {
+ const dataNode = document.getElementById('homepage-hero-data');
+ const root = document.getElementById('root');
+ if (!dataNode || !root) return;
+ const data = JSON.parse(dataNode.textContent);
+ const setText = (node, value) => { if (node && node.textContent.trim() !== value) node.textContent = value; };
+ const setAttribute = (node, name, value) => { if (node && node.getAttribute(name) !== value) node.setAttribute(name, value); };
+ const synchronizeHero = () => {
+  const hero = root.querySelector('main section');
+  if (!hero) return;
+  hero.dataset.homepageHero = '';
+  const content = hero.querySelector(':scope > .relative.z-10');
+  const copy = content ? [...content.children].filter(node => node.matches('p, h1')) : [];
+  setText(copy[0], data.eyebrow);
+  setText(copy[1], data.title);
+  setText(copy[2], data.subtitle);
+  const actions = content?.querySelectorAll('a') || [];
+  setText(actions[0]?.lastChild, data.primary_cta_label);
+  setAttribute(actions[0], 'href', data.primary_cta_url);
+  setText(actions[1], data.secondary_cta_label);
+  setAttribute(actions[1], 'href', data.secondary_cta_url);
+  setAttribute(hero.querySelector(':scope > div.absolute.inset-0 img'), 'src', data.background_url);
+  const scrollLabel = [...hero.querySelectorAll('span')].find(node => node.textContent.trim() === 'Scroll');
+  scrollLabel?.parentElement?.classList.toggle('hidden', !data.scroll_indicator_enabled);
+ };
+ const observer = new MutationObserver(synchronizeHero);
+ observer.observe(root, {childList: true, subtree: true});
+ window.addEventListener('load', () => requestAnimationFrame(() => requestAnimationFrame(synchronizeHero)), {once: true});
+ synchronizeHero();
+})();
+</script>
 @endsection
