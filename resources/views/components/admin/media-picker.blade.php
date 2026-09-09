@@ -12,10 +12,12 @@
     'orders' => [],
     'alts' => [],
     'error' => null,
+    'endpoint' => null,
+    'assetLabel' => 'images',
 ])
 
 <div @class(['admin-picker', 'admin-field-invalid' => $error]) x-data="adminMediaPicker(@js([
-    'endpoint' => route('admin.media.picker'),
+    'endpoint' => $endpoint ?? route('admin.media.picker'),
     'mode' => $mode,
     'selected' => array_values($selected),
 ]))" data-media-picker="{{ $id }}">
@@ -35,15 +37,15 @@
             </article>
         </template>
     </div>
-    <p class="admin-field-help" x-show="!selected.length">No image selected.</p>
-    <button type="button" class="admin-secondary-button" @click="open()"><span x-text="selected.length ? @js($changeLabel) : @js($buttonLabel)">{{ count($selected) > 0 ? $changeLabel : $buttonLabel }}</span></button>
-    @if($error)<small class="admin-field-error" role="alert">{{ $error }}</small>@endif
+    <p class="admin-field-help" x-show="!selected.length">No {{ rtrim($assetLabel, 's') }} selected.</p>
+    <button type="button" class="admin-secondary-button" @click="open()" @if($error) aria-invalid="true" aria-describedby="{{ $id }}-error" @endif><span x-text="selected.length ? @js($changeLabel) : @js($buttonLabel)">{{ count($selected) > 0 ? $changeLabel : $buttonLabel }}</span></button>
+    @if($error)<small id="{{ $id }}-error" class="admin-field-error" role="alert">{{ $error }}</small>@endif
 
     <dialog class="admin-media-picker-dialog" x-ref="dialog" @close="cancel()">
         <div class="admin-picker-dialog-header"><div><p>Media Library</p><h2>Choose media</h2></div><button type="button" aria-label="Close media picker" @click="cancel()">×</button></div>
         <x-admin.field label="Search" for="{{ $id }}-search" help="Search filename, title or default alt text."><input id="{{ $id }}-search" type="search" x-model="search" @input.debounce.400ms="load(1)" placeholder="Filename or alt text"></x-admin.field>
         <div class="admin-picker-current" x-show="working.length"><strong>Current selection</strong><template x-for="asset in working" :key="'current-'+asset.id"><span x-text="asset.title"></span></template></div>
-        <div class="admin-picker-toolbar"><span x-text="loading ? 'Loading…' : total+' ready images'"></span><div><a class="admin-secondary-button" href="{{ route('admin.media.index') }}" target="_blank" rel="noopener">Upload new media</a><button type="button" class="admin-secondary-button" @click="load(1)">Refresh media</button></div></div>
+        <div class="admin-picker-toolbar"><span x-text="loading ? 'Loading…' : total+' ready '+@js($assetLabel)"></span><div><a class="admin-secondary-button" href="{{ route('admin.media.index') }}" target="_blank" rel="noopener">Upload new media</a><button type="button" class="admin-secondary-button" @click="load(1)">Refresh media</button></div></div>
         <div class="admin-picker-results" x-show="results.length">
             <template x-for="asset in results" :key="asset.id">
                 <button type="button" class="admin-picker-result" :class="{'is-selected': isWorking(asset.id)}" @click="toggle(asset)">
@@ -51,7 +53,7 @@
                 </button>
             </template>
         </div>
-        <div class="admin-picker-empty" x-show="!loading && !results.length"><p>No ready images found.</p><a href="{{ route('admin.media.index') }}" target="_blank" rel="noopener">Upload an image to the Media Library first.</a></div>
+        <div class="admin-picker-empty" x-show="!loading && !results.length"><p>No ready {{ $assetLabel }} found.</p><a href="{{ route('admin.media.index') }}" target="_blank" rel="noopener">Upload media to the Media Library first.</a></div>
         <div class="admin-picker-pagination"><button type="button" class="admin-secondary-button" @click="load(page-1)" :disabled="page <= 1">Previous</button><span x-text="'Page '+page+' of '+lastPage"></span><button type="button" class="admin-secondary-button" @click="load(page+1)" :disabled="page >= lastPage">Next</button></div>
         <div class="admin-page-actions"><button type="button" class="admin-secondary-button" @click="cancel()">Cancel</button><button type="button" class="admin-primary-button" @click="commit()" :disabled="!working.length">Use selected</button></div>
     </dialog>

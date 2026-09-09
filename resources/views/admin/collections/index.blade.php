@@ -1,10 +1,10 @@
 <x-admin.layout title="Collections" description="Group and order Products for storefront ranges and featured edits." eyebrow="Catalogue" :breadcrumbs="['Catalogue' => route('admin.catalogue.index'), 'Collections' => null]">
-    <x-admin.flash :errors="$errors" />
-    <div class="admin-page-actions">
+    <x-slot:actions>
         @can('products.manage')
             <a class="admin-primary-button" href="{{ route('admin.collections.create') }}">New Collection</a>
         @endcan
-    </div>
+    </x-slot:actions>
+    <x-admin.flash :errors="$errors" />
     <form method="GET" class="admin-panel catalogue-filters">
         <label><span>Search Collections</span><input name="search" value="{{ $search }}" placeholder="Collection name"></label>
         <label><span>Visibility</span><select name="status"><option value="all">All</option><option value="visible" @selected($status === 'visible')>Visible</option><option value="hidden" @selected($status === 'hidden')>Hidden</option><option value="archived" @selected($status === 'archived')>Archived</option></select></label>
@@ -44,7 +44,7 @@
                     <td data-label="Visibility">{{ $item->archived_at ? 'Archived' : ($item->catalogue_status === 'ready' ? 'Visible' : 'Hidden') }}</td>
                     <td data-label="Updated">{{ $item->updated_at->diffForHumans() }}</td>
                     <td data-label="Actions">
-                        <div class="admin-page-actions">
+                        <div class="catalogue-row-actions">
                             @if(!$item->archived_at)
                                 @can('products.manage')
                                     <a class="admin-secondary-button" href="{{ route('admin.collections.edit', $item) }}">Edit</a>

@@ -38,7 +38,7 @@ final class Collection extends Model
     /** @return HasMany<CollectionProduct, $this> */
     public function products(): HasMany
     {
-        return $this->hasMany(CollectionProduct::class)->orderBy('position');
+        return $this->hasMany(CollectionProduct::class)->active()->orderBy('position');
     }
 
     /** @param Builder<self> $query

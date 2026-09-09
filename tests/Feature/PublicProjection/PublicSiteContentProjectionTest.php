@@ -92,7 +92,7 @@ final class PublicSiteContentProjectionTest extends TestCase
         $this->artisan('public-site-content:warm')->assertSuccessful();
     }
 
-    public function test_disabled_projection_has_zero_database_queries(): void
+    public function test_disabled_navigation_rollout_still_checks_live_site_settings(): void
     {
         config()->set('public_site_content.enabled', false);
         DB::flushQueryLog();
@@ -100,7 +100,7 @@ final class PublicSiteContentProjectionTest extends TestCase
 
         app(ResolvePublicSiteChrome::class)->resolve();
 
-        $this->assertCount(0, DB::getQueryLog());
+        $this->assertCount(1, DB::getQueryLog());
     }
 
     public function test_uncached_missing_surface_resolution_stays_within_four_queries(): void

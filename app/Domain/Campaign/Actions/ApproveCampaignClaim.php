@@ -38,9 +38,6 @@ final class ApproveCampaignClaim
             if (! hash_equals($item->value_checksum, $normalized['checksum'])) {
                 throw new InvalidArgumentException('Campaign claim checksum is invalid.');
             }
-            if (in_array($actor->id, [$item->created_by, $item->last_material_by, $item->submitted_by], true)) {
-                throw new AuthorizationException('Campaign claims require an independent approver.');
-            }
             $item->forceFill(['approval_status' => 'approved', 'approved_by' => $actor->id, 'approved_at' => now('UTC'), 'approved_checksum' => $item->value_checksum])->save();
             $c->increment('lock_version');
             $this->audit->handle('campaign.claim.approved', $item, $actor, ['state' => 'in_review'], ['state' => 'approved', 'checksum' => $item->approved_checksum], permission: PermissionRegistry::CAMPAIGN_CLAIMS_APPROVE);

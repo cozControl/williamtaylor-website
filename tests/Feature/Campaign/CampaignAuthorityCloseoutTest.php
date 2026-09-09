@@ -62,7 +62,7 @@ final class CampaignAuthorityCloseoutTest extends TestCase
         $this->assertSame(1, Role::query()->where('name', RoleRegistry::CAMPAIGN_CLAIMS_APPROVER)->count());
     }
 
-    public function test_approval_requires_permission_and_independent_actor_and_records_checksum(): void
+    public function test_approval_requires_permission_and_allows_the_submitter_to_approve(): void
     {
         [$campaign, $claim] = $this->submittedClaim();
         try {
@@ -72,8 +72,14 @@ final class CampaignAuthorityCloseoutTest extends TestCase
             $this->assertSame('in_review', $claim->fresh()->approval_status);
         }
         $this->author->givePermissionTo(PermissionRegistry::CAMPAIGN_CLAIMS_APPROVE);
-        $this->expectException(AuthorizationException::class);
-        app(ApproveCampaignClaim::class)->handle($this->author, $campaign, $claim, $this->claims($campaign));
+        $approved = app(ApproveCampaignClaim::class)->handle($this->author, $campaign, $claim, $this->claims($campaign));
+        $this->assertSame('approved', $approved->approval_status);
+        $this->assertSame($approved->value_checksum, $approved->approved_checksum);
+        $this->assertSame($this->author->id, $approved->approved_by);
+        $this->assertDatabaseHas('audit_records', [
+            'action' => 'campaign.claim.approved',
+            'actor_user_id' => $this->author->id,
+        ]);
     }
 
     public function test_separate_authorized_actor_approves_and_material_edit_invalidates(): void

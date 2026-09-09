@@ -21,6 +21,12 @@
    <script crossorigin="" src="/website/js/index-DxdnTNDA.js" type="module"></script>
   @endif
   <link crossorigin="" href="/website/css/index-X8-QjRMe.css" rel="stylesheet"/>
+  <style data-storefront-grid-spacing="ecom-home-3a">
+   .wt-new-arrivals-product-grid{column-gap:1rem;row-gap:2rem}
+   .wt-collection-product-grid{column-gap:1rem;row-gap:2.5rem}
+   @media (min-width:768px){.wt-new-arrivals-product-grid{column-gap:1.5rem}.wt-collection-product-grid{column-gap:1rem}}
+   @media (min-width:1024px){.wt-collection-product-grid{column-gap:1.5rem}}
+  </style>
   <script type="module">
    if (window.self === window.top && ["http:", "https:"].includes(window.location.protocol)) {
   let lastPath = "";

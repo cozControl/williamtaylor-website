@@ -36,12 +36,13 @@ final class FactoryBaselineTest extends TestCase
         $this->assertNotContains('inventory.view', PermissionRegistry::all());
     }
 
-    public function test_database_seeder_is_opt_in_and_creates_no_business_data_by_default(): void
+    public function test_database_seeder_always_creates_the_administrator_but_keeps_factory_data_opt_in(): void
     {
         config()->set('factory.seed_enabled', false);
         $this->seed(DatabaseSeeder::class);
-        $this->assertDatabaseCount('users', 0);
-        $this->assertDatabaseCount('roles', 0);
+        $administrator = User::query()->where('email', 'admin@example.com')->sole();
+        $this->assertTrue(Hash::check('password123!@', $administrator->password));
+        $this->assertTrue($administrator->hasRole(RoleRegistry::SUPER_ADMINISTRATOR));
         $this->assertDatabaseCount('site_contents', 0);
         $this->assertDatabaseCount('media_assets', 0);
     }

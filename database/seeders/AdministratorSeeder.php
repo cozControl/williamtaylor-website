@@ -9,55 +9,55 @@ use App\Domain\Identity\Support\RoleRegistry;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
-use InvalidArgumentException;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\PermissionRegistrar;
 
 final class AdministratorSeeder extends Seeder
 {
+    private const NAME = 'Administrator';
+
+    private const EMAIL = 'admin@example.com';
+
+    private const PASSWORD = 'password123!@';
+
     public function run(): void
     {
-        $configured = config('factory.users.administrator');
-
-        if (! is_array($configured)) {
-            throw new InvalidArgumentException('The administrator seed configuration is missing.');
-        }
-
-        $administrator = Validator::make($configured, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email:rfc', 'max:255'],
-            'password' => ['required', 'string', Password::min(12)],
-            'role' => ['required', 'string', Rule::in([RoleRegistry::SUPER_ADMINISTRATOR])],
-        ])->validate();
-        $email = mb_strtolower(trim($administrator['email']));
-
-        DB::transaction(function () use ($administrator, $email): void {
+        DB::transaction(function (): void {
             app(ProvisionRegisteredAccess::class)->handle();
 
             $user = User::query()
-                ->whereRaw('LOWER(email) = ?', [$email])
+                ->whereRaw('LOWER(email) = ?', [self::EMAIL])
                 ->lockForUpdate()
                 ->first();
             $created = $user === null;
 
             if ($created) {
                 $user = User::query()->create([
-                    'name' => $administrator['name'],
-                    'email' => $email,
-                    'password' => $administrator['password'],
+                    'name' => self::NAME,
+                    'email' => self::EMAIL,
+                    'password' => self::PASSWORD,
                 ]);
             }
 
             $before = [
                 'created' => false,
+                'name' => $user->name,
+                'email' => $user->email,
                 'email_verified' => $user->email_verified_at !== null,
                 'roles' => $user->getRoleNames()->sort()->values()->all(),
             ];
 
-            if ($user->email_verified_at === null) {
-                $user->forceFill(['email_verified_at' => now('UTC')])->save();
+            $identityChanged = $user->name !== self::NAME
+                || $user->email !== self::EMAIL
+                || ! Hash::check(self::PASSWORD, $user->password);
+
+            if ($identityChanged || $user->email_verified_at === null) {
+                $user->forceFill([
+                    'name' => self::NAME,
+                    'email' => self::EMAIL,
+                    'password' => self::PASSWORD,
+                    'email_verified_at' => $user->email_verified_at ?? now('UTC'),
+                ])->save();
             }
 
             if (! $user->hasRole(RoleRegistry::SUPER_ADMINISTRATOR)) {
@@ -69,6 +69,7 @@ final class AdministratorSeeder extends Seeder
             app(PermissionRegistrar::class)->forgetCachedPermissions();
             $afterRoles = $user->fresh()->getRoleNames()->sort()->values()->all();
             $changed = $created
+                || $identityChanged
                 || $before['email_verified'] === false
                 || $before['roles'] !== $afterRoles;
 
@@ -80,6 +81,8 @@ final class AdministratorSeeder extends Seeder
                     before: $before,
                     after: [
                         'created' => $created,
+                        'name' => self::NAME,
+                        'email' => self::EMAIL,
                         'email_verified' => true,
                         'roles' => $afterRoles,
                     ],

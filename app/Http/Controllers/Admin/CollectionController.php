@@ -15,8 +15,10 @@ use App\Domain\Catalogue\Actions\UpdateCollectionVisibility;
 use App\Domain\Catalogue\Models\Collection;
 use App\Domain\Catalogue\Models\CollectionProduct;
 use App\Domain\Catalogue\Models\Product;
+use App\Domain\Catalogue\Support\CatalogueReadinessEvaluator;
 use App\Domain\Catalogue\Support\CollectionMediaRoleRegistry;
 use App\Domain\Catalogue\Support\CollectionStateFingerprint;
+use App\Domain\Catalogue\Support\ProductPrice;
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Domain\Media\Contracts\MediaProvider;
 use App\Domain\Media\Enums\MediaAssetState;
@@ -120,6 +122,16 @@ final class CollectionController
             'product_ids.*' => ['string', 'distinct', Rule::exists('products', 'id')->whereNull('archived_at')],
             'product_order' => ['array'],
             'product_order.*' => ['nullable', 'integer', 'min:0', 'max:999'],
+        ], [
+            'name.required' => 'This field is required.',
+            'slug.required' => 'This field is required.',
+            'slug.unique' => 'This Collection URL is already in use.',
+            'description.required' => 'This field is required.',
+            'media_asset_id.exists' => 'The selected Collection image is no longer available.',
+            'product_ids.*.exists' => 'The selected Product is no longer available.',
+            'product_order.*.integer' => 'Display order must be a whole number.',
+            'product_order.*.min' => 'Display order must be zero or greater.',
+            'product_order.*.max' => 'Display order may not be greater than 999.',
         ]);
 
         $mediaId = $data['media_asset_id'] ?? null;
@@ -140,15 +152,17 @@ final class CollectionController
         $productOrder = $data['product_order'] ?? [];
         $selectedOrders = [];
         if (is_array($productIds) && is_array($productOrder)) {
-            foreach ($productIds as $productId) {
+            foreach (array_values($productIds) as $index => $productId) {
                 if (is_string($productId)) {
-                    $selectedOrders[] = (int) ($productOrder[$productId] ?? 999);
+                    $productOrder[$productId] ??= $index;
+                    $selectedOrders[] = (int) $productOrder[$productId];
                 }
             }
         }
         if (count($selectedOrders) !== count(array_unique($selectedOrders))) {
             throw ValidationException::withMessages(['product_order' => 'Each selected Product must have a unique display order.']);
         }
+        $data['product_order'] = $productOrder;
 
         return $data;
     }
@@ -203,7 +217,25 @@ final class CollectionController
     private function editor(Collection $collection, MediaProvider $media, ReadyImagePickerQuery $images): View
     {
         $collection->load(['currentDraftRevision', 'products.product.currentDraftRevision']);
-        $products = Product::query()->active()->with('currentDraftRevision')->orderBy('slug')->get();
+        $products = Product::query()->active()->with(['currentDraftRevision', 'categories'])->orderBy('slug')->get();
+        $productReadiness = $products->mapWithKeys(function (Product $product): array {
+            $result = app(CatalogueReadinessEvaluator::class)->evaluate($product);
+            $labels = [
+                'missing_primary_category' => 'Missing category',
+                'missing_primary_media' => 'Missing image',
+                'unusable_primary_media' => 'Image needs attention',
+                'missing_product_price' => 'Missing price',
+                'missing_variants' => 'Missing variants',
+                'missing_default_variant' => 'Missing default variant',
+            ];
+
+            return [$product->id => [
+                'ready' => $result->ready,
+                'reasons' => array_map(fn (string $code, string $message): string => $labels[$code] ?? Str::headline($message), $result->failureCodes, $result->failureMessages),
+                'category' => $product->categories->firstWhere('pivot.is_primary', true)->name ?? $product->categories->first()->name ?? 'Uncategorized',
+                'price' => app(ProductPrice::class)->format($product->base_price_minor, $product->currency) ?? 'Price not set',
+            ]];
+        });
         $usage = $collection->exists ? MediaUsage::query()->with('asset')->where('owner_type', Collection::class)->where('owner_identifier', $collection->id)->where('field_role', CollectionMediaRoleRegistry::CARD)->first() : null;
         $oldSelectedId = old('media_asset_id', $usage === null ? '' : $usage->media_asset_id);
         $selectedId = is_string($oldSelectedId) ? $oldSelectedId : '';
@@ -217,6 +249,6 @@ final class CollectionController
         ]];
         $mediaAlt = old('media_alt', $usage === null ? $selectedAsset?->default_alt_text : $usage->alt_text_override);
 
-        return view('admin.collections.form', compact('collection', 'products', 'usage', 'selectedMedia', 'mediaAlt'));
+        return view('admin.collections.form', compact('collection', 'products', 'productReadiness', 'usage', 'selectedMedia', 'mediaAlt'));
     }
 }

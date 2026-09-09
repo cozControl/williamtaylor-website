@@ -1,17 +1,7 @@
 @extends('layouts.frontend')
 
 @section('route-bootstrap')
-  <script>
-   if (window.location.pathname === '/limited-edition') {
-    const routeReplaceState = History.prototype.replaceState;
-    routeReplaceState.call(window.history, window.history.state, '', '/collections/limited-edition');
-    window.addEventListener('load', function () {
-     window.setTimeout(function () {
-      routeReplaceState.call(window.history, window.history.state, '', '/limited-edition');
-     }, 1500);
-    }, { once: true });
-   }
-  </script>
+ @php($loadImportedStorefrontRuntime = false)
 @endsection
 
 @section('content')
@@ -163,7 +153,12 @@
        </p>
       </div>
       <div class="max-w-screen-xl mx-auto px-6 lg:px-12 py-16">
-       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" data-limited-edition-grid>
+        @if(!empty($limitedEditionCampaigns))
+         @foreach($limitedEditionCampaigns as $campaign)
+          @include('frontend.partials.limited-edition-campaign-card', ['campaign' => $campaign, 'homepage' => false])
+         @endforeach
+        @else
         <div class="group relative" style="opacity: 1; transform: none;">
          <div class="relative overflow-hidden bg-gray-100 aspect-[3/4]">
           <a href="{{ route('products.dar-es-salaam-linen-suit') }}">
@@ -176,7 +171,7 @@
           </div>
           <div class="absolute bottom-3 left-3">
            <span class="bg-wt-gold text-wt-oxblood font-label text-[10px] tracking-widest px-2 py-0.5">
-            Only 30 Made
+            Limited Edition
            </span>
           </div>
           <button aria-label="Add to wishlist" class="absolute top-3 right-3 w-8 h-8 bg-white/90 flex items-center justify-center shadow transition-all hover:bg-wt-oxblood group/heart">
@@ -216,7 +211,7 @@
           </div>
           <div class="absolute bottom-3 left-3">
            <span class="bg-wt-gold text-wt-oxblood font-label text-[10px] tracking-widest px-2 py-0.5">
-            Only 40 Made
+            Limited Edition
            </span>
           </div>
           <button aria-label="Add to wishlist" class="absolute top-3 right-3 w-8 h-8 bg-white/90 flex items-center justify-center shadow transition-all hover:bg-wt-oxblood group/heart">
@@ -248,9 +243,6 @@
             </span>
            </span>
           </p>
-          <p class="font-label text-[10px] tracking-wider text-red-500 uppercase mt-0.5">
-           Only 8 left
-          </p>
          </div>
         </div>
         <div class="group relative" style="opacity: 1; transform: none;">
@@ -265,7 +257,7 @@
           </div>
           <div class="absolute bottom-3 left-3">
            <span class="bg-wt-gold text-wt-oxblood font-label text-[10px] tracking-widest px-2 py-0.5">
-            Only 25 Made
+            Limited Edition
            </span>
           </div>
           <button aria-label="Add to wishlist" class="absolute top-3 right-3 w-8 h-8 bg-white/90 flex items-center justify-center shadow transition-all hover:bg-wt-oxblood group/heart">
@@ -305,7 +297,7 @@
           </div>
           <div class="absolute bottom-3 left-3">
            <span class="bg-wt-gold text-wt-oxblood font-label text-[10px] tracking-widest px-2 py-0.5">
-            Only 35 Made
+            Limited Edition
            </span>
           </div>
           <button aria-label="Add to wishlist" class="absolute top-3 right-3 w-8 h-8 bg-white/90 flex items-center justify-center shadow transition-all hover:bg-wt-oxblood group/heart">
@@ -351,7 +343,7 @@
           </div>
           <div class="absolute bottom-3 left-3">
            <span class="bg-wt-gold text-wt-oxblood font-label text-[10px] tracking-widest px-2 py-0.5">
-            Only 35 Made
+            Limited Edition
            </span>
           </div>
           <button aria-label="Add to wishlist" class="absolute top-3 right-3 w-8 h-8 bg-white/90 flex items-center justify-center shadow transition-all hover:bg-wt-oxblood group/heart">
@@ -379,6 +371,7 @@
           </p>
          </div>
         </div>
+        @endif
        </div>
       </div>
      </div>

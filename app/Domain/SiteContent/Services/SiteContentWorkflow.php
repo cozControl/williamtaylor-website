@@ -364,7 +364,7 @@ final class SiteContentWorkflow
             'correlation_id' => $correlation,
             'occurred_at' => now('UTC'),
         ]);
-        if (in_array($action, ['site-content.published', 'site-content.unpublished'], true)) {
+        if (in_array($action, ['site-content.published', 'site-content.unpublished', 'site-content.saved-live'], true)) {
             $resourceId = (string) $content->getKey();
             DB::afterCommit(fn () => $this->publicCache->invalidate($resourceId));
         }

@@ -29,23 +29,69 @@ final class HomepageHeroManagementTest extends TestCase
         app(ControlledRoleMutation::class)->run(fn () => $this->manager->assignRole(RoleRegistry::CMS_MANAGER));
     }
 
-    public function test_homepage_navigation_and_route_are_authorized_server_side(): void
+    public function test_homepage_navigation_and_routes_are_authorized_server_side(): void
     {
         $this->get(route('admin.homepage.edit'))->assertRedirect(route('login'));
+        $this->get(route('admin.homepage.hero.edit'))->assertRedirect(route('login'));
+
         $ordinary = User::factory()->create(['email_verified_at' => now()]);
         $ordinary->givePermissionTo('admin.access');
         $this->actingAs($ordinary)->get(route('admin.homepage.edit'))->assertForbidden();
+        $this->actingAs($ordinary)->get(route('admin.homepage.hero.edit'))->assertForbidden();
+        $this->actingAs($ordinary)->put(route('admin.homepage.hero.update'), [])->assertForbidden();
         $this->actingAs($ordinary)->put(route('admin.homepage.update'), [])->assertForbidden();
 
         $this->actingAs($this->manager)->get(route('admin.dashboard'))->assertOk()
             ->assertSeeTextInOrder(['Homepage', 'Site settings', 'Pages', 'Navigation', 'Announcements', 'Media library']);
     }
 
-    public function test_editor_bootstraps_exact_existing_values_and_uses_reusable_media_picker(): void
+    public function test_homepage_workspace_lists_exactly_six_sections_in_storefront_order(): void
     {
-        $this->actingAs($this->manager)->get(route('admin.homepage.edit'))->assertOk()
-            ->assertSee('data-admin-ui-revision="ecom-home-1"', false)
-            ->assertSee('value="Tanzania · 2026 Collection"', false)
+        $response = $this->actingAs($this->manager)->get(route('admin.homepage.edit'))->assertOk()
+            ->assertSee('data-admin-ui-revision="ecom-home-2e"', false)
+            ->assertSeeText('Manage the content and merchandising sections shown on your storefront.')
+            ->assertSeeText('View homepage')
+            ->assertSee('href="'.route('home').'" target="_blank" rel="noopener">View homepage</a>', false)
+            ->assertSeeTextInOrder([
+                'Homepage Hero',
+                'Manage Hero',
+                'New Arrivals',
+                'Manage New Arrivals',
+                "William's Hot Sale",
+                'Manage Hot Sale',
+                'The Future of Style',
+                'Manage The Future of Style',
+                'Limited Edition',
+                'Manage Limited Edition',
+                'Explore the Collection',
+                'Manage Explore the Collection',
+            ])
+            ->assertSee(route('admin.homepage.hero.edit'), false)
+            ->assertSee(route('admin.homepage.new-arrivals.edit'), false)
+            ->assertSee(route('admin.homepage.hot-sale.edit'), false)
+            ->assertSee(route('admin.homepage.future-style.edit'), false)
+            ->assertSee(route('admin.homepage.limited-edition.edit'), false)
+            ->assertSee(route('admin.homepage.explore-collections.edit'), false)
+            ->assertDontSee('name="eyebrow"', false)
+            ->assertDontSee('data-media-picker="homepage-hero-media"', false)
+            ->assertDontSeeText('canonical')
+            ->assertDontSeeText('protected')
+            ->assertDontSeeText('static fallback')
+            ->assertDontSeeText('projection')
+            ->assertDontSeeText('presenter');
+
+        $this->assertSame(6, substr_count($response->getContent(), 'data-homepage-section='));
+        $this->assertDatabaseHas('homepage_heroes', ['id' => HomepageHero::SINGLETON_ID]);
+    }
+
+    public function test_hero_editor_bootstraps_exact_existing_values_and_uses_reusable_media_picker(): void
+    {
+        $response = $this->actingAs($this->manager)->get(route('admin.homepage.hero.edit'))->assertOk();
+        $hero = HomepageHero::query()->sole();
+
+        $response
+            ->assertSee('data-admin-ui-revision="ecom-home-2e"', false)
+            ->assertSee('value="'.e($hero->eyebrow).'"', false)
             ->assertSee('value="William Taylor"', false)
             ->assertSee('value="Contemporary Menswear"', false)
             ->assertSeeText('Shop New Arrivals')
@@ -53,19 +99,20 @@ final class HomepageHeroManagementTest extends TestCase
             ->assertSee('data-media-picker="homepage-hero-media"', false)
             ->assertSeeText('Choose media')
             ->assertSeeText('View homepage')
-            ->assertSeeTextInOrder(['Back', 'Save changes']);
+            ->assertSeeTextInOrder(['Homepage Hero', 'Hero image', 'Primary action', 'Secondary action'])
+            ->assertSeeTextInOrder(['Back to Homepage', 'Save changes']);
 
-        $this->assertDatabaseHas('homepage_heroes', ['id' => HomepageHero::SINGLETON_ID]);
+        $this->assertMatchesRegularExpression('/<section class="admin-panel" data-homepage-hero-card>.*data-media-picker="homepage-hero-media".*<\/section>/s', $response->getContent());
     }
 
     public function test_manager_directly_saves_typed_hero_and_public_projection(): void
     {
-        $this->actingAs($this->manager)->get(route('admin.homepage.edit'))->assertOk();
+        $this->actingAs($this->manager)->get(route('admin.homepage.hero.edit'))->assertOk();
         $hero = HomepageHero::query()->sole();
         $image = $this->image();
-        $response = $this->actingAs($this->manager)->put(route('admin.homepage.update'), [
+        $response = $this->actingAs($this->manager)->put(route('admin.homepage.hero.update'), [
             'lock_version' => $hero->lock_version,
-            'eyebrow' => 'Tanzania · Autumn 2026',
+            'eyebrow' => 'Tanzania Autumn 2026',
             'title' => 'William Taylor Atelier',
             'subtitle' => 'Made with intention',
             'primary_cta_label' => 'Discover New Arrivals',
@@ -76,25 +123,34 @@ final class HomepageHeroManagementTest extends TestCase
             'background_media_id' => $image->id,
         ]);
 
-        $response->assertRedirect(route('admin.homepage.edit'))->assertSessionHas('status', 'Homepage Hero updated successfully.');
+        $response->assertRedirect(route('admin.homepage.hero.edit'))->assertSessionHas('status', 'Homepage Hero updated successfully.');
         $this->assertDatabaseHas('media_usages', ['owner_type' => HomepageHero::class, 'owner_identifier' => $hero->id, 'media_asset_id' => $image->id, 'field_role' => HomepageHero::MEDIA_ROLE]);
         $this->assertDatabaseHas('audit_records', ['action' => 'homepage.hero.updated', 'resource_identifier' => $hero->id]);
+        $this->actingAs($this->manager)->get(route('admin.homepage.hero.edit'))->assertOk()
+            ->assertSee($image->id, false)
+            ->assertSeeText('Change media');
+        $this->actingAs($this->manager)->get(route('admin.homepage.edit'))->assertOk()
+            ->assertSeeText('Background image configured.')
+            ->assertSeeText('Configured');
         $this->get(route('home'))->assertOk()
-            ->assertSeeText('Tanzania · Autumn 2026')
+            ->assertSeeText('Tanzania Autumn 2026')
             ->assertSeeText('William Taylor Atelier')
             ->assertSeeText('Made with intention')
             ->assertSeeText('Discover New Arrivals')
             ->assertSeeText('Browse Collections')
             ->assertSee('homepage-hero-data', false)
             ->assertSee('homepage/'.$image->id, false)
-            ->assertSee('data-homepage-hero', false);
+            ->assertSee('data-homepage-hero', false)
+            ->assertSee('@media (max-width: 767px)', false)
+            ->assertSee('height: 100svh', false)
+            ->assertSee('data-homepage-hero-actions', false);
     }
 
     public function test_validation_preserves_input_and_stale_write_is_rejected(): void
     {
-        $this->actingAs($this->manager)->get(route('admin.homepage.edit'))->assertOk();
+        $this->actingAs($this->manager)->get(route('admin.homepage.hero.edit'))->assertOk();
         $hero = HomepageHero::query()->sole();
-        $this->actingAs($this->manager)->from(route('admin.homepage.edit'))->put(route('admin.homepage.update'), [
+        $this->actingAs($this->manager)->from(route('admin.homepage.hero.edit'))->put(route('admin.homepage.hero.update'), [
             'lock_version' => $hero->lock_version,
             'eyebrow' => '<script>',
             'title' => '',
@@ -103,22 +159,57 @@ final class HomepageHeroManagementTest extends TestCase
             'primary_cta_destination' => 'unbounded',
             'secondary_cta_label' => 'Collections',
             'secondary_cta_destination' => 'collections',
-        ])->assertRedirect(route('admin.homepage.edit'))->assertSessionHasErrors(['eyebrow', 'title', 'primary_cta_destination'])->assertSessionHasInput('subtitle', 'Retained subtitle');
+        ])->assertRedirect(route('admin.homepage.hero.edit'))
+            ->assertSessionHasErrors(['eyebrow', 'title', 'primary_cta_destination'])
+            ->assertSessionHasInput('subtitle', 'Retained subtitle');
 
         $payload = [...HomepageHero::defaults(), 'lock_version' => 0, 'background_media_id' => null];
-        $this->actingAs($this->manager)->put(route('admin.homepage.update'), $payload)
+        $this->actingAs($this->manager)->put(route('admin.homepage.hero.update'), $payload)
             ->assertSessionHasErrors('lock_version');
+    }
+
+    public function test_legacy_hero_update_route_remains_compatible(): void
+    {
+        $this->actingAs($this->manager)->get(route('admin.homepage.hero.edit'))->assertOk();
+        $hero = HomepageHero::query()->sole();
+
+        $this->actingAs($this->manager)->put(route('admin.homepage.update'), [
+            ...HomepageHero::defaults(),
+            'lock_version' => $hero->lock_version,
+            'background_media_id' => null,
+        ])->assertRedirect(route('admin.homepage.hero.edit'));
+    }
+
+    public function test_public_homepage_section_order_remains_unchanged(): void
+    {
+        $html = $this->get(route('home'))->assertOk()->getContent();
+        $offset = 0;
+
+        foreach ([
+            '<section data-homepage-hero',
+            'New Arrivals',
+            "William's Hot Sale",
+            'The Future of Style',
+            'LIMITED EDITION',
+            'Explore the Collection',
+            'The Summer Edit',
+        ] as $marker) {
+            $position = strpos($html, $marker, $offset);
+            $this->assertNotFalse($position, 'Missing or out-of-order Homepage marker: '.$marker);
+            $offset = $position + strlen($marker);
+        }
     }
 
     public function test_public_homepage_uses_exact_static_fallback_without_record(): void
     {
+        $defaults = HomepageHero::defaults();
         $this->assertDatabaseCount('homepage_heroes', 0);
         $this->get(route('home'))->assertOk()
-            ->assertSeeText('Tanzania · 2026 Collection')
-            ->assertSeeText('William Taylor')
-            ->assertSeeText('Contemporary Menswear')
-            ->assertSeeText('Shop New Arrivals')
-            ->assertSeeText('Explore Collections')
+            ->assertSeeText($defaults['eyebrow'])
+            ->assertSeeText($defaults['title'])
+            ->assertSeeText($defaults['subtitle'])
+            ->assertSeeText($defaults['primary_cta_label'])
+            ->assertSeeText($defaults['secondary_cta_label'])
             ->assertSee('/website/images/306170464_Screenshot2026-07-10at215946.png', false);
     }
 

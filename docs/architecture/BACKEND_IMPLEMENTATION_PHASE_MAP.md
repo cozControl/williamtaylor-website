@@ -86,4 +86,4 @@ BE-5C.1 adds the Catalogue-owned curated Collection foundation: immutable revisi
 
 ### BE-5C.2 — Campaigns, schedules and governed claims (closed 2026-07-26)
 
-Dedicated sensitive claim authority, independent approval, ordered Product targets, Campaign media, schedules, readiness/effective state, audit/cache controls, archive/restore, and full closeout validation are complete. See `docs/backend/BE-5C-2_COMPLETION_REPORT.md`. Phase 12 remains unstarted.
+Dedicated sensitive claim authority, permission-gated approval, ordered Product targets, Campaign media, schedules, readiness/effective state, audit/cache controls, archive/restore, and full closeout validation are complete. See `docs/backend/BE-5C-2_COMPLETION_REPORT.md`. Phase 12 remains unstarted.

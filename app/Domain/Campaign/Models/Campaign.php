@@ -2,6 +2,7 @@
 
 namespace App\Domain\Campaign\Models;
 
+use App\Domain\Media\Models\MediaUsage;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -25,7 +26,7 @@ final class Campaign extends Model
 
     protected function casts(): array
     {
-        return ['starts_at' => 'immutable_datetime', 'ends_at' => 'immutable_datetime', 'archived_at' => 'immutable_datetime', 'lock_version' => 'integer'];
+        return ['starts_at' => 'immutable_datetime', 'ends_at' => 'immutable_datetime', 'estimated_delivery_date' => 'immutable_date', 'archived_at' => 'immutable_datetime', 'lock_version' => 'integer'];
     }
 
     /** @return BelongsTo<CampaignRevision, $this> */
@@ -50,5 +51,12 @@ final class Campaign extends Model
     public function claims(): HasMany
     {
         return $this->hasMany(CampaignClaim::class);
+    }
+
+    /** @return HasMany<MediaUsage, $this> */
+    public function cardMedia(): HasMany
+    {
+        return $this->hasMany(MediaUsage::class, 'owner_identifier')
+            ->where('owner_type', self::class)->where('field_role', 'card');
     }
 }

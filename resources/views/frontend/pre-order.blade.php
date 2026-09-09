@@ -1,5 +1,9 @@
 @extends('layouts.frontend')
 
+@section('route-bootstrap')
+ @php($loadImportedStorefrontRuntime = false)
+@endsection
+
 @section('content')
   <div id="root">
    <div class="min-h-screen flex flex-col bg-wt-offwhite">
@@ -149,6 +153,11 @@
        </p>
       </div>
       <div class="max-w-screen-xl mx-auto px-6 lg:px-12 py-16 space-y-12">
+       @if(!empty($preOrderCampaigns))
+        @foreach($preOrderCampaigns as $campaign)
+         @include('frontend.partials.pre-order-campaign-card', ['campaign' => $campaign, 'homepage' => false])
+        @endforeach
+       @else
        <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white overflow-hidden shadow-sm" style="opacity: 1; transform: none;">
         <div class="aspect-[4/3] lg:aspect-auto overflow-hidden">
          <img alt="The Executive Overcoat" class="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-700" src="/website/images/81f56a965_image.jpg"/>
@@ -283,6 +292,7 @@
          </p>
         </div>
        </div>
+       @endif
        <div class="bg-wt-oxblood p-12 text-center">
         <p class="font-label text-xs tracking-[0.3em] uppercase text-wt-gold mb-3">
          Stay Ahead
@@ -388,5 +398,5 @@
     </div>
    </div>
   </div>
-
+  @include('frontend.partials.pre-order-countdown-script')
 @endsection

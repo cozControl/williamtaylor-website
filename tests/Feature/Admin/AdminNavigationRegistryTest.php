@@ -26,10 +26,11 @@ class AdminNavigationRegistryTest extends TestCase
     {
         $items = app(AdminNavigationRegistry::class)->all();
 
-        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'products', 'product-categories', 'collections', 'orders', 'users', 'roles', 'audit'], array_column($items, 'key'));
+        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'catalogue', 'products', 'product-categories', 'collections', 'campaigns', 'orders', 'users', 'roles', 'audit'], array_column($items, 'key'));
         $groups = app(AdminNavigationRegistry::class)->groupedVisibleFor($this->superAdministrator());
         $this->assertSame(['Overview', 'Catalogue', 'Website', 'Administration'], array_keys($groups));
-        $this->assertSame(['products', 'product-categories', 'collections'], array_column($groups['Catalogue'], 'key'));
+        $this->assertSame(['catalogue', 'products', 'product-categories', 'collections', 'campaigns'], array_column($groups['Catalogue'], 'key'));
+        $this->assertSame(['catalogue', 'products', 'categories', 'collections', 'campaigns'], array_column($groups['Catalogue'], 'icon'));
 
         foreach ($items as $item) {
             $this->assertTrue(Route::has($item->routeName));
@@ -49,11 +50,39 @@ class AdminNavigationRegistryTest extends TestCase
 
         $this->assertSame([], $registry->visibleFor(null));
         $this->assertSame([], $registry->visibleFor($ordinary));
-        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'products', 'product-categories', 'collections', 'audit'], array_column($registry->visibleFor($cms), 'key'));
-        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'products', 'product-categories', 'collections', 'users', 'roles', 'audit'], array_column($registry->visibleFor($super), 'key'));
+        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'catalogue', 'products', 'product-categories', 'collections', 'campaigns', 'audit'], array_column($registry->visibleFor($cms), 'key'));
+        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'catalogue', 'products', 'product-categories', 'collections', 'campaigns', 'users', 'roles', 'audit'], array_column($registry->visibleFor($super), 'key'));
 
         config(['demo.enabled' => true, 'demo.allowed_environments' => ['testing']]);
         $this->assertContains('orders', array_column($registry->visibleFor($super), 'key'));
+    }
+
+    public function test_media_library_navigation_and_route_remain_permission_aware(): void
+    {
+        $ordinary = User::factory()->create(['email_verified_at' => now()]);
+        $ordinary->givePermissionTo(PermissionRegistry::ADMIN_ACCESS);
+        $manager = User::factory()->create(['email_verified_at' => now()]);
+        app(ControlledRoleMutation::class)->run(fn () => $manager->assignRole(RoleRegistry::CMS_MANAGER));
+
+        $this->actingAs($ordinary)->get(route('admin.dashboard'))->assertOk()->assertDontSeeText('Media library');
+        $this->actingAs($ordinary)->get(route('admin.media.index'))->assertForbidden();
+        $this->actingAs($manager)->get(route('admin.dashboard'))->assertOk()
+            ->assertSeeText('Media library')->assertSee(route('admin.media.index'), false)
+            ->assertSee('class="admin-sidebar-navigation"', false)
+            ->assertSee('class="admin-drawer-navigation"', false)
+            ->assertSee('data-admin-active-nav-link', false)
+            ->assertSee('grid-template-rows:auto minmax(0,1fr) auto!important', false);
+
+        $navigationScript = file_get_contents(resource_path('js/admin.js'));
+        $this->assertIsString($navigationScript);
+        $this->assertStringContainsString('revealActiveNavigationLink', $navigationScript);
+        $this->assertStringContainsString("navigation.scrollTo({ top: Math.max(0, target), behavior: 'auto' })", $navigationScript);
+
+        $navigationStyles = file_get_contents(resource_path('css/admin.css'));
+        $this->assertIsString($navigationStyles);
+        $this->assertStringContainsString('scrollbar-color:#8f7340 #211f1a', $navigationStyles);
+        $this->assertStringContainsString('.admin-sidebar-navigation::-webkit-scrollbar-thumb', $navigationStyles);
+        $this->assertStringContainsString('background:#c3a264', $navigationStyles);
     }
 
     private function superAdministrator(): User

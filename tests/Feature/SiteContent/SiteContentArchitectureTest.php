@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\SiteContent;
 
+use App\Domain\Homepage\Support\HomepageDeliveryPresenter;
 use App\Domain\Identity\Actions\AlignFoundationRegistry;
 use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
 use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Domain\Identity\Support\RoleRegistry;
+use App\Domain\PublicProjection\Services\ResolvePublicSiteChrome;
 use App\Domain\SiteContent\Actions\EnsureSiteContent;
 use App\Domain\SiteContent\Actions\SaveSiteContentDraft;
 use App\Domain\SiteContent\Models\SiteContent;
@@ -141,19 +143,30 @@ final class SiteContentArchitectureTest extends TestCase
 
     public function test_site_settings_save_is_direct_audited_and_effective(): void
     {
+        config(['public_site_content.enabled' => false]);
         $profile = $this->resource('site_profile');
         $payload = $profile->currentDraftRevision->payload;
         $payload['brand']['name'] = 'William Taylor Direct';
+        $payload['contact']['email'] = 'service@example.test';
 
         Livewire::actingAs($this->cms)
             ->test(Workspace::class, ['siteContent' => $profile])
             ->set('content', $payload)
             ->call('save')
-            ->assertSee('Site settings saved.');
+            ->assertSee('Site settings saved. Changes are now published on the website.');
 
         $profile->refresh()->load('publicationState');
         $this->assertSame($profile->current_draft_revision_id, $profile->publicationState->current_public_revision_id);
         $this->assertDatabaseHas('audit_records', ['action' => 'site-content.saved-live']);
+        app()->forgetInstance(ResolvePublicSiteChrome::class);
+        $this->assertSame('mailto:service@example.test', app(HomepageDeliveryPresenter::class)->destinations()['contact_email']);
+        $this->get('/')->assertOk()->assertSee('William Taylor Direct');
+
+        $payload['contact']['email'] = 'changed@example.test';
+        Livewire::actingAs($this->cms)->test(Workspace::class, ['siteContent' => $profile->fresh()])
+            ->set('content', $payload)->call('save')->assertHasNoErrors();
+        app()->forgetInstance(ResolvePublicSiteChrome::class);
+        $this->assertSame('mailto:changed@example.test', app(HomepageDeliveryPresenter::class)->destinations()['contact_email']);
     }
 
     public function test_evidence_database_guard_refuses_willy_memory_and_empty_paths(): void

@@ -11,6 +11,8 @@ final class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
+        $this->call(AdministratorSeeder::class);
+
         if (! filter_var(config('factory.seed_enabled'), FILTER_VALIDATE_BOOL)) {
             return;
         }

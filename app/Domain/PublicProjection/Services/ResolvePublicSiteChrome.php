@@ -44,7 +44,14 @@ final class ResolvePublicSiteChrome
         }
 
         if (! config('public_site_content.enabled') && $this->previewRevision === null) {
-            return $this->resolved = PublicSiteChromeView::fallback();
+            // Site Settings are saved live by their editor, independently of
+            // the navigation/announcement rollout switch.
+            return $this->resolved = new PublicSiteChromeView(
+                navigation: null,
+                footerGroups: null,
+                announcement: null,
+                profile: $this->surface(SiteContentTypeRegistry::SITE_PROFILE, fn (array $payload) => $this->profile($payload)),
+            );
         }
 
         return $this->resolved = new PublicSiteChromeView(

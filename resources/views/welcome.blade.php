@@ -1,16 +1,107 @@
 @extends('layouts.frontend')
 
+@section('document-head')
+ @include('frontend.partials.document-head')
+ <style>
+  [data-homepage-hero] { height: 100svh; }
+
+  @media (max-width: 767px) {
+   [data-homepage-hero] {
+    box-sizing: border-box;
+    min-height: 34rem;
+    height: 100svh;
+    padding-top: calc(4.5rem + env(safe-area-inset-top));
+    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+   }
+
+   [data-homepage-hero-background] img {
+    object-position: 58% top;
+   }
+
+   [data-homepage-hero-content] {
+    width: 100%;
+    max-width: 32rem;
+    padding-inline: clamp(1.25rem, 6vw, 2rem);
+   }
+
+   [data-homepage-hero-content] > p:first-child {
+    margin-bottom: 1rem;
+    font-size: .625rem;
+    line-height: 1.5;
+    letter-spacing: .22em;
+   }
+
+   [data-homepage-hero-content] > h1 {
+    font-size: clamp(2.75rem, 14vw, 4.5rem) !important;
+    line-height: .95 !important;
+    overflow-wrap: anywhere;
+   }
+
+   [data-homepage-hero-content] > h1 + p {
+    margin-bottom: 1.75rem;
+    font-size: clamp(.95rem, 4.5vw, 1.25rem) !important;
+    line-height: 1.4;
+   }
+
+   [data-homepage-hero-actions] {
+    display: grid;
+    width: min(100%, 21rem);
+    margin-inline: auto;
+    gap: .75rem;
+   }
+
+   [data-homepage-hero-actions] > a {
+    display: inline-flex;
+    width: 100%;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    padding: .8rem 1.25rem;
+   }
+
+   [data-homepage-hero-scroll] {
+    bottom: calc(5.25rem + env(safe-area-inset-bottom));
+   }
+
+   [data-homepage-hero-indicator] {
+    right: 1rem;
+    bottom: calc(5.25rem + env(safe-area-inset-bottom));
+   }
+  }
+
+  @media (max-width: 767px) and (orientation: landscape) and (max-height: 540px) {
+   [data-homepage-hero] {
+    min-height: 30rem;
+    padding-top: 4rem;
+    padding-bottom: 4.5rem;
+   }
+
+   [data-homepage-hero-content] > h1 {
+    font-size: clamp(2.5rem, 10vw, 3.75rem) !important;
+   }
+
+   [data-homepage-hero-scroll],
+   [data-homepage-hero-indicator] {
+    bottom: 1.25rem;
+   }
+  }
+ </style>
+@endsection
+
 @section('content')
-  <div id="root">
+@php
+    $homepageExploreCollectionsIsManaged = (bool) ($homepageExploreCollections['managed'] ?? false);
+@endphp
+<div id="root">
    <div class="min-h-screen flex flex-col bg-wt-offwhite">
     @include('frontend.partials.header')
     <main class="flex-1 pb-16 lg:pb-0">
      <div class="w-full">
       <section data-homepage-hero class="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
-       <div class="absolute inset-0 transition-opacity duration-1500" style="opacity: 1;">
+       <div data-homepage-hero-background class="absolute inset-0 transition-opacity duration-1500" style="opacity: 1;">
         <img alt="" class="w-full h-full object-cover object-top" src="{{ $homepageHero['background_url'] }}"/>
        </div>
-       <div class="relative z-10 text-center px-6 max-w-5xl mx-auto" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 300;'>
+       <div data-homepage-hero-content class="relative z-10 text-center px-6 max-w-5xl mx-auto" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 300;'>
         <p class="text-xs tracking-[0.3em] uppercase text-wt-gold mb-6" style="opacity: 1; transform: none;">
          {{ $homepageHero['eyebrow'] }}
         </p>
@@ -20,7 +111,7 @@
         <p class="text-wt-cream mb-10" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-size: clamp(1rem, 3vw, 1.75rem); font-style: italic; font-weight: 300; opacity: 1; transform: none;'>
          {{ $homepageHero['subtitle'] }}
         </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center" style="opacity: 1; transform: none;">
+        <div data-homepage-hero-actions class="flex flex-col sm:flex-row gap-4 justify-center" style="opacity: 1; transform: none;">
          <a class="btn-gold px-12 py-4 text-sm inline-flex items-center gap-2" href="{{ $homepageHero['primary_cta_url'] }}" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 400;'>
           <span aria-hidden="true" class="inline-flex items-center justify-center bg-wt-oxblood rounded-full flex-shrink-0" style="width: 20px; height: 20px;">
            <img alt="" class="mix-blend-screen object-contain" src="/website/images/cf030fe26_ICONlight.png" style="width: 14px; height: 14px;"/>
@@ -43,7 +134,7 @@
          </svg>
         </div>
        </div>
-       <div class="absolute bottom-24 lg:bottom-8 right-4 lg:right-8 flex gap-2">
+       <div data-homepage-hero-indicator class="absolute bottom-24 lg:bottom-8 right-4 lg:right-8 flex gap-2">
         <button class="w-1 h-6 transition-all duration-300 bg-wt-gold">
         </button>
        </div>
@@ -137,6 +228,9 @@
         </div>
        </div>
       </section>
+      @if($homepageNewArrivals['managed'])
+       @include('frontend.partials.homepage-new-arrivals')
+      @else
       <section class="py-12 lg:py-20 bg-wt-offwhite">
        <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
         <div class="flex items-end justify-between mb-8 lg:mb-12">
@@ -497,7 +591,11 @@
         </div>
        </div>
       </section>
-      <section class="py-12 lg:py-20 bg-white">
+      @endif
+       @if($homepageHotSale['managed'])
+       @include('frontend.partials.homepage-hot-sale')
+       @else
+       <section class="py-12 lg:py-20 bg-white">
        <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
         <div class="text-center mb-10 lg:mb-14">
          <span aria-hidden="true" class="inline-flex items-center justify-center bg-wt-oxblood rounded-full flex-shrink-0 mb-3" style="width: 29px; height: 29px;">
@@ -589,329 +687,13 @@
          </div>
         </div>
        </div>
-      </section>
-      <section class="py-12 lg:py-20 bg-wt-offwhite">
-       <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
-        <div class="text-center mb-10 lg:mb-14">
-         <span aria-hidden="true" class="inline-flex items-center justify-center bg-wt-oxblood rounded-full flex-shrink-0 mb-3" style="width: 29px; height: 29px;">
-          <img alt="" class="mix-blend-screen object-contain" src="/website/images/cf030fe26_ICONlight.png" style="width: 20px; height: 20px;"/>
-         </span>
-         <p class="section-subtitle mb-2 text-wt-gold">
-          Exclusive Access
-         </p>
-         <h2 class="section-title text-wt-oxblood" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 300;'>
-          The Future of Style
-         </h2>
-         <p class="font-body text-base text-gray-500 font-light mt-4 max-w-md mx-auto">
-          Reserve exclusive pieces before they launch. Limited quantities. Reserve yours today.
-         </p>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-         <div class="bg-wt-oxblood overflow-hidden flex flex-col md:flex-row" style="opacity: 1; transform: none;">
-          <div class="md:w-64 aspect-[4/5] md:aspect-auto overflow-hidden flex-shrink-0">
-           <img alt="The Executive Overcoat" class="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-700" src="/website/images/81f56a965_image.jpg"/>
-          </div>
-          <div class="flex flex-col justify-center p-8">
-           <span class="bg-wt-gold text-wt-oxblood font-label text-[10px] tracking-widest px-3 py-1 self-start mb-4">
-            PRE-ORDER
-           </span>
-           <h3 class="font-heading text-xl text-wt-cream mb-2">
-            The Executive Overcoat
-           </h3>
-           <p class="font-body text-sm text-wt-cream/60 font-light mb-3">
-            A structural masterpiece. Collarless overcoat with suede shoulder inserts and a belted waist.
-           </p>
-           <p class="font-label text-base text-wt-gold mb-2">
-            <span class="inline-flex items-center gap-1.5">
-             <img alt="" aria-hidden="true" class="mix-blend-screen inline-block object-contain flex-shrink-0" src="/website/images/cf030fe26_ICONlight.png" style="width: 11px; height: 11px;"/>
-             <span>
-              TZS 890,000
-             </span>
-            </span>
-           </p>
-           <p class="font-label text-xs tracking-wider text-wt-cream/50 uppercase mb-3">
-            Ships 2026-08-15
-           </p>
-           <div class="flex gap-2 sm:gap-3 mt-3">
-            <div class="text-center">
-             <div class="bg-wt-gold text-wt-oxblood font-label font-bold text-sm sm:text-base w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center">
-              22
-             </div>
-             <p class="font-label text-[9px] tracking-wider uppercase text-wt-cream/60 mt-0.5">
-              Days
-             </p>
-            </div>
-            <div class="text-center">
-             <div class="bg-wt-gold text-wt-oxblood font-label font-bold text-sm sm:text-base w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center">
-              19
-             </div>
-             <p class="font-label text-[9px] tracking-wider uppercase text-wt-cream/60 mt-0.5">
-              Hrs
-             </p>
-            </div>
-            <div class="text-center">
-             <div class="bg-wt-gold text-wt-oxblood font-label font-bold text-sm sm:text-base w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center">
-              16
-             </div>
-             <p class="font-label text-[9px] tracking-wider uppercase text-wt-cream/60 mt-0.5">
-              Min
-             </p>
-            </div>
-            <div class="text-center">
-             <div class="bg-wt-gold text-wt-oxblood font-label font-bold text-sm sm:text-base w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center">
-              09
-             </div>
-             <p class="font-label text-[9px] tracking-wider uppercase text-wt-cream/60 mt-0.5">
-              Sec
-             </p>
-            </div>
-           </div>
-           <a class="btn-gold self-start mt-6 text-xs py-3 px-8" href="{{ route('products.executive-overcoat') }}">
-            Reserve Yours
-           </a>
-          </div>
-         </div>
-         <div class="bg-wt-oxblood overflow-hidden flex flex-col md:flex-row" style="opacity: 1; transform: none;">
-          <div class="md:w-64 aspect-[4/5] md:aspect-auto overflow-hidden flex-shrink-0">
-           <img alt="Summer Linen Trousers" class="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-700" src="/website/images/601f1442e_image.jpg"/>
-          </div>
-          <div class="flex flex-col justify-center p-8">
-           <span class="bg-wt-gold text-wt-oxblood font-label text-[10px] tracking-widest px-3 py-1 self-start mb-4">
-            PRE-ORDER
-           </span>
-           <h3 class="font-heading text-xl text-wt-cream mb-2">
-            Summer Linen Trousers
-           </h3>
-           <p class="font-body text-sm text-wt-cream/60 font-light mb-3">
-            Wide-leg linen trousers in natural stripe. Summer 2026 pre-order.
-           </p>
-           <p class="font-label text-base text-wt-gold mb-2">
-            <span class="inline-flex items-center gap-1.5">
-             <img alt="" aria-hidden="true" class="mix-blend-screen inline-block object-contain flex-shrink-0" src="/website/images/cf030fe26_ICONlight.png" style="width: 11px; height: 11px;"/>
-             <span>
-              TZS 295,000
-             </span>
-            </span>
-           </p>
-           <p class="font-label text-xs tracking-wider text-wt-cream/50 uppercase mb-3">
-            Ships 2026-08-01
-           </p>
-           <div class="flex gap-2 sm:gap-3 mt-3">
-            <div class="text-center">
-             <div class="bg-wt-gold text-wt-oxblood font-label font-bold text-sm sm:text-base w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center">
-              08
-             </div>
-             <p class="font-label text-[9px] tracking-wider uppercase text-wt-cream/60 mt-0.5">
-              Days
-             </p>
-            </div>
-            <div class="text-center">
-             <div class="bg-wt-gold text-wt-oxblood font-label font-bold text-sm sm:text-base w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center">
-              19
-             </div>
-             <p class="font-label text-[9px] tracking-wider uppercase text-wt-cream/60 mt-0.5">
-              Hrs
-             </p>
-            </div>
-            <div class="text-center">
-             <div class="bg-wt-gold text-wt-oxblood font-label font-bold text-sm sm:text-base w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center">
-              16
-             </div>
-             <p class="font-label text-[9px] tracking-wider uppercase text-wt-cream/60 mt-0.5">
-              Min
-             </p>
-            </div>
-            <div class="text-center">
-             <div class="bg-wt-gold text-wt-oxblood font-label font-bold text-sm sm:text-base w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center">
-              09
-             </div>
-             <p class="font-label text-[9px] tracking-wider uppercase text-wt-cream/60 mt-0.5">
-              Sec
-             </p>
-            </div>
-           </div>
-           <a class="btn-gold self-start mt-6 text-xs py-3 px-8" href="html/summer-linen-trousers.html">
-            Reserve Yours
-           </a>
-          </div>
-         </div>
-        </div>
-        <div class="text-center mt-10">
-         <a class="btn-outline px-10 py-4" href="{{ route('preorders.index') }}">
-          View All Pre-Orders
-         </a>
-        </div>
-       </div>
-      </section>
-      <section class="py-12 lg:py-20 bg-wt-oxblood">
-       <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
-        <div class="text-center mb-10 lg:mb-14 mb-10 lg:mb-14">
-         <img alt="" aria-hidden="true" class="mix-blend-screen inline-block object-contain flex-shrink-0 mb-3" src="/website/images/cf030fe26_ICONlight.png" style="width: 20px; height: 20px;"/>
-         <p class="section-subtitle mb-2 text-wt-gold">
-          Exclusive
-         </p>
-         <h2 class="section-title text-wt-cream" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 300;'>
-          <span class="inline-flex items-center gap-3 text-wt-cream">
-           <img alt="" aria-hidden="true" class="mix-blend-screen inline-block object-contain flex-shrink-0" src="/website/images/cf030fe26_ICONlight.png" style="width: 18px; height: 18px;"/>
-           LIMITED EDITION
-           <img alt="" aria-hidden="true" class="mix-blend-screen inline-block object-contain flex-shrink-0" src="/website/images/cf030fe26_ICONlight.png" style="width: 18px; height: 18px;"/>
-          </span>
-         </h2>
-        </div>
-        <div class="flex items-center justify-center gap-3 max-w-xs mx-auto mb-10 lg:mb-14">
-         <div class="flex-1 h-px bg-wt-gold/30">
-         </div>
-         <img alt="" aria-hidden="true" class="mix-blend-screen inline-block object-contain flex-shrink-0" src="/website/images/cf030fe26_ICONlight.png" style="width: 14px; height: 14px;"/>
-         <div class="flex-1 h-px bg-wt-gold/30">
-         </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-         <div class="group relative" style="opacity: 1; transform: none;">
-          <div class="relative overflow-hidden aspect-[3/4]">
-           <a href="{{ route('products.dar-es-salaam-linen-suit') }}">
-            <img alt="The Dar es Salaam Linen Suit" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700" src="/website/images/da608a583_image.jpg"/>
-           </a>
-           <div class="absolute top-4 right-4">
-            <div class="w-16 h-16 bg-wt-gold flex items-center justify-center flex-col group-hover:scale-110 transition-transform duration-300" style="clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);">
-             <p class="font-label text-[8px] tracking-widest text-wt-oxblood font-bold uppercase leading-tight text-center">
-              Only
-              <br/>
-              30
-              <br/>
-              Made
-             </p>
-            </div>
-           </div>
-           <div class="absolute top-4 left-4">
-            <span class="bg-wt-gold text-wt-oxblood font-label text-[10px] tracking-widest px-2 py-1">
-             LIMITED EDITION
-            </span>
-           </div>
-          </div>
-          <div class="mt-4">
-           <a href="{{ route('products.dar-es-salaam-linen-suit') }}">
-            <h3 class="font-heading text-lg text-wt-cream hover:text-wt-gold transition-colors" style="text-shadow: rgba(0, 0, 0, 0.5) 0px 2px 8px;">
-             The Dar es Salaam Linen Suit
-            </h3>
-           </a>
-           <div class="flex items-center justify-between mt-2">
-            <p class="font-label text-sm text-wt-gold">
-             <span class="inline-flex items-center gap-1.5">
-              <img alt="" aria-hidden="true" class="mix-blend-screen inline-block object-contain flex-shrink-0" src="/website/images/cf030fe26_ICONlight.png" style="width: 11px; height: 11px;"/>
-              <span>
-               TZS 1,250,000
-              </span>
-             </span>
-            </p>
-            <p class="font-label text-xs text-wt-cream tracking-wider uppercase">
-             12 Remaining
-            </p>
-           </div>
-           <a class="mt-4 font-label border border-wt-cream text-wt-cream hover:bg-wt-cream hover:text-wt-oxblood transition-all duration-300 w-full py-3 text-xs tracking-widest uppercase block text-center" href="{{ route('products.dar-es-salaam-linen-suit') }}">
-            Acquire This Piece
-           </a>
-          </div>
-         </div>
-         <div class="group relative" style="opacity: 1; transform: none;">
-          <div class="relative overflow-hidden aspect-[3/4]">
-           <a href="html/heritage-blazer.html">
-            <img alt="The Heritage Blazer" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700" src="/website/images/9cf5386c6_image.jpg"/>
-           </a>
-           <div class="absolute top-4 right-4">
-            <div class="w-16 h-16 bg-wt-gold flex items-center justify-center flex-col group-hover:scale-110 transition-transform duration-300" style="clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);">
-             <p class="font-label text-[8px] tracking-widest text-wt-oxblood font-bold uppercase leading-tight text-center">
-              Only
-              <br/>
-              40
-              <br/>
-              Made
-             </p>
-            </div>
-           </div>
-           <div class="absolute top-4 left-4">
-            <span class="bg-wt-gold text-wt-oxblood font-label text-[10px] tracking-widest px-2 py-1">
-             LIMITED EDITION
-            </span>
-           </div>
-          </div>
-          <div class="mt-4">
-           <a href="html/heritage-blazer.html">
-            <h3 class="font-heading text-lg text-wt-cream hover:text-wt-gold transition-colors" style="text-shadow: rgba(0, 0, 0, 0.5) 0px 2px 8px;">
-             The Heritage Blazer
-            </h3>
-           </a>
-           <div class="flex items-center justify-between mt-2">
-            <p class="font-label text-sm text-wt-gold">
-             <span class="inline-flex items-center gap-1.5">
-              <img alt="" aria-hidden="true" class="mix-blend-screen inline-block object-contain flex-shrink-0" src="/website/images/cf030fe26_ICONlight.png" style="width: 11px; height: 11px;"/>
-              <span>
-               TZS 750,000
-              </span>
-             </span>
-            </p>
-            <p class="font-label text-xs text-wt-cream tracking-wider uppercase">
-             8 Remaining
-            </p>
-           </div>
-           <a class="mt-4 font-label border border-wt-cream text-wt-cream hover:bg-wt-cream hover:text-wt-oxblood transition-all duration-300 w-full py-3 text-xs tracking-widest uppercase block text-center" href="html/heritage-blazer.html">
-            Acquire This Piece
-           </a>
-          </div>
-         </div>
-         <div class="group relative" style="opacity: 1; transform: none;">
-          <div class="relative overflow-hidden aspect-[3/4]">
-           <a href="html/cashmere-blend-scarf.html">
-            <img alt="Cashmere Blend Scarf" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700" src="/website/images/b9c0b1bdf_image.jpg"/>
-           </a>
-           <div class="absolute top-4 right-4">
-            <div class="w-16 h-16 bg-wt-gold flex items-center justify-center flex-col group-hover:scale-110 transition-transform duration-300" style="clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);">
-             <p class="font-label text-[8px] tracking-widest text-wt-oxblood font-bold uppercase leading-tight text-center">
-              Only
-              <br/>
-              25
-              <br/>
-              Made
-             </p>
-            </div>
-           </div>
-           <div class="absolute top-4 left-4">
-            <span class="bg-wt-gold text-wt-oxblood font-label text-[10px] tracking-widest px-2 py-1">
-             LIMITED EDITION
-            </span>
-           </div>
-          </div>
-          <div class="mt-4">
-           <a href="html/cashmere-blend-scarf.html">
-            <h3 class="font-heading text-lg text-wt-cream hover:text-wt-gold transition-colors" style="text-shadow: rgba(0, 0, 0, 0.5) 0px 2px 8px;">
-             Cashmere Blend Scarf
-            </h3>
-           </a>
-           <div class="flex items-center justify-between mt-2">
-            <p class="font-label text-sm text-wt-gold">
-             <span class="inline-flex items-center gap-1.5">
-              <img alt="" aria-hidden="true" class="mix-blend-screen inline-block object-contain flex-shrink-0" src="/website/images/cf030fe26_ICONlight.png" style="width: 11px; height: 11px;"/>
-              <span>
-               TZS 320,000
-              </span>
-             </span>
-            </p>
-            <p class="font-label text-xs text-wt-cream tracking-wider uppercase">
-             15 Remaining
-            </p>
-           </div>
-           <a class="mt-4 font-label border border-wt-cream text-wt-cream hover:bg-wt-cream hover:text-wt-oxblood transition-all duration-300 w-full py-3 text-xs tracking-widest uppercase block text-center" href="html/cashmere-blend-scarf.html">
-            Acquire This Piece
-           </a>
-          </div>
-         </div>
-        </div>
-        <div class="text-center mt-12">
-         <a class="border border-wt-gold text-wt-gold hover:bg-wt-gold hover:text-wt-oxblood transition-all duration-300 px-10 py-4 font-label text-xs tracking-widest uppercase" href="{{ route('limited-edition.index') }}">
-          View All Limited Editions
-         </a>
-        </div>
-       </div>
-      </section>
+       </section>
+       @endif
+       @include('frontend.partials.homepage-future-style')
+      @include('frontend.partials.homepage-limited-edition')
+      @if($homepageExploreCollectionsIsManaged)
+       @include('frontend.partials.homepage-explore-collections')
+      @else
       <section class="py-12 lg:py-20 bg-white">
        <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
         <div class="text-center mb-10 lg:mb-14">
@@ -990,9 +772,13 @@
         </div>
        </div>
       </section>
+      @endif
       <section class="relative bg-wt-oxblood overflow-hidden">
        <div class="wt-pattern-texture wt-pattern-breathe-band wt-pattern-radial-mask absolute inset-0 z-0" style='background-image: url("/website/images/cf030fe26_ICONlight.png"); background-size: 280px;'>
        </div>
+@if($homepageSummerEdit['managed'])
+@include('frontend.partials.homepage-summer-edit')
+@else
        <div class="relative z-10 px-4 lg:px-12 py-8 lg:py-10">
         <div class="max-w-screen-xl mx-auto">
          <div class="relative overflow-hidden border border-wt-gold/40">
@@ -1032,6 +818,10 @@
          </div>
         </div>
        </div>
+@endif
+@if($homepageDelivery['managed'])
+@include('frontend.partials.homepage-delivery')
+@else
        <div class="relative z-10 bg-wt-cream border-y border-wt-gold/40 py-5 px-6">
         <div class="wt-pattern-texture absolute inset-0 opacity-[0.04]" style='background-image: url("/website/images/cf030fe26_ICONlight.png"); background-size: 240px;'>
         </div>
@@ -1054,8 +844,12 @@
          </a>
         </div>
        </div>
+@endif
       </section>
-      <section class="py-12 lg:py-20 bg-wt-offwhite">
+ @if($homepageHandbags['managed'])
+@include('frontend.partials.homepage-handbags')
+@else
+     <section class="py-12 lg:py-20 bg-wt-offwhite">
        <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
         <div class="flex items-end justify-between mb-8 lg:mb-12">
          <div>
@@ -1333,7 +1127,11 @@
         </div>
        </div>
       </section>
-      <section class="py-12 lg:py-20 bg-wt-cream">
+ @endif
+@if($homepageClientStories['managed'])
+@include('frontend.partials.homepage-client-stories')
+@else
+     <section class="py-12 lg:py-20 bg-wt-cream">
        <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
         <div class="text-center mb-10 lg:mb-14">
          <span aria-hidden="true" class="inline-flex items-center justify-center bg-wt-oxblood rounded-full flex-shrink-0 mb-3" style="width: 29px; height: 29px;">
@@ -1413,6 +1211,7 @@
         </div>
        </div>
       </section>
+@endif
       <section class="py-12 lg:py-20 bg-wt-offwhite">
        <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
         <div class="text-center mb-8 lg:mb-12">
@@ -1543,6 +1342,43 @@
    </div>
   </div>
 
+@if($homepageNewArrivals['managed'])
+<template id="homepage-new-arrivals-projection">@include('frontend.partials.homepage-new-arrivals')</template>
+@endif
+@if($homepageHotSale['managed'])
+<template id="homepage-hot-sale-projection">@include('frontend.partials.homepage-hot-sale')</template>
+@endif
+<template id="homepage-future-style-projection">@include('frontend.partials.homepage-future-style')</template>
+<template id="homepage-limited-edition-projection">@include('frontend.partials.homepage-limited-edition')</template>
+@if($homepageExploreCollectionsIsManaged)
+<template id="homepage-explore-collections-projection">@include('frontend.partials.homepage-explore-collections')</template>
+@endif
+@if($homepageSummerEdit['managed'])
+<template id="homepage-summer-edit-projection">@include('frontend.partials.homepage-summer-edit')</template>
+@endif
+@if($homepageDelivery['managed'])
+<template id="homepage-delivery-projection">@include('frontend.partials.homepage-delivery')</template>
+@endif
+@if($homepageHandbags['managed'])
+<template id="homepage-handbags-projection">@include('frontend.partials.homepage-handbags')</template>
+<style>
+[data-homepage-handbags] .wt-handbags-layout {display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
+[data-homepage-handbags] .wt-handbags-products {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+[data-homepage-handbags] .wt-handbags-layout > div {min-width:0}
+@media(min-width:1024px) {
+ [data-homepage-handbags] .wt-handbags-layout {grid-template-columns:repeat(12,minmax(0,1fr));gap:32px}
+ [data-homepage-handbags] .wt-handbags-products {grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+}
+</style>
+@endif
+
+@if($homepageClientStories['managed'])
+<template id="homepage-client-stories-projection">@include('frontend.partials.homepage-client-stories')</template>
+<style>
+[data-homepage-client-stories] .wt-client-stories-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:32px}
+@media(min-width:768px) {[data-homepage-client-stories] .wt-client-stories-grid {grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+@endif
 <script type="application/json" id="homepage-hero-data">@json($homepageHero)</script>
 <script>
 (() => {
@@ -1557,23 +1393,107 @@
   if (!hero) return;
   hero.dataset.homepageHero = '';
   const content = hero.querySelector(':scope > .relative.z-10');
+  const background = hero.querySelector(':scope > div.absolute.inset-0');
+  if (background) background.dataset.homepageHeroBackground = '';
+  if (content) content.dataset.homepageHeroContent = '';
   const copy = content ? [...content.children].filter(node => node.matches('p, h1')) : [];
   setText(copy[0], data.eyebrow);
   setText(copy[1], data.title);
   setText(copy[2], data.subtitle);
   const actions = content?.querySelectorAll('a') || [];
+  if (actions[0]?.parentElement) actions[0].parentElement.dataset.homepageHeroActions = '';
   setText(actions[0]?.lastChild, data.primary_cta_label);
   setAttribute(actions[0], 'href', data.primary_cta_url);
   setText(actions[1], data.secondary_cta_label);
   setAttribute(actions[1], 'href', data.secondary_cta_url);
   setAttribute(hero.querySelector(':scope > div.absolute.inset-0 img'), 'src', data.background_url);
   const scrollLabel = [...hero.querySelectorAll('span')].find(node => node.textContent.trim() === 'Scroll');
+  if (scrollLabel?.parentElement) scrollLabel.parentElement.dataset.homepageHeroScroll = '';
   scrollLabel?.parentElement?.classList.toggle('hidden', !data.scroll_indicator_enabled);
+  const indicator = hero.querySelector(':scope > div.absolute.right-4');
+  if (indicator) indicator.dataset.homepageHeroIndicator = '';
  };
- const observer = new MutationObserver(synchronizeHero);
+ const synchronizeNewArrivals = () => {
+  const template = document.getElementById('homepage-new-arrivals-projection');
+  if (!template) return;
+  const projected = template.content.firstElementChild;
+  if (!projected) return;
+  const current = [...root.querySelectorAll('main section')].find(section => section.dataset.homepageNewArrivals !== undefined || section.querySelector('h2')?.textContent.trim() === 'New Arrivals');
+  if (!current || current.dataset.homepageNewArrivalsSource === projected.dataset.homepageNewArrivalsSource) return;
+  current.replaceWith(projected.cloneNode(true));
+ };
+ const synchronizeHotSale = () => {
+  const template = document.getElementById('homepage-hot-sale-projection');
+  if (!template) return;
+  const projected = template.content.firstElementChild;
+  if (!projected) return;
+  const current = [...root.querySelectorAll('main section')].find(section => section.dataset.homepageHotSale !== undefined || section.querySelector('h2')?.textContent.trim() === "William's Hot Sale");
+  if (!current || current.dataset.homepageHotSale !== undefined) return;
+  current.replaceWith(projected.cloneNode(true));
+ };
+ const synchronizeFutureStyle = () => {
+  const template = document.getElementById('homepage-future-style-projection');
+  if (!template) return;
+  const projected = template.content.firstElementChild;
+  if (!projected) return;
+  const current = [...root.querySelectorAll('main section')].find(section => section.dataset.homepageFutureStyle !== undefined || section.querySelector('h2')?.textContent.trim() === 'The Future of Style');
+  if (!current || current.dataset.homepageFutureStyle !== undefined) return;
+  current.replaceWith(projected.cloneNode(true));
+ };
+ const synchronizeLimitedEdition = () => {
+  const template = document.getElementById('homepage-limited-edition-projection');
+  if (!template) return;
+  const projected = template.content.firstElementChild;
+  if (!projected) return;
+  const current = [...root.querySelectorAll('main section')].find(section => section.dataset.homepageLimitedEdition !== undefined || section.querySelector('h2')?.textContent.trim() === 'LIMITED EDITION');
+  if (!current || current.dataset.homepageLimitedEdition !== undefined) return;
+  current.replaceWith(projected.cloneNode(true));
+ };
+ const synchronizeExploreCollections = () => {
+  const template = document.getElementById('homepage-explore-collections-projection');
+  if (!template) return;
+  const projected = template.content.firstElementChild;
+  if (!projected) return;
+  const current = [...root.querySelectorAll('main section')].find(section => section.dataset.homepageExploreCollections !== undefined || section.querySelector('h2')?.textContent.trim() === 'Explore the Collection');
+  if (!current || current.dataset.homepageExploreCollections !== undefined) return;
+  current.replaceWith(projected.cloneNode(true));
+ };
+ const synchronizeSummerEdit = () => {
+  const projected = document.getElementById('homepage-summer-edit-projection')?.content.firstElementChild;
+  if (!projected) return;
+  const current = root.querySelector('[data-homepage-summer-edit]') || [...root.querySelectorAll('h2')].find(node => node.textContent.trim() === 'The Summer Edit')?.closest('.relative.z-10.px-4');
+  if (!current || current.hasAttribute('data-homepage-summer-edit')) return;
+  current.replaceWith(projected.cloneNode(true));
+ };
+ const synchronizeDelivery = () => {
+  const projected = document.getElementById('homepage-delivery-projection')?.content.firstElementChild;
+  if (!projected) return;
+  const current = root.querySelector('[data-homepage-delivery]') || [...root.querySelectorAll('h3')].find(node => node.textContent.trim() === 'Complimentary Delivery in Dar es Salaam')?.closest('.relative.z-10.bg-wt-cream');
+  if (!current || current.hasAttribute('data-homepage-delivery')) return;
+  current.replaceWith(projected.cloneNode(true));
+ };
+ const synchronizeHandbags = () => {
+  const projected = document.getElementById('homepage-handbags-projection')?.content.firstElementChild;
+  if (!projected) return;
+  const current = root.querySelector('[data-homepage-handbags]') || [...root.querySelectorAll('h2')].find(node => node.textContent.trim() === "Women's Handbags")?.closest('section');
+  if (!current || current.hasAttribute('data-homepage-handbags')) return;
+  current.replaceWith(projected.cloneNode(true));
+ };
+ const synchronizeClientStories = () => {
+  const projected = document.getElementById('homepage-client-stories-projection')?.content.firstElementChild;
+  if (!projected) return;
+  const current = root.querySelector('[data-homepage-client-stories]') || [...root.querySelectorAll('h2')].find(node => node.textContent.trim() === 'What They Say')?.closest('section');
+  if (!current || current.hasAttribute('data-homepage-client-stories')) return;
+  current.replaceWith(projected.cloneNode(true));
+ };
+ const synchronize = () => { synchronizeHero(); synchronizeNewArrivals(); synchronizeHotSale(); synchronizeFutureStyle(); synchronizeLimitedEdition(); synchronizeExploreCollections(); synchronizeSummerEdit(); synchronizeDelivery(); synchronizeHandbags(); synchronizeClientStories(); };
+ const observer = new MutationObserver(synchronize);
  observer.observe(root, {childList: true, subtree: true});
- window.addEventListener('load', () => requestAnimationFrame(() => requestAnimationFrame(synchronizeHero)), {once: true});
- synchronizeHero();
+ window.addEventListener('load', () => requestAnimationFrame(() => requestAnimationFrame(synchronize)), {once: true});
+ synchronize();
 })();
 </script>
+@include('frontend.partials.homepage-client-stories-script')
+@include('frontend.partials.homepage-handbags-script')
+@include('frontend.partials.pre-order-countdown-script')
 @endsection

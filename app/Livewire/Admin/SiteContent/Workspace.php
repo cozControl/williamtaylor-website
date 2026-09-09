@@ -70,7 +70,7 @@ final class Workspace extends Component
         }, match ($this->siteContent()->type) {
             SiteContentTypeRegistry::PRIMARY_NAVIGATION, SiteContentTypeRegistry::FOOTER_NAVIGATION => 'Navigation updated.',
             SiteContentTypeRegistry::ANNOUNCEMENT => 'Announcement saved.',
-            default => 'Site settings saved.',
+            default => 'Site settings saved. Changes are now published on the website.',
         }, $fingerprints);
     }
 

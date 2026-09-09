@@ -60,7 +60,7 @@ final class PermissionMetadata
             PermissionRegistry::SETTINGS_SCHEDULE => ['label' => 'Schedule site settings', 'area' => 'Site settings', 'description' => 'Schedule site settings through the governed typed Site Content workflow.'],
             PermissionRegistry::SETTINGS_UNPUBLISH => ['label' => 'Unpublish site settings', 'area' => 'Site settings', 'description' => 'Unpublish site settings through the governed typed Site Content workflow.'],
             PermissionRegistry::CAMPAIGN_CLAIMS_REVIEW => ['label' => 'Review Campaign claims', 'area' => 'Campaign claims', 'description' => 'Inspect bounded Campaign claim and evidence summaries.'],
-            PermissionRegistry::CAMPAIGN_CLAIMS_APPROVE => ['label' => 'Approve Campaign claims', 'area' => 'Campaign claims', 'description' => 'Approve a submitted factual Campaign claim under separation of duties.'],
+            PermissionRegistry::CAMPAIGN_CLAIMS_APPROVE => ['label' => 'Approve Campaign claims', 'area' => 'Campaign claims', 'description' => 'Approve a submitted factual Campaign claim.'],
             PermissionRegistry::CAMPAIGN_CLAIMS_REJECT => ['label' => 'Reject Campaign claims', 'area' => 'Campaign claims', 'description' => 'Reject a submitted Campaign claim with a bounded reason.'],
             PermissionRegistry::CAMPAIGN_CLAIMS_WITHDRAW_APPROVAL => ['label' => 'Withdraw Campaign claim approval', 'area' => 'Campaign claims', 'description' => 'Withdraw current Campaign claim approval with a bounded reason.'],
             PermissionRegistry::ORDERS_VIEW => ['label' => 'View Orders', 'area' => 'Order operations', 'description' => 'Search and inspect protected demo customer Orders.'],

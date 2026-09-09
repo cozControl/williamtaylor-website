@@ -37,7 +37,8 @@ final class AssignProductToCollection
                 if ($members->contains('product_id', $target->id)) {
                     throw new InvalidArgumentException('Product is already assigned to this Collection.');
                 }
-                $position = $members->count();
+                $maximumPosition = $members->max('position');
+                $position = $maximumPosition === null ? 0 : ((int) $maximumPosition) + 1;
                 $membership = CollectionProduct::query()->create(['collection_id' => $locked->id, 'product_id' => $target->id, 'position' => $position, 'active_product_key' => CollectionOrderingKeys::active('product', $target->id), 'position_key' => CollectionOrderingKeys::active('position', (string) $position), 'created_by' => $actor->id]);
                 $locked->increment('lock_version');
                 $this->audit->handle('collection.product.assigned', $membership, $actor, null, ['collection_id' => $locked->id, 'product_id' => $target->id, 'position' => $position]);

@@ -25,7 +25,7 @@
     @fluxAppearance
     <x-admin.form-styles />
 </head>
-<body class="admin-body" data-admin-ui-revision="ecom-home-1">
+<body class="admin-body" data-admin-ui-revision="ecom-home-2e">
     <a class="admin-skip-link" href="#admin-main">Skip to main content</a>
     <div class="admin-shell">
         <aside class="admin-sidebar" aria-label="Primary administration">
@@ -33,7 +33,7 @@
                 <span class="admin-brand-mark">WT</span>
                 <span><strong>{{ config('app.name') }}</strong><small>Administration</small></span>
             </a>
-            <x-admin.navigation :groups="$navigationGroups" :current-route="$currentRoute" />
+            <x-admin.navigation class="admin-sidebar-navigation" :groups="$navigationGroups" :current-route="$currentRoute" />
             <div class="admin-sidebar-footer">
                 <span class="admin-environment">{{ $environmentLabel }}</span>
                 <a href="{{ route('home') }}">View storefront</a>
@@ -67,9 +67,14 @@
                         @endforeach
                     </ol></nav>
                 @endif
-                <header class="admin-page-header">
-                    <p>{{ $eyebrow }}</p><h1>{{ $title }}</h1><span>{{ $description }}</span>
-                </header>
+                <div class="admin-page-heading-row">
+                    <header class="admin-page-header">
+                        <p>{{ $eyebrow }}</p><h1>{{ $title }}</h1><span>{{ $description }}</span>
+                    </header>
+                    @isset($actions)
+                        <div class="admin-page-heading-actions">{{ $actions }}</div>
+                    @endisset
+                </div>
                 {{ $slot }}
             </main>
         </div>
@@ -79,7 +84,7 @@
             <div><strong id="admin-drawer-title">{{ config('app.name') }}</strong><span>Administration</span></div>
             <button type="button" data-admin-nav-close aria-label="Close administration navigation">x</button>
         </div>
-        <x-admin.navigation :groups="$navigationGroups" :current-route="$currentRoute" />
+        <x-admin.navigation class="admin-drawer-navigation" :groups="$navigationGroups" :current-route="$currentRoute" />
         <div class="admin-drawer-footer"><span class="admin-environment">{{ $environmentLabel }}</span><a href="{{ route('home') }}">View storefront</a></div>
     </dialog>
     @fluxScripts

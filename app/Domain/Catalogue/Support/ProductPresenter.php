@@ -54,9 +54,10 @@ final class ProductPresenter
      */
     private function images(string $ownerType, string $ownerId, array $roles): array
     {
-        return array_values(MediaUsage::query()->with('asset')->where('owner_type', $ownerType)->where('owner_identifier', $ownerId)->whereIn('field_role', $roles)->orderBy('sort_order')->get()->map(fn (MediaUsage $usage) => [
-            'url' => $this->media->deliveryUrl($usage->asset->provider_public_id, $usage->asset->resource_type->value, 'product_gallery', $usage->asset->focal_x !== null ? (float) $usage->asset->focal_x : null, $usage->asset->focal_y !== null ? (float) $usage->asset->focal_y : null),
-            'alt' => $usage->alt_text_override ?: $usage->asset->default_alt_text ?: $usage->asset->internal_title,
-        ])->values()->all());
+        return array_values(MediaUsage::query()->with('asset')->where('owner_type', $ownerType)->where('owner_identifier', $ownerId)->whereIn('field_role', $roles)
+            ->orderByRaw('CASE WHEN field_role = ? THEN 0 ELSE 1 END', [$roles[0]])->orderBy('sort_order')->get()->map(fn (MediaUsage $usage) => [
+                'url' => $this->media->deliveryUrl($usage->asset->provider_public_id, $usage->asset->resource_type->value, 'product_gallery', $usage->asset->focal_x !== null ? (float) $usage->asset->focal_x : null, $usage->asset->focal_y !== null ? (float) $usage->asset->focal_y : null),
+                'alt' => $usage->alt_text_override ?: $usage->asset->default_alt_text ?: $usage->asset->internal_title,
+            ])->values()->all());
     }
 }

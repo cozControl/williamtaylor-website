@@ -3,7 +3,9 @@
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\HomepageController;
+use App\Http\Controllers\LimitedEditionController;
 use App\Http\Controllers\PagePreviewController;
+use App\Http\Controllers\PreOrderController;
 use App\Http\Controllers\StorefrontCollectionController;
 use App\Http\Controllers\StorefrontProductController;
 use Illuminate\Support\Facades\Route;
@@ -14,8 +16,8 @@ Route::get('about', AboutController::class)->name('about');
 Route::view('collections', 'frontend.collections')->name('collections.index');
 Route::get('collections/{collection:slug}', StorefrontCollectionController::class)->name('collections.show');
 Route::view('shop', 'frontend.shop')->name('products.index');
-Route::view('pre-order', 'frontend.pre-order')->name('preorders.index');
-Route::view('limited-edition', 'frontend.limited-edition')->name('limited-edition.index');
+Route::get('pre-order', PreOrderController::class)->name('preorders.index');
+Route::get('limited-edition', LimitedEditionController::class)->name('limited-edition.index');
 Route::view('gift-cards', 'frontend.gift-cards')->name('gift-cards.index');
 Route::view('wishlist', 'frontend.wishlist')->name('wishlist.index');
 

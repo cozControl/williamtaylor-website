@@ -59,6 +59,7 @@ final class CampaignFoundationTest extends TestCase
             }
         }
         $this->assertTrue(app(CampaignClaimRegistry::class)->get('pre_order', 'public_window_statement')['legal_approval_required']);
+        $this->assertSame('fixed planned edition statement', app(CampaignClaimRegistry::class)->get('limited_edition', 'edition_statement')['display_semantics']);
         $this->expectException(InvalidArgumentException::class);
         app(CampaignClaimRegistry::class)->get('limited_edition', 'stock_quantity');
     }

@@ -8,6 +8,7 @@ use App\Domain\Catalogue\Models\Product;
 use App\Domain\Catalogue\Models\ProductCategory;
 use App\Domain\Catalogue\Models\ProductOptionValue;
 use App\Domain\Catalogue\Models\ProductVariant;
+use App\Domain\Catalogue\Support\ProductPresenter;
 use App\Domain\Catalogue\Support\ProductPrice;
 use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
 use App\Domain\Identity\Support\ControlledRoleMutation;
@@ -64,7 +65,7 @@ final class EcomCatalogueCoreTest extends TestCase
     {
         $this->actingAs($this->manager)->get(route('admin.product-categories.create'))
             ->assertOk()
-            ->assertSee('data-admin-ui-revision="ecom-home-1"', false)
+            ->assertSee('data-admin-ui-revision="ecom-home-2e"', false)
             ->assertSee('for="category-name"', false)
             ->assertSee('id="category-name"', false)
             ->assertSee('for="category-parent"', false)
@@ -316,6 +317,47 @@ final class EcomCatalogueCoreTest extends TestCase
         $this->actingAs($this->manager)->put(route('admin.products.update', $product), $payload)->assertRedirect();
         $this->assertFalse(MediaUsage::query()->where('owner_type', $colour::class)->where('owner_identifier', $colour->id)->exists());
         $this->assertTrue(MediaAsset::query()->whereKey($asset->id)->exists());
+    }
+
+    public function test_dynamic_product_uses_default_colour_gallery_and_exposes_safe_colour_fallback(): void
+    {
+        $category = ProductCategory::query()->create(['name' => 'Gallery', 'slug' => 'gallery', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $primary = $this->image();
+        $blackFirst = $this->image();
+        $blackSecond = $this->image();
+        $white = $this->image();
+        $variants = $this->draftVariants(['black' => 'Black', 'white' => 'White', 'beige' => 'Beige'], ['s' => 'S', 'm' => 'M'], 'gallery-shirt');
+
+        $this->actingAs($this->manager)->post(route('admin.products.store'), [
+            'title' => 'Gallery Shirt', 'slug' => 'gallery-shirt', 'short_description' => 'Canonical gallery Product.',
+            'currency' => 'TZS', 'base_price' => '320,000', 'primary_category_id' => $category->id,
+            'primary_media_id' => $primary->id, 'media_alt' => [$primary->id => 'Gallery Shirt'], 'gallery_media_ids' => [],
+            'draft_colours' => [
+                'black' => ['name' => 'Black', 'swatch_hex' => '#000000', 'media_ids' => [$blackFirst->id, $blackSecond->id], 'media_order' => [$blackFirst->id => 0, $blackSecond->id => 1]],
+                'white' => ['name' => 'White', 'swatch_hex' => '#FFFFFF', 'media_ids' => [$white->id], 'media_order' => [$white->id => 0]],
+                'beige' => ['name' => 'Beige', 'swatch_hex' => '#D8C3A5', 'media_ids' => []],
+            ],
+            'draft_sizes' => ['s' => ['name' => 'S'], 'm' => ['name' => 'M']],
+            'draft_variants' => $variants, 'default_variant_key' => 'black--s', 'status' => 'active',
+        ])->assertRedirect();
+
+        $product = Product::query()->where('slug', 'gallery-shirt')->sole();
+        $presented = app(ProductPresenter::class)->resolve($product->slug);
+        $black = collect($presented['options']['colour'])->firstWhere('key', 'black');
+        $whiteOption = collect($presented['options']['colour'])->firstWhere('key', 'white');
+        $beige = collect($presented['options']['colour'])->firstWhere('key', 'beige');
+        $this->assertCount(2, $presented['colour_images'][$black['id']]);
+        $this->assertCount(1, $presented['colour_images'][$whiteOption['id']]);
+        $this->assertSame([], $presented['colour_images'][$beige['id']]);
+
+        $this->get(route('products.show', $product))->assertOk()
+            ->assertSee('src="'.$presented['colour_images'][$black['id']][0]['url'].'"', false)
+            ->assertSee('const fallbackImages = productData?.images || [];', false)
+            ->assertSee('renderColourPreview(productData.colour_images[button.dataset.valueId])', false)
+            ->assertDontSee('gallery.replaceChildren', false)
+            ->assertSeeText('SKU:')->assertSeeText('TZS 320,000')
+            ->assertSeeText('Free delivery in Dar es Salaam. 2–4 days nationwide.')
+            ->assertDontSee('Ã', false);
     }
 
     /** @return array<string, mixed> */

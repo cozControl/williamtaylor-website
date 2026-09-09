@@ -1,9 +1,9 @@
 <x-admin.layout title="Products" description="Manage products, pricing, imagery and variants." eyebrow="Catalogue" :breadcrumbs="['Products' => null]">
-    <div class="admin-page-actions catalogue-index-actions">
+    <x-slot:actions>
         @can('products.manage')
             <a class="admin-primary-button" href="{{ route('admin.products.create') }}">New Product</a>
         @endcan
-    </div>
+    </x-slot:actions>
 
     <form method="GET" class="admin-panel catalogue-filters" aria-label="Product filters" aria-labelledby="product-filters-title">
         <h2 id="product-filters-title">Filters</h2>

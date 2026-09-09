@@ -20,6 +20,6 @@ final class StorefrontCollectionController
         $image = $usage === null ? null : $media->deliveryUrl($usage->asset->provider_public_id, $usage->asset->resource_type->value, 'hero_desktop', null, null);
         $products = $collection->products->map(fn ($membership) => $cards->present($membership->product))->filter()->values();
 
-        return view('frontend.collection-show', compact('collection', 'image', 'products'));
+        return view('frontend.collection-show', compact('collection', 'image', 'products'))->with('loadImportedStorefrontRuntime', false);
     }
 }

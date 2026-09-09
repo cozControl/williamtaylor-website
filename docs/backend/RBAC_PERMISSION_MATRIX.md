@@ -59,7 +59,7 @@ Inventory Manager is registered with exactly admin.access. It receives no CMS, c
 
 ## BE-5C.2 Campaign claim authority
 
-BE-5C.2 adds the sensitive permissions `campaigns.claims.review`, `campaigns.claims.approve`, `campaigns.claims.reject`, and `campaigns.claims.withdraw-approval`. The deterministic `Campaign Claims Approver` role contains exactly these four permissions and has no automatic assignment. Super Administrator receives registered access; no other role does. Approval requires an independent active actor and excludes the creator, latest material/evidence editor, and submitter.
+BE-5C.2 adds the sensitive permissions `campaigns.claims.review`, `campaigns.claims.approve`, `campaigns.claims.reject`, and `campaigns.claims.withdraw-approval`. The deterministic `Campaign Claims Approver` role contains exactly these four permissions and has no automatic assignment. Super Administrator receives registered access; no other role does. Approval requires an active actor with `campaigns.claims.approve`; the claim creator, latest material/evidence editor or submitter may approve when they hold that permission.
 
 
 ## BE-6A.1 emergency publication authority

@@ -14,7 +14,7 @@ final class ProductCardPresenter
     /** @return array<string, mixed>|null */
     public function present(Product $product): ?array
     {
-        $product->loadMissing('currentDraftRevision');
+        $product->loadMissing(['currentDraftRevision', 'options.values']);
         if ($product->archived_at !== null || $product->catalogue_status !== 'ready' || $product->currentDraftRevision === null || $product->base_price_minor === null) {
             return null;
         }
@@ -23,6 +23,7 @@ final class ProductCardPresenter
 
         return [
             'slug' => $product->slug,
+            'url' => route('products.show', $product->slug),
             'title' => $product->currentDraftRevision->title,
             'price' => $this->prices->format($product->base_price_minor, $product->currency),
             'compare_at_price' => $this->prices->format($product->compare_at_price_minor, $product->currency),
@@ -31,6 +32,10 @@ final class ProductCardPresenter
                 'alt' => $usage->alt_text_override ?: $usage->asset->default_alt_text ?: $usage->asset->internal_title,
             ],
             'badges' => ProductBadge::query()->active()->where('product_id', $product->id)->orderBy('position')->pluck('badge_key')->all(),
+            'colours' => $product->options->firstWhere('key', 'colour')?->values
+                ->where('is_active', true)
+                ->map(fn ($value) => ['label' => $value->label, 'swatch_hex' => $value->swatch_hex])
+                ->values()->all() ?? [],
         ];
     }
 }

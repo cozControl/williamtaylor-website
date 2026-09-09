@@ -176,15 +176,19 @@
        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
         <div class="space-y-4">
          @php
-          $oxfordImages = !empty($oxfordProduct['images']) ? $oxfordProduct['images'] : [
+         $oxfordImages = !empty($oxfordProduct['images']) ? $oxfordProduct['images'] : [
            ['url' => '/website/images/0368482bc_image.jpg', 'alt' => 'The Taylor Oxford Shirt'],
            ['url' => '/website/images/6d46d522f_image.jpg', 'alt' => 'The Taylor Oxford Shirt 2'],
            ['url' => '/website/images/2946546dd_image.jpeg', 'alt' => 'The Taylor Oxford Shirt 3'],
            ['url' => '/website/images/ee86da3ae_image.jpg', 'alt' => 'The Taylor Oxford Shirt 4'],
           ];
+          $defaultVariant = collect($oxfordProduct['variants'] ?? [])->firstWhere('id', $oxfordProduct['default_variant_id'] ?? null);
+          $defaultColour = collect($oxfordProduct['options']['colour'] ?? [])->first(fn ($colour) => in_array($colour['id'], $defaultVariant['values'] ?? [], true));
+          $defaultColourImages = $defaultColour ? ($oxfordProduct['colour_images'][$defaultColour['id']] ?? []) : [];
+          $initialGalleryImages = !empty($defaultColourImages) ? $defaultColourImages : $oxfordImages;
          @endphp
          <div class="aspect-[3/4] overflow-hidden bg-gray-100 relative group">
-          <img id="product-main-image" alt="{{ $oxfordImages[0]['alt'] }}" class="w-full h-full object-cover object-top" src="{{ $oxfordImages[0]['url'] }}" style="opacity: 1;"/>
+          <img id="product-main-image" alt="{{ $initialGalleryImages[0]['alt'] }}" class="w-full h-full object-cover object-top" src="{{ $initialGalleryImages[0]['url'] }}" style="opacity: 1;"/>
          </div>
          <div id="product-gallery-thumbnails" class="flex gap-3 overflow-x-auto scrollbar-hide">
           @foreach($oxfordImages as $image)
@@ -203,7 +207,6 @@
            BESTSELLER
           </span>
          </div>
-         @if(!$oxfordProduct || !empty($oxfordProduct['options']['colour']))
          <div>
           <h1 class="font-heading text-3xl lg:text-4xl text-wt-oxblood leading-tight">
            {{ $oxfordProduct['title'] ?? 'The Taylor Oxford Shirt' }}
@@ -220,16 +223,17 @@
          <p class="font-body text-sm text-gray-600 font-light leading-relaxed">
           {{ $oxfordProduct['short_description'] ?? 'Hand-finished camp collar shirt in textured Italian cotton. Crossover drape with a refined boxy silhouette.' }}
          </p>
+         @if(!$oxfordProduct || !empty($oxfordProduct['options']['colour']))
          <div>
           <p class="font-label text-xs tracking-widest uppercase text-wt-oxblood mb-3">
            Colour:
            <span id="product-colour-label" class="text-gray-500">
-            Ivory
+            {{ $defaultColour['label'] ?? 'Select a colour' }}
            </span>
           </p>
           <div class="flex gap-2">
            @foreach(($oxfordProduct['options']['colour'] ?? [['id' => 'ivory', 'key' => 'ivory', 'label' => 'Ivory'], ['id' => 'noir', 'key' => 'noir', 'label' => 'Noir']]) as $colour)
-            <button type="button" data-product-option="colour" data-value-id="{{ $colour['id'] }}" class="w-8 h-8 rounded-full border-2 transition-all {{ $loop->first ? 'border-wt-gold scale-110' : 'border-gray-200 hover:border-gray-400' }}" style="background-color: {{ $colour['swatch_hex'] ?? ($colour['key'] === 'ivory' ? 'rgb(245, 240, 232)' : 'rgb(26, 26, 26)') }};" title="{{ $colour['label'] }}"></button>
+            <button type="button" data-product-option="colour" data-value-id="{{ $colour['id'] }}" class="w-8 h-8 rounded-full border-2 transition-all {{ ($defaultColour['id'] ?? null) === $colour['id'] ? 'border-wt-gold scale-110' : 'border-gray-200 hover:border-gray-400' }}" style="background-color: {{ $colour['swatch_hex'] ?? ($colour['key'] === 'ivory' ? 'rgb(245, 240, 232)' : 'rgb(26, 26, 26)') }};" title="{{ $colour['label'] }}"></button>
            @endforeach
           </div>
          </div>
@@ -308,7 +312,7 @@
             </circle>
            </svg>
            <p class="font-body text-xs font-light">
-            Free delivery in Dar es Salaam. 2ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“4 days nationwide.
+            Free delivery in Dar es Salaam. 2–4 days nationwide.
            </p>
           </div>
           <div class="flex items-center gap-3 text-gray-600">
@@ -362,7 +366,7 @@
            @if($oxfordProduct['features'])<ul>@foreach($oxfordProduct['features'] as $feature)<li>{{ $feature }}</li>@endforeach</ul>@endif
           @else
           <p>
-           The Taylor Oxford Shirt is the cornerstone of the William Taylor collection. Crafted from our signature textured Italian cotton, this piece commands attention through restraint ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â an unbuttoned camp collar, a slightly oversized boxy cut, and clean crossover detail speak volumes without effort.
+           The Taylor Oxford Shirt is the cornerstone of the William Taylor collection. Crafted from our signature textured Italian cotton, this piece commands attention through restraint — an unbuttoned camp collar, a slightly oversized boxy cut, and clean crossover detail speak volumes without effort.
           </p>
           <p>
            Every stitch is finished by hand in our Dar es Salaam atelier. The result is a shirt that transcends seasons, moving effortlessly from a morning meeting to an evening gathering at the coast.
@@ -379,7 +383,7 @@
            <strong>
             The Detail:
            </strong>
-           Crossover front panel. No buttons, no fuss. A single interior label ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â gold on charcoal.
+           Crossover front panel. No buttons, no fuss. A single interior label — gold on charcoal.
           </p>
           @endif
          </div>
@@ -540,7 +544,7 @@
             </span>
            </p>
            <p class="font-label text-xs tracking-wider text-wt-gold uppercase mt-0.5">
-            Pre-Order ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Ships 2026-08-15
+            Pre-Order · Ships 2026-08-15
            </p>
           </div>
          </div>
@@ -642,18 +646,27 @@
 document.addEventListener('DOMContentLoaded', function () {
  const main = document.getElementById('product-main-image');
  const gallery = document.getElementById('product-gallery-thumbnails');
- const bindGallery = function () { document.querySelectorAll('[data-product-gallery]').forEach(function (button) {
-  button.onclick = function () {
-   const image = button.querySelector('img');
-   main.src = image.src; main.alt = image.alt;
-   document.querySelectorAll('[data-product-gallery]').forEach(function (item) { item.classList.remove('border-wt-gold'); item.classList.add('border-transparent'); });
-   button.classList.add('border-wt-gold'); button.classList.remove('border-transparent');
-  };
- }); };
- bindGallery();
  const selected = {};
  const dataNode = document.getElementById('product-bootstrap-data');
  const productData = dataNode ? JSON.parse(dataNode.textContent) : null;
+ const fallbackImages = productData?.images || [];
+ const renderColourPreview = function (requestedImages) {
+  const image = requestedImages?.[0] || fallbackImages[0];
+  if (!image) return;
+  main.src = image.url;
+  main.alt = image.alt;
+  gallery.querySelectorAll('[data-product-gallery]').forEach(function (item) { item.classList.remove('border-wt-gold'); item.classList.add('border-transparent'); });
+ };
+ gallery.addEventListener('click', function (event) {
+  const button = event.target.closest('[data-product-gallery]');
+  if (!button || !gallery.contains(button)) return;
+  const image = button.querySelector('img');
+  main.src = image.src;
+  main.alt = image.alt;
+  gallery.querySelectorAll('[data-product-gallery]').forEach(function (item) { item.classList.remove('border-wt-gold'); item.classList.add('border-transparent'); });
+  button.classList.add('border-wt-gold');
+  button.classList.remove('border-transparent');
+ });
  document.querySelectorAll('[data-product-option]').forEach(function (button) {
   button.addEventListener('click', function () {
    const key = button.dataset.productOption;
@@ -661,12 +674,7 @@ document.addEventListener('DOMContentLoaded', function () {
    document.querySelectorAll('[data-product-option="' + key + '"]').forEach(function (item) { item.classList.remove('border-wt-gold', 'scale-110', 'bg-wt-oxblood', 'text-white'); });
    button.classList.add('border-wt-gold');
    if (key === 'colour') { button.classList.add('scale-110'); document.getElementById('product-colour-label').textContent = button.title; }
-   if (key === 'colour' && productData && productData.colour_images[button.dataset.valueId] && productData.colour_images[button.dataset.valueId].length) {
-    const images = productData.colour_images[button.dataset.valueId];
-    main.src = images[0].url; main.alt = images[0].alt;
-    gallery.replaceChildren(...images.map(function (image, index) { const button = document.createElement('button'); button.type = 'button'; button.dataset.productGallery = ''; button.className = 'flex-shrink-0 w-20 h-24 overflow-hidden border-2 transition-all '+(index === 0 ? 'border-wt-gold' : 'border-transparent hover:border-gray-300'); const thumbnail = document.createElement('img'); thumbnail.src = image.url; thumbnail.alt = image.alt; thumbnail.className = 'w-full h-full object-cover object-top'; button.appendChild(thumbnail); return button; }));
-    bindGallery();
-   }
+   if (key === 'colour' && productData) renderColourPreview(productData.colour_images[button.dataset.valueId]);
    if (key === 'size') { button.classList.add('bg-wt-oxblood', 'text-white'); document.getElementById('product-size-label').textContent = button.textContent.trim(); }
    if (productData) {
     const selectedValues = Object.values(selected);

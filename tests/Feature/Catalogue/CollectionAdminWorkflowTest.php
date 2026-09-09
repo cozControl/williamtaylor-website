@@ -67,7 +67,23 @@ final class CollectionAdminWorkflowTest extends TestCase
         $collection = Collection::query()->where('slug', 'new-arrivals-test')->sole();
         $this->assertSame([$oxford->id, $second->id], CollectionProduct::query()->active()->where('collection_id', $collection->id)->orderBy('position')->pluck('product_id')->all());
         $this->assertDatabaseHas('media_usages', ['owner_type' => Collection::class, 'owner_identifier' => $collection->id, 'media_asset_id' => $image->id, 'field_role' => 'card']);
-        $this->get(route('collections.show', $collection))->assertOk()->assertSeeText('New Arrivals Test')->assertSeeText('The Taylor Oxford Shirt');
+        $publicCollection = $this->get(route('collections.show', $collection))->assertOk()
+            ->assertSeeText('New Arrivals Test')->assertSeeText('The Taylor Oxford Shirt')
+            ->assertSeeText('The newest William Taylor pieces.')
+            ->assertSeeText('1 Result')
+            ->assertSee('data-collection-heading', false)
+            ->assertSee('data-collection-toolbar', false)
+            ->assertSee('data-collection-product-card', false)
+            ->assertSee('wt-collection-product-grid', false)
+            ->assertSee('data-storefront-grid-spacing="ecom-home-3a"', false)
+            ->assertSee('data-storefront-product-card', false)
+            ->assertSee('/website/images/eab6bab5d_bg.jpg', false)
+            ->assertSee('aspect-[3/4]', false)
+            ->assertDontSee('/website/js/index-DxdnTNDA.js', false)
+            ->assertDontSee('min-h-[28rem]', false)
+            ->assertDontSeeText('Curated pieces')
+            ->assertDontSeeText('Coming soon');
+        $this->assertSame(1, substr_count($publicCollection->getContent(), 'data-collection-product-card'));
 
         $this->actingAs($this->manager)->put(route('admin.collections.update', $collection), [
             'name' => 'New Arrivals Updated', 'slug' => 'new-arrivals-updated', 'description' => 'Updated storefront collection description.',
@@ -79,7 +95,25 @@ final class CollectionAdminWorkflowTest extends TestCase
         $this->assertDatabaseHas('audit_records', ['resource_identifier' => $collection->id, 'action' => 'collection.visibility.changed']);
         $this->assertTrue(MediaAsset::query()->whereKey($image->id)->exists());
         $this->assertFalse(MediaUsage::query()->where('owner_type', Collection::class)->where('owner_identifier', $collection->id)->exists());
+        $this->assertSame([$oxford->id], $collection->fresh()->products->pluck('product_id')->all());
+        $this->assertSame(2, CollectionProduct::query()->where('collection_id', $collection->id)->count());
+        $this->assertSame(1, CollectionProduct::query()->where('collection_id', $collection->id)->whereNotNull('archived_at')->count());
+        $this->actingAs($this->manager)->get(route('admin.collections.edit', $collection))
+            ->assertOk()->assertSee('value="'.$oxford->id.'" checked', false)
+            ->assertDontSee('value="'.$second->id.'" checked', false);
+        $this->actingAs($this->manager)->get(route('admin.collections.index'))->assertOk()->assertSeeText('1 Product');
         $this->get('/collections/new-arrivals-updated')->assertNotFound();
+
+        $this->actingAs($this->manager)->put(route('admin.collections.update', $collection), [
+            'name' => 'New Arrivals Updated', 'slug' => 'new-arrivals-updated', 'description' => 'Updated storefront collection description.',
+            'media_asset_id' => '', 'product_ids' => [$second->id, $oxford->id],
+            'product_order' => [$second->id => 2, $oxford->id => 3], 'visibility' => 'hidden',
+        ])->assertRedirect(route('admin.collections.edit', $collection));
+        $this->assertSame(
+            [[$second->id, 2], [$oxford->id, 3]],
+            $collection->fresh()->products->map(fn (CollectionProduct $membership): array => [$membership->product_id, $membership->position])->all(),
+        );
+        $this->assertSame(3, CollectionProduct::query()->where('collection_id', $collection->id)->count());
     }
 
     public function test_non_ready_media_is_rejected(): void
@@ -104,6 +138,42 @@ final class CollectionAdminWorkflowTest extends TestCase
             ->assertSessionHasInput('media_asset_id', $image->id);
 
         $this->assertDatabaseMissing('collections', ['slug' => 'alt-validation']);
+    }
+
+    public function test_collection_validation_maps_slug_and_display_order_errors_and_preserves_selection(): void
+    {
+        $this->actingAs($this->manager)->post(route('admin.collections.store'), [
+            'name' => 'Existing Collection', 'slug' => 'existing-collection', 'description' => 'Existing description.',
+            'product_ids' => [], 'visibility' => 'hidden',
+        ])->assertRedirect();
+        $product = Product::query()->create(['stable_key' => 'order-product', 'slug' => 'order-product', 'product_type' => 'apparel', 'catalogue_status' => 'draft', 'currency' => 'TZS', 'created_by' => $this->manager->id]);
+
+        $response = $this->actingAs($this->manager)->followingRedirects()->from(route('admin.collections.create'))->post(route('admin.collections.store'), [
+            'name' => 'Preserved Collection', 'slug' => 'existing-collection', 'description' => 'Preserved description.',
+            'product_ids' => [$product->id], 'product_order' => [$product->id => 'not-a-number'], 'visibility' => 'visible',
+        ])->assertOk()
+            ->assertSee('value="Preserved Collection"', false)
+            ->assertSee('value="'.$product->id.'" checked', false)
+            ->assertSee('value="not-a-number"', false)
+            ->assertSeeText('This Collection URL is already in use.')
+            ->assertSeeText('Display order must be a whole number.')
+            ->assertSee('aria-describedby="collection-order-'.$product->id.'-help collection-order-'.$product->id.'-error"', false)
+            ->assertSeeText('Needs attention');
+        $response->assertSee('value="visible" selected', false);
+    }
+
+    public function test_new_product_orders_are_deterministic_when_the_client_omits_them(): void
+    {
+        $first = Product::query()->create(['stable_key' => 'first-order', 'slug' => 'first-order', 'product_type' => 'apparel', 'catalogue_status' => 'draft', 'currency' => 'TZS', 'created_by' => $this->manager->id]);
+        $second = Product::query()->create(['stable_key' => 'second-order', 'slug' => 'second-order', 'product_type' => 'apparel', 'catalogue_status' => 'draft', 'currency' => 'TZS', 'created_by' => $this->manager->id]);
+
+        $this->actingAs($this->manager)->post(route('admin.collections.store'), [
+            'name' => 'Automatic Order', 'slug' => 'automatic-order', 'description' => 'Orders are assigned deterministically.',
+            'product_ids' => [$first->id, $second->id], 'visibility' => 'hidden',
+        ])->assertRedirect(route('admin.collections.index'));
+
+        $collection = Collection::query()->where('slug', 'automatic-order')->sole();
+        $this->assertSame([0, 1], CollectionProduct::query()->active()->where('collection_id', $collection->id)->orderBy('position')->pluck('position')->all());
     }
 
     public function test_collection_usage_alt_override_is_saved_and_restored(): void
@@ -169,6 +239,7 @@ final class CollectionAdminWorkflowTest extends TestCase
 
         $this->actingAs($viewer)->get(route('admin.collections.edit', $collection))->assertForbidden();
         $collection->forceFill(['archived_at' => now()])->save();
+        $this->get(route('collections.show', $collection))->assertNotFound();
         $this->actingAs($this->manager)->get(route('admin.collections.edit', $collection))->assertNotFound();
         $this->actingAs($this->manager)->put(route('admin.collections.update', $collection), [])->assertNotFound();
     }
@@ -185,7 +256,8 @@ final class CollectionAdminWorkflowTest extends TestCase
             'name' => '', 'slug' => 'validation-edit-test', 'description' => 'Preserved edit description.',
             'product_ids' => [], 'visibility' => 'hidden',
         ])->assertOk()->assertSeeText('Please correct the highlighted fields.')
-            ->assertSeeText('The name field is required.')->assertSeeText('Preserved edit description.');
+            ->assertSeeText('This field is required.')->assertSeeText('Preserved edit description.')
+            ->assertSee('aria-invalid="true"', false)->assertSee('aria-describedby="collection-name-error"', false);
     }
 
     public function test_media_picker_is_permissioned_eligible_searchable_and_bounded(): void
