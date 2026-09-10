@@ -4,6 +4,7 @@
 
 <x-admin.layout title="Homepage / William's Hot Sale" description="Manage the three editorial feature tiles already shown on the Homepage." eyebrow="Website" :breadcrumbs="$breadcrumbs">
     <x-admin.flash :errors="$errors" />
+    <x-admin.homepage-section-visibility section-key="hot-sale" />
     <form method="POST" action="{{ route('admin.homepage.hot-sale.update') }}" class="homepage-hot-sale-editor">
         @csrf
         @method('PUT')

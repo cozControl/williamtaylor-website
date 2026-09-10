@@ -42,14 +42,14 @@ final class StorefrontProductController
             $data = null;
         }
 
-        return view('frontend.products.'.$template, [
+        return view('frontend.products.'.($data !== null ? 'taylor-oxford-shirt' : $template), [
             // The imported Product template retains this legacy variable name,
             // but the presenter payload is canonical for every Product slug.
             'oxfordProduct' => $data,
             'catalogueProduct' => $data,
-            // The imported SPA only knows its original static route map. Dynamic
-            // Laravel Products must retain the canonical server-rendered document.
-            'loadImportedStorefrontRuntime' => array_key_exists($product, self::TEMPLATES),
+            // Keep canonical Variant selection and inventory authoritative; the imported
+            // demonstration SPA has independent Product and Cart state.
+            'loadImportedStorefrontRuntime' => false,
         ]);
     }
 }

@@ -6,6 +6,9 @@
             @endif
         </a>
         <div class="absolute top-3 left-3 flex flex-col gap-1">
+            @if(!($card['is_available'] ?? false))
+                <span data-inventory-out-of-stock class="bg-wt-oxblood text-wt-cream font-label px-2 py-0.5 text-[10px] tracking-widest">OUT OF STOCK</span>
+            @endif
             @foreach ($card['badges'] as $badge)
                 <span class="{{ $badge === 'new' ? 'bg-wt-gold text-wt-oxblood' : 'bg-wt-oxblood text-wt-cream' }} font-label px-2 py-0.5 text-[10px] tracking-widest">{{ strtoupper($badge) }}</span>
             @endforeach

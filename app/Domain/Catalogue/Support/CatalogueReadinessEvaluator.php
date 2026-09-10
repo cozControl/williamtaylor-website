@@ -5,6 +5,7 @@ namespace App\Domain\Catalogue\Support;
 use App\Domain\Catalogue\Data\CatalogueReadinessResult;
 use App\Domain\Catalogue\Models\Product;
 use App\Domain\Media\Models\MediaUsage;
+use Illuminate\Support\Collection;
 
 final class CatalogueReadinessEvaluator
 {
@@ -13,7 +14,8 @@ final class CatalogueReadinessEvaluator
         private ProductMediaAccessibility $accessibility,
     ) {}
 
-    public function evaluate(Product $p): CatalogueReadinessResult
+    /** @param Collection<int, MediaUsage>|null $resolvedMedia */
+    public function evaluate(Product $p, ?Collection $resolvedMedia = null): CatalogueReadinessResult
     {
         $f = [];
         if ($p->archived_at) {
@@ -31,13 +33,13 @@ final class CatalogueReadinessEvaluator
         if ($p->base_price_minor === null) {
             $f[] = 'missing_product_price';
         }
-        if (! $p->categories()->wherePivot('is_primary', true)->exists()) {
+        if (! ($p->relationLoaded('categories') ? $p->categories->contains(fn ($category) => (bool) $category->getRelation('pivot')->getAttribute('is_primary')) : $p->categories()->wherePivot('is_primary', true)->exists())) {
             $f[] = 'missing_primary_category';
         }
-        $options = $p->options()->active()->with('values')->get();
+        $options = $p->relationLoaded('options') ? $p->options->whereNull('archived_at') : $p->options()->active()->with('values')->get();
         if ($options->count() > 2 || $options->contains(fn ($o) => ! in_array($o->key, ['colour', 'size'], true))) {
             $f[] = 'invalid_option_configuration';
-        }$variants = $p->variants()->active()->with('values')->get();
+        }$variants = $p->relationLoaded('variants') ? $p->variants->whereNull('archived_at') : $p->variants()->active()->with('values')->get();
         if ($variants->isEmpty()) {
             $f[] = 'missing_variants';
         }foreach ($variants as $v) {
@@ -51,7 +53,7 @@ final class CatalogueReadinessEvaluator
             $f[] = 'invalid_default_variant';
         }
 
-        $media = MediaUsage::query()
+        $media = $resolvedMedia ?? MediaUsage::query()
             ->with('asset')
             ->where('owner_type', Product::class)
             ->where('owner_identifier', $p->id)

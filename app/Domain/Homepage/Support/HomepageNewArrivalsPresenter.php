@@ -35,6 +35,7 @@ final class HomepageNewArrivalsPresenter
 
         $memberships = CollectionProduct::query()->active()->where('collection_id', $collection->id)
             ->with('product.currentDraftRevision')->orderBy('position')->get();
+        $this->cards->warmAvailability($memberships->pluck('product')->filter());
         $cards = $memberships->map(function (CollectionProduct $membership): ?array {
             $product = $membership->product;
             if ($product === null || $this->products->resolve($product->slug) === null) {

@@ -25,6 +25,9 @@ final class RoleRegistry
             ],
             self::INVENTORY_MANAGER => [
                 PermissionRegistry::ADMIN_ACCESS,
+                PermissionRegistry::PRODUCTS_VIEW,
+                PermissionRegistry::INVENTORY_VIEW,
+                PermissionRegistry::INVENTORY_MANAGE,
             ],
             self::CMS_MANAGER => [
                 PermissionRegistry::ADMIN_ACCESS,

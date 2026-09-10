@@ -1,4 +1,5 @@
 <x-admin.layout title="The Future of Style" eyebrow="Homepage" heading="The Future of Style" description="Choose up to two published Pre-Order Campaigns for the supplied Homepage composition.">
+    <x-admin.homepage-section-visibility section-key="future-style" />
     @if($errors->any())
         <div class="admin-alert admin-alert-error" role="alert">
             @foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach

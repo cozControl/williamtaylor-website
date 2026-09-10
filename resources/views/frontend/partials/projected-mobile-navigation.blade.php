@@ -1,50 +1,36 @@
-@if($publicSiteChrome?->navigation)
-<div id="public-mobile-navigation" class="hidden lg:hidden fixed inset-x-0 top-14 z-50 bg-wt-oxblood border-t border-wt-gold/30 px-6 py-6 shadow-xl" role="dialog" aria-modal="true" aria-label="Primary navigation">
- <div class="flex items-center justify-between mb-5">
-  <span class="font-label text-xs tracking-widest uppercase text-wt-gold">Menu</span>
-  <button type="button" data-public-menu-close aria-label="Close menu" class="text-wt-cream hover:text-wt-gold transition-colors">
-   <svg fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="22"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-  </button>
- </div>
- <nav aria-label="Mobile primary navigation">
-  <ul class="space-y-4">
-   @foreach($publicSiteChrome->navigation->items as $item)
+<div id="public-mobile-navigation" hidden class="wt-mobile-navigation lg:hidden" role="dialog" aria-modal="true" aria-label="Primary navigation">
+ <div class="fixed inset-0 bg-black/60" data-public-menu-backdrop></div>
+ <div class="wt-mobile-panel fixed top-0 left-0 h-full bg-wt-oxblood flex flex-col">
+  <div class="flex items-center justify-between p-5 border-b border-wt-gold/20">
+   <a href="{{ route('home') }}"><img src="/website/images/cf030fe26_ICONlight.png" alt="{{ $publicSiteChrome?->profile?->brandName ?: 'William Taylor' }}" class="h-9 w-auto mix-blend-screen"></a>
+   <button type="button" data-public-menu-close aria-label="Close menu" class="text-wt-cream hover:text-wt-gold"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+  </div>
+  <nav class="flex-1 overflow-y-auto py-4" aria-label="Mobile primary navigation" data-shop-navigation="mobile">
+   <button type="button" data-mobile-shop-toggle aria-expanded="true" aria-controls="public-mobile-shop-links" class="w-full flex items-center justify-between px-6 py-3.5 font-body text-lg uppercase text-wt-cream" @if($shopNavigation['active']) data-shop-active @endif>{{ $shopNavigation['label'] }}<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+   <div id="public-mobile-shop-links" class="bg-black/20">
+    @foreach([$shopNavigation['all_collections'], ...$shopNavigation['collections'], ...$shopNavigation['special']] as $entry)
+     <a href="{{ $entry['url'] }}" @if($entry['active']) aria-current="page" @endif class="block px-10 py-2.5 font-label text-xs tracking-wider uppercase text-wt-cream/60 hover:text-wt-gold">{{ $entry['label'] }}</a>
+    @endforeach
+   </div>
+   @foreach([$shopNavigation['all_collections'], ...$shopNavigation['special']] as $entry)
+    <a class="block px-6 py-3.5 font-body text-lg uppercase text-wt-cream hover:text-wt-gold" href="{{ $entry['url'] }}" @if($entry['active']) aria-current="page" @endif>{{ $loop->first ? 'Collections' : $entry['label'] }}</a>
+   @endforeach
+   @foreach($shopNavigation['editorial'] as $item)
     @if($item->visibility !== 'desktop')
-    <li>
-     <a class="font-label text-sm tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors" href="{{ $item->link->url }}" @if($item->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $item->link->label }}</a>
-     @if($item->children)
-      <ul class="mt-3 ml-4 space-y-3 border-l border-wt-gold/20 pl-4">
-       @foreach($item->children as $child)
-        @if($child->visibility !== 'desktop')
-        <li><a class="font-body text-sm text-wt-cream/70 hover:text-wt-gold" href="{{ $child->link->url }}" @if($child->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $child->link->label }}</a></li>
-        @endif
-       @endforeach
-      </ul>
-     @endif
-    </li>
+     <a class="block px-6 py-3.5 font-body text-lg uppercase text-wt-cream hover:text-wt-gold" href="{{ $item->link->url }}" @if($item->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $item->link->label }}</a>
+     @foreach($item->children as $child)
+      @if($child->visibility !== 'desktop')
+       <a class="block px-10 py-2.5 font-label text-xs uppercase text-wt-cream/60 hover:text-wt-gold" href="{{ $child->link->url }}" @if($child->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $child->link->label }}</a>
+      @endif
+     @endforeach
     @endif
    @endforeach
-  </ul>
- </nav>
+   <div class="border-t border-wt-gold/20 mt-4 pt-4">
+    <a class="block px-6 py-3 font-label text-xs uppercase text-wt-cream/60" href="{{ route('gift-cards.index') }}">Gift Cards</a>
+    <a class="block px-6 py-3 font-label text-xs uppercase text-wt-cream/60" href="{{ route('login') }}">My Account</a>
+    <a class="block px-6 py-3 font-label text-xs uppercase text-wt-cream/60" href="{{ route('wishlist.index') }}">Wishlist</a>
+   </div>
+  </nav>
+  <div class="p-5 border-t border-wt-gold/20 font-label text-xs tracking-widest uppercase text-wt-gold">William Taylor</div>
+ </div>
 </div>
-<script>
- (() => {
-  const menu = document.getElementById('public-mobile-navigation');
-  const opener = document.querySelector('[data-public-menu-open]');
-  const closer = menu?.querySelector('[data-public-menu-close]');
-  if (!menu || !opener || !closer) return;
-  const focusable = () => [...menu.querySelectorAll('a[href], button:not([disabled])')];
-  const close = () => { menu.classList.add('hidden'); opener.setAttribute('aria-expanded', 'false'); opener.focus(); };
-  opener.addEventListener('click', () => { menu.classList.remove('hidden'); opener.setAttribute('aria-expanded', 'true'); closer.focus(); });
-  closer.addEventListener('click', close);
-  document.addEventListener('keydown', event => {
-   if (menu.classList.contains('hidden')) return;
-   if (event.key === 'Escape') close();
-   if (event.key !== 'Tab') return;
-   const items = focusable(); const first = items[0]; const last = items[items.length - 1];
-   if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-   if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-  });
- })();
-</script>
-@endif

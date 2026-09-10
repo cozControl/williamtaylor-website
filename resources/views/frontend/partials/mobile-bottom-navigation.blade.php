@@ -59,7 +59,7 @@
          Wishlist
         </span>
        </a>
-       <a class="relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full" href="html/cart.html">
+       <a data-cart-open aria-haspopup="dialog" class="relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full" href="{{ route('cart.show') }}">
         <div class="relative">
          <svg class="lucide lucide-shopping-bag text-wt-cream/60" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
           <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z">

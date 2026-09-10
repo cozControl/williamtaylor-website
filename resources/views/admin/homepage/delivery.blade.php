@@ -1,5 +1,6 @@
 <x-admin.layout title="Complimentary Delivery" eyebrow="Homepage" description="Manage the delivery information shown below The Summer Edit." :breadcrumbs="['Homepage' => route('admin.homepage.edit'), 'Complimentary Delivery' => null]">
     <x-admin.flash :errors="$errors" />
+    <x-admin.homepage-section-visibility section-key="delivery" />
     <div class="admin-page-actions"><a class="admin-secondary-button" href="{{ route('home') }}" target="_blank" rel="noopener">View homepage</a></div>
     <form method="POST" action="{{ route('admin.homepage.delivery.update') }}" class="admin-form-stack homepage-delivery-editor">
         @csrf

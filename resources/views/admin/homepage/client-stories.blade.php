@@ -1,5 +1,6 @@
 <x-admin.layout title="Client Stories" eyebrow="Homepage" description="Manage the three client experiences featured on the Homepage." :breadcrumbs="['Homepage' => route('admin.homepage.edit'), 'Client Stories' => null]">
     <x-admin.flash :errors="$errors" />
+    <x-admin.homepage-section-visibility section-key="client-stories" />
     <div class="admin-page-actions"><a class="admin-secondary-button" href="{{ route('home') }}" target="_blank" rel="noopener">View homepage</a></div>
     <form method="POST" action="{{ route('admin.homepage.client-stories.update') }}" class="admin-form-stack homepage-client-stories-editor">
         @csrf

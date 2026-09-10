@@ -74,7 +74,7 @@ if ($action === 'setup') {
     $payload['contact']['telephone'] = '+255 700 000 000';
     $payload['contact']['whatsapp'] = '+255700000000';
     $payload['contact']['address'] = 'Dar es Salaam, Tanzania';
-    $payload['social_links'] = [['platform' => 'instagram', 'url' => 'https://instagram.com/williamtaylor', 'label' => 'William Taylor on Instagram']];
+    $payload['social_links'] = [['platform' => 'instagram', 'url' => 'https://instagram.com/williamtaylorbrand', 'label' => 'William Taylor on Instagram']];
     $payload['footer']['description'] = 'Governed tailoring from Tanzania.';
     $payload['footer']['copyright'] = '2026 William Taylor. All Rights Reserved.';
     $payload['footer']['newsletter_heading'] = 'Join the Governed Ledger';

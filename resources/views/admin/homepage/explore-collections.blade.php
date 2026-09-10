@@ -1,5 +1,6 @@
 <x-admin.layout title="Explore the Collection" eyebrow="Homepage" description="Choose up to three canonical Collections for the existing Homepage composition." :breadcrumbs="['Homepage' => route('admin.homepage.edit'), 'Explore the Collection' => null]">
     <x-admin.flash :errors="$errors" />
+    <x-admin.homepage-section-visibility section-key="explore-collections" />
 
     <section class="admin-form-section" aria-label="Current storefront state">
         <p class="admin-status-label">Current storefront state</p>

@@ -30,6 +30,7 @@ use App\Domain\Catalogue\Support\ProductPrice;
 use App\Domain\Catalogue\Support\ProductStateFingerprint;
 use App\Domain\Catalogue\Support\VariantCombinationFingerprint;
 use App\Domain\Catalogue\Support\VariantStateFingerprint;
+use App\Domain\Inventory\Services\InventoryAvailabilityService;
 use App\Domain\Media\Contracts\MediaProvider;
 use App\Domain\Media\Enums\MediaAssetState;
 use App\Domain\Media\Enums\MediaResourceType;
@@ -208,7 +209,9 @@ final class ProductController
         $storefrontIssues = $this->storefrontReadinessMessages($storefrontReadiness->failureCodes);
         $storefrontResolvable = $presenter->resolve($product->slug) !== null;
 
-        return view('admin.products.edit', compact('product', 'usages', 'primarySelected', 'gallerySelected', 'galleryOrders', 'mediaAlts', 'colourValues', 'colourSelected', 'colourOrders', 'categories', 'relatedIds', 'relatedCandidates', 'storefrontReadiness', 'storefrontIssues', 'storefrontResolvable'));
+        $inventorySummary = auth()->user()->can('inventory.view') ? app(InventoryAvailabilityService::class)->summaries($product->variants) : [];
+
+        return view('admin.products.edit', compact('inventorySummary', 'product', 'usages', 'primarySelected', 'gallerySelected', 'galleryOrders', 'mediaAlts', 'colourValues', 'colourSelected', 'colourOrders', 'categories', 'relatedIds', 'relatedCandidates', 'storefrontReadiness', 'storefrontIssues', 'storefrontResolvable'));
     }
 
     public function update(Request $request, Product $product): RedirectResponse

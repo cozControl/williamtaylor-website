@@ -1,5 +1,6 @@
 <x-admin.layout title="Limited Edition" eyebrow="Homepage" heading="Limited Edition" description="Choose up to three published Limited Edition Campaigns for the supplied Homepage composition.">
     <x-admin.flash :errors="$errors" />
+    <x-admin.homepage-section-visibility section-key="limited-edition" />
     <form method="POST" action="{{ route('admin.homepage.limited-edition.update') }}" class="admin-form-stack">
         @csrf
         @method('PUT')

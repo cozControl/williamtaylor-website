@@ -2,10 +2,7 @@
 
 @section('content')
 <div id="root" class="min-h-screen bg-wt-offwhite">
-    <header class="fixed top-0 left-0 right-0 z-40">
-        @include('frontend.partials.announcement')
-        @include('frontend.partials.header')
-    </header>
+    @include('frontend.partials.header')
     <main class="flex-1 pt-14 lg:pt-16 pb-16 lg:pb-0">
         <section data-collection-heading class="relative bg-wt-oxblood py-16 px-6 text-center overflow-hidden">
             <div aria-hidden="true" class="absolute inset-0 wt-pattern-texture wt-pattern-breathe pointer-events-none" style='background-image: url("/website/images/eab6bab5d_bg.jpg"); background-size: 300px;'></div>

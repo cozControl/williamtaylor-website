@@ -18,6 +18,7 @@ final class StorefrontCollectionController
         abort_if($collection->currentDraftRevision === null, 404);
         $usage = MediaUsage::query()->with('asset')->where('owner_type', Collection::class)->where('owner_identifier', $collection->id)->where('field_role', CollectionMediaRoleRegistry::CARD)->first();
         $image = $usage === null ? null : $media->deliveryUrl($usage->asset->provider_public_id, $usage->asset->resource_type->value, 'hero_desktop', null, null);
+        $cards->warmAvailability($collection->products->pluck('product')->filter());
         $products = $collection->products->map(fn ($membership) => $cards->present($membership->product))->filter()->values();
 
         return view('frontend.collection-show', compact('collection', 'image', 'products'))->with('loadImportedStorefrontRuntime', false);

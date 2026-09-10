@@ -11,6 +11,7 @@ use App\Domain\Catalogue\Actions\RemoveCollectionMedia;
 use App\Domain\Catalogue\Actions\ReorderCollectionProducts;
 use App\Domain\Catalogue\Actions\ReviseCollection;
 use App\Domain\Catalogue\Actions\UpdateCollectionMediaUsage;
+use App\Domain\Catalogue\Actions\UpdateCollectionNavigationOrder;
 use App\Domain\Catalogue\Actions\UpdateCollectionVisibility;
 use App\Domain\Catalogue\Models\Collection;
 use App\Domain\Catalogue\Models\CollectionProduct;
@@ -120,6 +121,7 @@ final class CollectionController
             'media_alt' => ['nullable', 'string', 'max:500'],
             'product_ids' => ['array'],
             'product_ids.*' => ['string', 'distinct', Rule::exists('products', 'id')->whereNull('archived_at')],
+            'navigation_order' => ['sometimes', 'integer', 'min:0', 'max:999999'],
             'product_order' => ['array'],
             'product_order.*' => ['nullable', 'integer', 'min:0', 'max:999'],
         ], [
@@ -171,6 +173,9 @@ final class CollectionController
     private function sync(Request $request, Collection $collection, array $data): void
     {
         $actor = $request->user();
+        if (array_key_exists('navigation_order', $data)) {
+            $collection = app(UpdateCollectionNavigationOrder::class)->handle($actor, $collection, (int) $data['navigation_order']);
+        }
         $usage = MediaUsage::query()->where('owner_type', Collection::class)->where('owner_identifier', $collection->id)->where('field_role', CollectionMediaRoleRegistry::CARD)->first();
         $mediaId = $data['media_asset_id'] ?? null;
         if ($usage !== null && $usage->media_asset_id !== $mediaId) {

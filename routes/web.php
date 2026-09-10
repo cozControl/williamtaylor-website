@@ -2,18 +2,32 @@
 
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomepageController;
 use App\Http\Controllers\LimitedEditionController;
 use App\Http\Controllers\PagePreviewController;
 use App\Http\Controllers\PreOrderController;
+use App\Http\Controllers\SnippePaymentController;
 use App\Http\Controllers\StorefrontCollectionController;
+use App\Http\Controllers\StorefrontCollectionsController;
 use App\Http\Controllers\StorefrontProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomepageController::class)->name('home');
+Route::post('webhooks/snippe', [SnippePaymentController::class, 'webhook'])->name('snippe.webhook');
+Route::get('checkout/snippe/return/{reference}', [SnippePaymentController::class, 'returned'])->where('reference', '[a-f0-9]{64}')->name('snippe.return');
+Route::post('checkout/snippe/retry/{reference}', [SnippePaymentController::class, 'retry'])->where('reference', '[a-f0-9]{64}')->block()->middleware('throttle:10,1')->name('snippe.retry');
+Route::get('cart', [CartController::class, 'show'])->name('cart.show');
+Route::get('checkout', [CheckoutController::class, 'show'])->block()->name('checkout.show');
+Route::post('checkout', [CheckoutController::class, 'store'])->block()->middleware('throttle:30,1')->name('checkout.store');
+Route::get('order-confirmation/{reference}', [CheckoutController::class, 'confirmation'])->where('reference', '[a-f0-9]{64}')->name('checkout.confirmation');
+Route::post('cart/items', [CartController::class, 'store'])->block()->name('cart.store');
+Route::patch('cart/items/{variant}', [CartController::class, 'update'])->block()->name('cart.update');
+Route::delete('cart/items/{variant}', [CartController::class, 'destroy'])->block()->name('cart.destroy');
 Route::get('about', AboutController::class)->name('about');
 
-Route::view('collections', 'frontend.collections')->name('collections.index');
+Route::get('collections', StorefrontCollectionsController::class)->name('collections.index');
 Route::get('collections/{collection:slug}', StorefrontCollectionController::class)->name('collections.show');
 Route::view('shop', 'frontend.shop')->name('products.index');
 Route::get('pre-order', PreOrderController::class)->name('preorders.index');

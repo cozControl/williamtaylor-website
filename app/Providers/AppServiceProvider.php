@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Domain\Catalogue\Support\StorefrontShopNavigationPresenter;
 use App\Domain\Content\Contracts\RichTextSanitizer;
 use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Domain\Identity\Support\RoleRegistry;
 use App\Domain\Media\Contracts\MediaProvider;
+use App\Domain\Payments\Support\CommerceLifecycleMutation;
 use App\Domain\PublicProjection\Services\ResolvePublicSiteChrome;
 use App\Domain\Publishing\Contracts\PublicationPolicy;
 use App\Domain\Publishing\Support\CodeOwnedPublicationPolicy;
@@ -28,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->singleton(CommerceLifecycleMutation::class);
         $this->app->singleton(ControlledRoleMutation::class);
         $this->app->singleton(RichTextSanitizer::class, SymfonyRichTextSanitizer::class);
         $this->app->singleton(PublicationPolicy::class, CodeOwnedPublicationPolicy::class);
@@ -56,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
     {
         View::composer(['frontend.*', 'layouts.frontend'], function ($view): void {
             $view->with('publicSiteChrome', app(ResolvePublicSiteChrome::class)->resolve());
+            $view->with('shopNavigation', app(StorefrontShopNavigationPresenter::class)->present());
         });
     }
 

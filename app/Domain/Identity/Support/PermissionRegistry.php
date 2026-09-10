@@ -36,6 +36,10 @@ final class PermissionRegistry
 
     public const MEDIA_RESTORE = 'media.restore';
 
+    public const INVENTORY_VIEW = 'inventory.view';
+
+    public const INVENTORY_MANAGE = 'inventory.manage';
+
     public const PRODUCTS_VIEW = 'products.view';
 
     public const PRODUCTS_MANAGE = 'products.manage';
@@ -163,6 +167,8 @@ final class PermissionRegistry
             self::MEDIA_REPLACE,
             self::MEDIA_ARCHIVE,
             self::MEDIA_RESTORE,
+            self::INVENTORY_VIEW,
+            self::INVENTORY_MANAGE,
             self::PRODUCTS_VIEW,
             self::PRODUCTS_MANAGE,
             self::PAGES_VIEW,

@@ -4,6 +4,7 @@ use App\Domain\Identity\Support\PermissionRegistry;
 use App\Http\Controllers\Admin\CampaignController;
 use App\Http\Controllers\Admin\CatalogueController;
 use App\Http\Controllers\Admin\CollectionController;
+use App\Http\Controllers\Admin\CommerceOrderController;
 use App\Http\Controllers\Admin\ContentPageController;
 use App\Http\Controllers\Admin\HomepageClientStoriesController;
 use App\Http\Controllers\Admin\HomepageCollectionPickerController;
@@ -11,7 +12,9 @@ use App\Http\Controllers\Admin\HomepageController;
 use App\Http\Controllers\Admin\HomepageDeliveryController;
 use App\Http\Controllers\Admin\HomepageHandbagsController;
 use App\Http\Controllers\Admin\HomepageHotSaleMediaPickerController;
+use App\Http\Controllers\Admin\HomepageSectionVisibilityController;
 use App\Http\Controllers\Admin\HomepageSummerEditController;
+use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\MediaController;
 use App\Http\Controllers\Admin\MediaPickerController;
 use App\Http\Controllers\Admin\OrderController;
@@ -27,6 +30,13 @@ Route::prefix('admin')
     ->middleware(['auth', 'verified', 'can:'.PermissionRegistry::ADMIN_ACCESS])
     ->group(function (): void {
         Route::view('/', 'admin.dashboard')->name('dashboard');
+        Route::get('/commerce/orders', [CommerceOrderController::class, 'index'])->middleware('can:'.PermissionRegistry::ORDERS_VIEW)->name('commerce.orders.index');
+        Route::post('/commerce/orders/filters', [CommerceOrderController::class, 'filter'])->middleware('can:'.PermissionRegistry::ORDERS_VIEW)->name('commerce.orders.filters');
+        Route::get('/commerce/orders/{order}', [CommerceOrderController::class, 'show'])->middleware('can:'.PermissionRegistry::ORDERS_VIEW)->name('commerce.orders.show');
+        Route::get('/commerce/orders/{order}/cancel', [CommerceOrderController::class, 'confirmCancellation'])->middleware(['can:'.PermissionRegistry::ORDERS_VIEW, 'can:'.PermissionRegistry::ORDERS_CANCEL])->name('commerce.orders.cancel.confirm');
+        Route::post('/commerce/orders/{order}/cancel', [CommerceOrderController::class, 'cancel'])->middleware(['can:'.PermissionRegistry::ORDERS_VIEW, 'can:'.PermissionRegistry::ORDERS_CANCEL, 'throttle:10,1'])->name('commerce.orders.cancel');
+        Route::post('/commerce/orders/{order}/payments/{payment}/check', [CommerceOrderController::class, 'check'])->middleware(['can:'.PermissionRegistry::ORDERS_VIEW, 'throttle:10,1'])->name('commerce.orders.payments.check');
+        Route::put('/homepage/sections/{section}/visibility', HomepageSectionVisibilityController::class)->middleware('can:'.PermissionRegistry::SETTINGS_MANAGE)->name('homepage.visibility.update');
         Route::get('/homepage/client-stories', [HomepageClientStoriesController::class, 'edit'])->middleware('can:'.PermissionRegistry::SETTINGS_VIEW)->name('homepage.client-stories.edit');
         Route::put('/homepage/client-stories', [HomepageClientStoriesController::class, 'update'])->middleware('can:'.PermissionRegistry::SETTINGS_MANAGE)->name('homepage.client-stories.update');
         Route::get('/homepage/womens-handbags', [HomepageHandbagsController::class, 'edit'])->middleware('can:'.PermissionRegistry::SETTINGS_VIEW)->name('homepage.handbags.edit');
@@ -51,6 +61,9 @@ Route::prefix('admin')
         Route::get('/homepage/explore-collections', [HomepageController::class, 'editExploreCollections'])->middleware('can:'.PermissionRegistry::SETTINGS_VIEW)->name('homepage.explore-collections.edit');
         Route::put('/homepage/explore-collections', [HomepageController::class, 'updateExploreCollections'])->middleware('can:'.PermissionRegistry::SETTINGS_MANAGE)->name('homepage.explore-collections.update');
         Route::get('/homepage/collection-picker', HomepageCollectionPickerController::class)->middleware('can:'.PermissionRegistry::SETTINGS_VIEW)->name('homepage.collection-picker');
+        Route::get('/inventory', [InventoryController::class, 'index'])->middleware('can:'.PermissionRegistry::INVENTORY_VIEW)->name('inventory.index');
+        Route::get('/inventory/{variant}', [InventoryController::class, 'show'])->middleware('can:'.PermissionRegistry::INVENTORY_VIEW)->name('inventory.show');
+        Route::post('/inventory/{variant}', [InventoryController::class, 'store'])->middleware(['can:'.PermissionRegistry::INVENTORY_VIEW, 'can:'.PermissionRegistry::INVENTORY_MANAGE])->name('inventory.store');
         Route::get('/catalogue', CatalogueController::class)->middleware('can:'.PermissionRegistry::PRODUCTS_VIEW)->name('catalogue.index');
         Route::get('/collections', [CollectionController::class, 'index'])->middleware('can:'.PermissionRegistry::PRODUCTS_VIEW)->name('collections.index');
         Route::get('/collections/create', [CollectionController::class, 'create'])->middleware('can:'.PermissionRegistry::PRODUCTS_MANAGE)->name('collections.create');

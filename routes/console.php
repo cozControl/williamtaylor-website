@@ -15,3 +15,5 @@ Schedule::command('content:publish-scheduled-pages')
 Schedule::command('site-content:publish-scheduled')
     ->everyMinute()
     ->withoutOverlapping();
+
+Schedule::command('payments:reconcile-snippe --limit=10')->everyFiveMinutes()->withoutOverlapping(10)->when(fn () => config('snippe.enabled'));

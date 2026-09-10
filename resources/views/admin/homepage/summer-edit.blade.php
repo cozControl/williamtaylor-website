@@ -1,5 +1,6 @@
 <x-admin.layout title="The Summer Edit" eyebrow="Homepage" description="Manage this seasonal editorial feature." :breadcrumbs="['Homepage' => route('admin.homepage.edit'), 'The Summer Edit' => null]">
     <x-admin.flash :errors="$errors" />
+    <x-admin.homepage-section-visibility section-key="summer-edit" />
     <div class="admin-page-actions"><a class="admin-secondary-button" href="{{ route('home') }}" target="_blank" rel="noopener">View homepage</a></div>
     <form method="POST" action="{{ route('admin.homepage.summer-edit.update') }}" class="admin-form-stack homepage-summer-edit-editor">
         @csrf

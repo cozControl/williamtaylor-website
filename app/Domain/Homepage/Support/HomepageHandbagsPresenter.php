@@ -38,6 +38,7 @@ final class HomepageHandbagsPresenter
         $result['collection'] = $identity;
         $result['cta_url'] = route('collections.show', $collection);
         $memberships = CollectionProduct::query()->active()->where('collection_id', $collection->id)->with('product.currentDraftRevision')->orderBy('position')->get();
+        $this->cards->warmAvailability($memberships->pluck('product')->filter());
         foreach ($memberships as $membership) {
             $product = $membership->product;
             $card = $product !== null && $this->products->resolve($product->slug) !== null ? $this->cards->present($product) : null;

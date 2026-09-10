@@ -20,7 +20,7 @@ final class Collection extends Model
 
     protected function casts(): array
     {
-        return ['archived_at' => 'immutable_datetime', 'lock_version' => 'integer'];
+        return ['archived_at' => 'immutable_datetime', 'lock_version' => 'integer', 'navigation_order' => 'integer'];
     }
 
     /** @return HasMany<CollectionRevision, $this> */

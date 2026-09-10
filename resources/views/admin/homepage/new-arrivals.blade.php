@@ -1,5 +1,6 @@
 <x-admin.layout title="Homepage / New Arrivals" description="Choose the Collection that supplies the existing New Arrivals Product cards." eyebrow="Website" :breadcrumbs="['Homepage' => route('admin.homepage.edit'), 'New Arrivals' => null]">
     <x-admin.flash :errors="$errors" />
+    <x-admin.homepage-section-visibility section-key="new-arrivals" />
 
     <form method="POST" action="{{ route('admin.homepage.new-arrivals.update') }}" class="homepage-new-arrivals-editor" data-collection-picker-endpoint="{{ route('admin.homepage.collection-picker') }}">
         @csrf

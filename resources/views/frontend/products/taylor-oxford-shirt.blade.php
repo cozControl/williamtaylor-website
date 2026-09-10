@@ -21,138 +21,7 @@
 @section('content')
   <div id="root">
    <div class="min-h-screen flex flex-col bg-wt-offwhite">
-    <header class="fixed top-0 left-0 right-0 z-40">
-     @include('frontend.partials.announcement')
-     <nav class="frosted-nav transition-all duration-300 relative" style="box-shadow: rgba(0, 0, 0, 0.25) 0px 4px 30px;">
-      <div class="max-w-screen-2xl mx-auto px-4 lg:px-12 h-14 lg:h-16 flex items-center justify-between gap-4">
-       <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-        <button class="lg:hidden text-wt-cream hover:text-wt-gold transition-colors" @if($publicSiteChrome?->navigation) data-public-menu-open aria-label="Open menu" aria-controls="public-mobile-navigation" aria-expanded="false" @endif>
-         <svg class="lucide lucide-menu" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
-          <line x1="4" x2="20" y1="12" y2="12">
-          </line>
-          <line x1="4" x2="20" y1="6" y2="6">
-          </line>
-          <line x1="4" x2="20" y1="18" y2="18">
-          </line>
-         </svg>
-        </button>
-        <button class="lg:hidden text-wt-cream hover:text-wt-gold transition-colors">
-         <svg class="lucide lucide-chevron-left" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
-          <path d="m15 18-6-6 6-6">
-          </path>
-         </svg>
-        </button>
-        <a class="flex-shrink-0" href="/">
-         <img alt="{{ $publicSiteChrome?->profile?->brandName ?: 'William Taylor' }}" class="h-5 lg:h-7 w-auto mix-blend-screen" src="{{ $publicSiteChrome?->profile?->headerLogoUrl ?: '/website/images/8d99836ea_LOGO-3.png' }}"/>
-        </a>
-       </div>
-       <div class="lg:hidden flex-1 text-center min-w-0 px-2">
-        <span class="font-heading text-sm text-wt-cream tracking-wide truncate block">
-         Product
-        </span>
-       </div>
-       @if($publicSiteChrome?->navigation)
-       <div class="hidden lg:flex items-center gap-8">
-        @foreach($publicSiteChrome->navigation->items as $item)
-         @if($item->visibility !== 'mobile')
-         <div class="relative">
-          <a class="font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200" href="{{ $item->link->url }}" @if($item->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $item->link->label }}</a>
-         </div>
-         @endif
-        @endforeach
-       </div>
-       @else       <div class="hidden lg:flex items-center gap-8">
-        <div class="relative">
-         <button class="flex items-center gap-1 font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200">
-          Shop
-          <svg class="lucide lucide-chevron-down" fill="none" height="12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="12" xmlns="http://www.w3.org/2000/svg">
-           <path d="m6 9 6 6 6-6">
-           </path>
-          </svg>
-         </button>
-        </div>
-        <div class="relative">
-         <a class="font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200" href="{{ route('collections.index') }}">
-          Collections
-         </a>
-        </div>
-        <div class="relative">
-         <a class="font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200" href="{{ route('products.index', ['sort' => 'newest']) }}">
-          New Arrivals
-         </a>
-        </div>
-        <div class="relative">
-         <a class="font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200" href="{{ route('preorders.index') }}">
-          Pre-Order
-         </a>
-        </div>
-        <div class="relative">
-         <a class="font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200" href="{{ route('limited-edition.index') }}">
-          Limited Edition
-         </a>
-        </div>
-       </div>
-       @endif
-       <div class="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
-        <div class="hidden sm:block">
-         <button class="hidden lg:flex items-center border border-wt-gold/30 rounded-full overflow-hidden" title="Toggle currency">
-          <span class="px-2.5 py-1 font-label text-[10px] tracking-wider uppercase transition-colors bg-wt-gold text-wt-oxblood">
-           TZS
-          </span>
-          <span class="px-2.5 py-1 font-label text-[10px] tracking-wider uppercase transition-colors text-wt-cream/60">
-           USD
-          </span>
-         </button>
-        </div>
-        <button class="text-wt-cream hover:text-wt-gold transition-colors">
-         <svg class="lucide lucide-search" fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="11" cy="11" r="8">
-          </circle>
-          <path d="m21 21-4.3-4.3">
-          </path>
-         </svg>
-        </button>
-        <a class="text-wt-cream hover:text-wt-gold transition-colors hidden lg:block" href="{{ route('gift-cards.index') }}" title="Gift Cards">
-         <svg class="lucide lucide-gift" fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg">
-          <rect height="4" rx="1" width="18" x="3" y="8">
-          </rect>
-          <path d="M12 8v13">
-          </path>
-          <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7">
-          </path>
-          <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5">
-          </path>
-         </svg>
-        </a>
-        <a class="text-wt-cream hover:text-wt-gold transition-colors hidden lg:block" href="{{ route('login') }}" title="My Account">
-         <svg class="lucide lucide-user" fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2">
-          </path>
-          <circle cx="12" cy="7" r="4">
-          </circle>
-         </svg>
-        </a>
-        <a class="relative hidden lg:block text-wt-cream hover:text-wt-gold transition-colors" href="{{ route('wishlist.index') }}">
-         <svg class="lucide lucide-heart" fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg">
-          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z">
-          </path>
-         </svg>
-        </a>
-        <button class="relative text-wt-cream hover:text-wt-gold transition-colors">
-         <svg class="lucide lucide-shopping-bag" fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg">
-          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z">
-          </path>
-          <path d="M3 6h18">
-          </path>
-          <path d="M16 10a4 4 0 0 1-8 0">
-          </path>
-         </svg>
-        </button>
-       </div>
-      </div>
-     </nav>
-     @include('frontend.partials.projected-mobile-navigation')
-    </header>
+    @include('frontend.partials.header')
     <main class="flex-1 pt-14 lg:pt-16 pb-16 lg:pb-0">
      <div class="min-h-screen bg-wt-offwhite pt-0">
       <div class="max-w-screen-xl mx-auto px-6 lg:px-12 py-10">
@@ -217,7 +86,7 @@
          </div>
          <div class="flex items-baseline gap-4">
           <p class="font-heading text-2xl text-wt-oxblood">
-          <span id="product-price">{{ $oxfordProduct['price'] ?? 'TZS 285,000' }}</span>
+          <span id="product-price">{{ $defaultVariant['price'] ?? $oxfordProduct['price'] ?? 'TZS 285,000' }}</span>
           </p>
          </div>
          <p class="font-body text-sm text-gray-600 font-light leading-relaxed">
@@ -233,7 +102,10 @@
           </p>
           <div class="flex gap-2">
            @foreach(($oxfordProduct['options']['colour'] ?? [['id' => 'ivory', 'key' => 'ivory', 'label' => 'Ivory'], ['id' => 'noir', 'key' => 'noir', 'label' => 'Noir']]) as $colour)
-            <button type="button" data-product-option="colour" data-value-id="{{ $colour['id'] }}" class="w-8 h-8 rounded-full border-2 transition-all {{ ($defaultColour['id'] ?? null) === $colour['id'] ? 'border-wt-gold scale-110' : 'border-gray-200 hover:border-gray-400' }}" style="background-color: {{ $colour['swatch_hex'] ?? ($colour['key'] === 'ivory' ? 'rgb(245, 240, 232)' : 'rgb(26, 26, 26)') }};" title="{{ $colour['label'] }}"></button>
+            @php
+             $colourAvailable = collect($oxfordProduct['variants'] ?? [])->contains(fn ($variant) => ($variant['is_available'] ?? false) && in_array($colour['id'], $variant['values'], true));
+            @endphp
+            <button aria-label="{{ $colour['label'] }}{{ $colourAvailable ? '' : ' - Out of stock' }}" data-unavailable="{{ $colourAvailable ? 'false' : 'true' }}" type="button" data-product-option="colour" data-value-id="{{ $colour['id'] }}" class="w-8 h-8 rounded-full border-2 transition-all {{ ($defaultColour['id'] ?? null) === $colour['id'] ? 'border-wt-gold scale-110' : 'border-gray-200 hover:border-gray-400' }}" style="background-color: {{ $colour['swatch_hex'] ?? ($colour['key'] === 'ivory' ? 'rgb(245, 240, 232)' : 'rgb(26, 26, 26)') }};" title="{{ $colour['label'] }}"></button>
            @endforeach
           </div>
          </div>
@@ -253,7 +125,10 @@
           </div>
           <div class="flex flex-wrap gap-2">
            @foreach(($oxfordProduct['options']['size'] ?? collect(['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'])->map(fn ($size) => ['id' => strtolower($size), 'key' => strtolower($size), 'label' => $size])->all()) as $size)
-            <button type="button" data-product-option="size" data-value-id="{{ $size['id'] }}" class="px-4 py-2 font-label text-xs border transition-all border-gray-300 text-gray-700 hover:border-wt-oxblood">{{ $size['label'] }}</button>
+            @php
+             $sizeAvailable = collect($oxfordProduct['variants'] ?? [])->contains(fn ($variant) => ($variant['is_available'] ?? false) && in_array($size['id'], $variant['values'], true) && (!$defaultColour || in_array($defaultColour['id'], $variant['values'], true)));
+            @endphp
+            <button @disabled(!$sizeAvailable) aria-label="{{ $size['label'] }}{{ $sizeAvailable ? '' : ' - Out of stock' }}" data-unavailable="{{ $sizeAvailable ? 'false' : 'true' }}" type="button" data-product-option="size" data-value-id="{{ $size['id'] }}" class="px-4 py-2 font-label text-xs border transition-all border-gray-300 text-gray-700 hover:border-wt-oxblood">{{ $size['label'] }}</button>
            @endforeach
           </div>
          </div>
@@ -262,17 +137,17 @@
           <p class="font-label text-xs tracking-widest uppercase text-wt-oxblood">
            Quantity
           </p>
-          <div class="flex items-center border border-gray-200">
-           <button class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition-colors">
+          <div class="flex items-center border border-gray-200" data-product-quantity>
+           <button type="button" data-quantity-change="-1" aria-label="Decrease quantity" disabled class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition-colors">
             <svg class="lucide lucide-minus" fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
              <path d="M5 12h14">
              </path>
             </svg>
            </button>
-           <span class="w-12 text-center font-label text-sm">
+           <span data-quantity-value aria-live="polite" aria-label="Quantity" class="w-12 text-center font-label text-sm">
             1
            </span>
-           <button class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition-colors">
+           <button type="button" data-quantity-change="1" aria-label="Increase quantity" class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition-colors">
             <svg class="lucide lucide-plus" fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
              <path d="M5 12h14">
              </path>
@@ -283,12 +158,11 @@
           </div>
          </div>
          <div class="space-y-3">
-          <button class="w-full py-4 font-label text-xs tracking-widest uppercase transition-all bg-gray-300 text-gray-500 cursor-not-allowed" disabled="">
-           Add to Cart
+          <p id="product-availability" role="status" aria-live="polite" class="font-label text-xs tracking-widest uppercase text-wt-oxblood">{{ ($defaultVariant['is_available'] ?? false) ? 'In stock' : 'Out of stock' }}</p>
+          <button type="button" data-product-purchase data-cart-add data-variant-id="{{ $defaultVariant['id'] ?? '' }}" data-ready-label="Add to Cart" aria-describedby="product-availability" class="w-full py-4 font-label text-xs tracking-widest uppercase transition-all {{ ($defaultVariant['is_available'] ?? false) ? 'btn-primary' : 'bg-gray-300 text-gray-500 cursor-not-allowed' }}" @disabled(!($defaultVariant['is_available'] ?? false))>
+           {{ ($defaultVariant['is_available'] ?? false) ? 'Add to Cart' : 'Out of Stock' }}
           </button>
-          <button class="w-full btn-gold py-4 text-xs">
-           Buy Now
-          </button>
+          <button type="button" data-product-purchase data-ready-label="Buy Now" aria-describedby="product-availability" class="w-full btn-gold py-4 text-xs" @disabled(!($defaultVariant['is_available'] ?? false))>Buy Now</button>
           <button class="w-full flex items-center justify-center gap-2 py-3 border font-label text-xs tracking-widest uppercase transition-all border-gray-300 text-gray-600 hover:border-wt-oxblood">
            <svg class="lucide lucide-heart" fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="14" xmlns="http://www.w3.org/2000/svg">
             <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z">
@@ -394,6 +268,11 @@
          You May Also Like
         </h2>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+         @if($catalogueProduct)
+          @foreach($catalogueProduct['related'] as $card)
+           @include('frontend.partials.product-card')
+          @endforeach
+         @else
          <div class="group relative" style="opacity: 1; transform: none;">
           <div class="relative overflow-hidden bg-gray-100 aspect-[3/4]">
            <a href="{{ route('products.mercerized-cotton-polo') }}">
@@ -548,6 +427,7 @@
            </p>
           </div>
          </div>
+         @endif
         </div>
        </div>
       </div>
@@ -642,6 +522,9 @@
 @if($catalogueProduct)
 <script type="application/json" id="product-bootstrap-data">@json($catalogueProduct)</script>
 @endif
+<script src="/website/js/variant-availability.js"></script>
+<script src="/website/js/product-quantity.js"></script>
+<style>[data-product-option][data-unavailable="true"]{opacity:.45}[data-product-option="size"][data-unavailable="true"]{text-decoration:line-through;cursor:not-allowed}[data-product-option="colour"][data-unavailable="true"]{outline:1px dashed #777;outline-offset:3px}[data-product-purchase]:disabled{opacity:.65;cursor:not-allowed}</style>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
  const main = document.getElementById('product-main-image');
@@ -649,6 +532,27 @@ document.addEventListener('DOMContentLoaded', function () {
  const selected = {};
  const dataNode = document.getElementById('product-bootstrap-data');
  const productData = dataNode ? JSON.parse(dataNode.textContent) : null;
+ const refreshAvailability = function () {
+  if (!productData) return;
+  const state = window.wtVariantAvailability(productData, selected);
+  document.getElementById('product-availability').textContent = state.variant ? (state.variant.is_available ? 'In stock' : 'Out of stock') : 'Choose an available combination';
+  document.querySelectorAll('[data-product-purchase]').forEach(function (button) {
+   const available = !!state.variant?.is_available;
+   if(button.hasAttribute('data-cart-add')) button.dataset.variantId = state.variant?.id || '';
+   button.disabled = !available;
+   button.classList.toggle('bg-gray-300', !available); button.classList.toggle('text-gray-500', !available); button.classList.toggle('cursor-not-allowed', !available);
+   if (button.dataset.readyLabel === 'Add to Cart') { button.classList.toggle('btn-primary', available); button.textContent = available ? button.dataset.readyLabel : 'Out of Stock'; }
+  });
+  document.querySelectorAll('[data-product-option]').forEach(function (button) {
+   const available = state.options[button.dataset.productOption]?.[button.dataset.valueId] || false;
+   button.dataset.unavailable = String(!available);
+   const label = (productData.options[button.dataset.productOption] || []).find(option => option.id === button.dataset.valueId)?.label || button.textContent.trim();
+   button.setAttribute('aria-label', label + (available ? '' : ' - Out of stock'));
+   button.setAttribute('aria-pressed', String(selected[button.dataset.productOption] === button.dataset.valueId));
+   // Colours remain inspectable for their images. Unavailable Sizes cannot be purchased/selected.
+   if (button.dataset.productOption === 'size') button.disabled = !available;
+  });
+ };
  const fallbackImages = productData?.images || [];
  const renderColourPreview = function (requestedImages) {
   const image = requestedImages?.[0] || fallbackImages[0];
@@ -679,13 +583,29 @@ document.addEventListener('DOMContentLoaded', function () {
    if (productData) {
     const selectedValues = Object.values(selected);
     const variant = productData.variants.find(function (item) { return selectedValues.length === item.values.length && selectedValues.every(function (value) { return item.values.includes(value); }); });
-    if (variant) { document.getElementById('product-sku').textContent = variant.sku || 'SKU unavailable'; document.getElementById('product-price').textContent = variant.price; }
+    document.getElementById('product-sku').textContent = variant?.sku || 'SKU unavailable';
+    document.getElementById('product-price').textContent = variant?.price || productData.price;
+    refreshAvailability();
    }
   });
  });
  if (productData) {
   const initial = productData.variants.find(function (item) { return item.id === productData.default_variant_id; });
-  (initial?.values || []).forEach(function (value) { document.querySelector('[data-product-option][data-value-id="'+CSS.escape(value)+'"]')?.click(); });
+  Object.entries(productData.options).forEach(function ([key, values]) {
+   const option = values.find(value => initial?.values.includes(value.id));
+   if (option) selected[key] = option.id;
+  });
+  document.querySelectorAll('[data-product-option]').forEach(function (button) {
+   const key = button.dataset.productOption;
+   if (selected[key] !== button.dataset.valueId) return;
+   button.classList.add('border-wt-gold');
+   if (key === 'colour') button.classList.add('scale-110');
+   if (key === 'size') button.classList.add('bg-wt-oxblood', 'text-white');
+   document.getElementById('product-'+key+'-label').textContent = productData.options[key].find(value => value.id === selected[key]).label;
+  });
+  document.getElementById('product-sku').textContent = initial?.sku || 'SKU unavailable';
+  document.getElementById('product-price').textContent = initial?.price || productData.price;
+  refreshAvailability();
  }
 });
 </script>

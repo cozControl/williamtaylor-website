@@ -97,20 +97,12 @@
     @include('frontend.partials.header')
     <main class="flex-1 pb-16 lg:pb-0">
      <div class="w-full">
-      <section data-homepage-hero class="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
+      @if($homepageVisibility['hero'])
+<section data-homepage-hero class="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
        <div data-homepage-hero-background class="absolute inset-0 transition-opacity duration-1500" style="opacity: 1;">
         <img alt="" class="w-full h-full object-cover object-top" src="{{ $homepageHero['background_url'] }}"/>
        </div>
        <div data-homepage-hero-content class="relative z-10 text-center px-6 max-w-5xl mx-auto" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 300;'>
-        <p class="text-xs tracking-[0.3em] uppercase text-wt-gold mb-6" style="opacity: 1; transform: none;">
-         {{ $homepageHero['eyebrow'] }}
-        </p>
-        <h1 class="text-wt-cream mb-4" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-size: clamp(3rem, 10vw, 7rem); line-height: 1; letter-spacing: -0.02em; font-weight: 300; opacity: 1; transform: none;'>
-         {{ $homepageHero['title'] }}
-        </h1>
-        <p class="text-wt-cream mb-10" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-size: clamp(1rem, 3vw, 1.75rem); font-style: italic; font-weight: 300; opacity: 1; transform: none;'>
-         {{ $homepageHero['subtitle'] }}
-        </p>
         <div data-homepage-hero-actions class="flex flex-col sm:flex-row gap-4 justify-center" style="opacity: 1; transform: none;">
          <a class="btn-gold px-12 py-4 text-sm inline-flex items-center gap-2" href="{{ $homepageHero['primary_cta_url'] }}" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 400;'>
           <span aria-hidden="true" class="inline-flex items-center justify-center bg-wt-oxblood rounded-full flex-shrink-0" style="width: 20px; height: 20px;">
@@ -139,6 +131,7 @@
         </button>
        </div>
       </section>
+@endif
       <section class="bg-white border-y border-gray-100 py-6 lg:py-10">
        <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
         <div class="flex justify-center mb-6 hidden">
@@ -228,7 +221,8 @@
         </div>
        </div>
       </section>
-      @if($homepageNewArrivals['managed'])
+      @if($homepageVisibility['new-arrivals'])
+@if($homepageNewArrivals['managed'])
        @include('frontend.partials.homepage-new-arrivals')
       @else
       <section class="py-12 lg:py-20 bg-wt-offwhite">
@@ -592,7 +586,9 @@
        </div>
       </section>
       @endif
-       @if($homepageHotSale['managed'])
+@endif
+       @if($homepageVisibility['hot-sale'])
+@if($homepageHotSale['managed'])
        @include('frontend.partials.homepage-hot-sale')
        @else
        <section class="py-12 lg:py-20 bg-white">
@@ -689,9 +685,15 @@
        </div>
        </section>
        @endif
-       @include('frontend.partials.homepage-future-style')
-      @include('frontend.partials.homepage-limited-edition')
-      @if($homepageExploreCollectionsIsManaged)
+@endif
+       @if($homepageVisibility['future-style'])
+@include('frontend.partials.homepage-future-style')
+@endif
+      @if($homepageVisibility['limited-edition'])
+@include('frontend.partials.homepage-limited-edition')
+@endif
+      @if($homepageVisibility['explore-collections'])
+@if($homepageExploreCollectionsIsManaged)
        @include('frontend.partials.homepage-explore-collections')
       @else
       <section class="py-12 lg:py-20 bg-white">
@@ -773,9 +775,12 @@
        </div>
       </section>
       @endif
-      <section class="relative bg-wt-oxblood overflow-hidden">
+@endif
+      @if($homepageVisibility['summer-edit'] || $homepageVisibility['delivery'])
+<section class="relative bg-wt-oxblood overflow-hidden">
        <div class="wt-pattern-texture wt-pattern-breathe-band wt-pattern-radial-mask absolute inset-0 z-0" style='background-image: url("/website/images/cf030fe26_ICONlight.png"); background-size: 280px;'>
        </div>
+@if($homepageVisibility['summer-edit'])
 @if($homepageSummerEdit['managed'])
 @include('frontend.partials.homepage-summer-edit')
 @else
@@ -819,6 +824,8 @@
         </div>
        </div>
 @endif
+@endif
+@if($homepageVisibility['delivery'])
 @if($homepageDelivery['managed'])
 @include('frontend.partials.homepage-delivery')
 @else
@@ -845,8 +852,11 @@
         </div>
        </div>
 @endif
+@endif
       </section>
- @if($homepageHandbags['managed'])
+@endif
+ @if($homepageVisibility['handbags'])
+@if($homepageHandbags['managed'])
 @include('frontend.partials.homepage-handbags')
 @else
      <section class="py-12 lg:py-20 bg-wt-offwhite">
@@ -1128,6 +1138,8 @@
        </div>
       </section>
  @endif
+@endif
+@if($homepageVisibility['client-stories'])
 @if($homepageClientStories['managed'])
 @include('frontend.partials.homepage-client-stories')
 @else
@@ -1212,6 +1224,7 @@
        </div>
       </section>
 @endif
+@endif
       <section class="py-12 lg:py-20 bg-wt-offwhite">
        <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
         <div class="text-center mb-8 lg:mb-12">
@@ -1228,7 +1241,7 @@
            </line>
           </svg>
           <p class="font-label text-xs tracking-[0.3em] uppercase text-wt-gold">
-           @williamtaylor
+           @williamtaylorbrand
           </p>
          </div>
          <h2 class="section-title">
@@ -1236,7 +1249,7 @@
          </h2>
         </div>
         <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
-         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylor" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
+         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylorbrand" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
           <img alt="Instagram post 1" class="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500" src="/website/images/0368482bc_image.jpg"/>
           <div class="absolute inset-0 bg-wt-oxblood/0 group-hover:bg-wt-oxblood/40 transition-colors duration-300 flex items-center justify-center">
            <svg class="lucide lucide-instagram text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
@@ -1249,7 +1262,7 @@
            </svg>
           </div>
          </a>
-         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylor" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
+         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylorbrand" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
           <img alt="Instagram post 2" class="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500" src="/website/images/6d46d522f_image.jpg"/>
           <div class="absolute inset-0 bg-wt-oxblood/0 group-hover:bg-wt-oxblood/40 transition-colors duration-300 flex items-center justify-center">
            <svg class="lucide lucide-instagram text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
@@ -1262,7 +1275,7 @@
            </svg>
           </div>
          </a>
-         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylor" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
+         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylorbrand" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
           <img alt="Instagram post 3" class="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500" src="/website/images/2946546dd_image.jpeg"/>
           <div class="absolute inset-0 bg-wt-oxblood/0 group-hover:bg-wt-oxblood/40 transition-colors duration-300 flex items-center justify-center">
            <svg class="lucide lucide-instagram text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
@@ -1275,7 +1288,7 @@
            </svg>
           </div>
          </a>
-         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylor" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
+         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylorbrand" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
           <img alt="Instagram post 4" class="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500" src="/website/images/ee86da3ae_image.jpg"/>
           <div class="absolute inset-0 bg-wt-oxblood/0 group-hover:bg-wt-oxblood/40 transition-colors duration-300 flex items-center justify-center">
            <svg class="lucide lucide-instagram text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
@@ -1288,7 +1301,7 @@
            </svg>
           </div>
          </a>
-         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylor" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
+         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylorbrand" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
           <img alt="Instagram post 5" class="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500" src="/website/images/db23eed31_image.jpg"/>
           <div class="absolute inset-0 bg-wt-oxblood/0 group-hover:bg-wt-oxblood/40 transition-colors duration-300 flex items-center justify-center">
            <svg class="lucide lucide-instagram text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
@@ -1301,7 +1314,7 @@
            </svg>
           </div>
          </a>
-         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylor" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
+         <a class="group relative aspect-square overflow-hidden" href="https://instagram.com/williamtaylorbrand" rel="noopener noreferrer" style="opacity: 0;" target="_blank">
           <img alt="Instagram post 6" class="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500" src="/website/images/9c691e236_image.jpg"/>
           <div class="absolute inset-0 bg-wt-oxblood/0 group-hover:bg-wt-oxblood/40 transition-colors duration-300 flex items-center justify-center">
            <svg class="lucide lucide-instagram text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
@@ -1316,7 +1329,7 @@
          </a>
         </div>
         <div class="text-center mt-10">
-         <a class="btn-outline px-10 py-4 inline-flex items-center gap-2" href="https://instagram.com/williamtaylor" rel="noopener noreferrer" target="_blank">
+         <a class="btn-outline px-10 py-4 inline-flex items-center gap-2" href="https://instagram.com/williamtaylorbrand" rel="noopener noreferrer" target="_blank">
           <svg class="lucide lucide-instagram" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg">
            <rect height="20" rx="5" ry="5" width="20" x="2" y="2">
            </rect>
@@ -1343,24 +1356,40 @@
   </div>
 
 @if($homepageNewArrivals['managed'])
+@if($homepageVisibility['new-arrivals'])
 <template id="homepage-new-arrivals-projection">@include('frontend.partials.homepage-new-arrivals')</template>
 @endif
+@endif
 @if($homepageHotSale['managed'])
+@if($homepageVisibility['hot-sale'])
 <template id="homepage-hot-sale-projection">@include('frontend.partials.homepage-hot-sale')</template>
 @endif
+@endif
+@if($homepageVisibility['future-style'])
 <template id="homepage-future-style-projection">@include('frontend.partials.homepage-future-style')</template>
+@endif
+@if($homepageVisibility['limited-edition'])
 <template id="homepage-limited-edition-projection">@include('frontend.partials.homepage-limited-edition')</template>
+@endif
 @if($homepageExploreCollectionsIsManaged)
+@if($homepageVisibility['explore-collections'])
 <template id="homepage-explore-collections-projection">@include('frontend.partials.homepage-explore-collections')</template>
 @endif
+@endif
 @if($homepageSummerEdit['managed'])
+@if($homepageVisibility['summer-edit'])
 <template id="homepage-summer-edit-projection">@include('frontend.partials.homepage-summer-edit')</template>
 @endif
+@endif
 @if($homepageDelivery['managed'])
+@if($homepageVisibility['delivery'])
 <template id="homepage-delivery-projection">@include('frontend.partials.homepage-delivery')</template>
 @endif
+@endif
 @if($homepageHandbags['managed'])
+@if($homepageVisibility['handbags'])
 <template id="homepage-handbags-projection">@include('frontend.partials.homepage-handbags')</template>
+@endif
 <style>
 [data-homepage-handbags] .wt-handbags-layout {display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
 [data-homepage-handbags] .wt-handbags-products {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -1373,23 +1402,28 @@
 @endif
 
 @if($homepageClientStories['managed'])
+@if($homepageVisibility['client-stories'])
 <template id="homepage-client-stories-projection">@include('frontend.partials.homepage-client-stories')</template>
+@endif
 <style>
 [data-homepage-client-stories] .wt-client-stories-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:32px}
 @media(min-width:768px) {[data-homepage-client-stories] .wt-client-stories-grid {grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 @endif
-<script type="application/json" id="homepage-hero-data">@json($homepageHero)</script>
+<script type="application/json" id="homepage-hidden-sections">@json($homepageHiddenSections)</script>
+<script type="application/json" id="homepage-hero-data">@json($homepageVisibility['hero'] ? $homepageHero : [])</script>
 <script>
 (() => {
  const dataNode = document.getElementById('homepage-hero-data');
  const root = document.getElementById('root');
  if (!dataNode || !root) return;
  const data = JSON.parse(dataNode.textContent);
+ const hiddenSections = JSON.parse(document.getElementById('homepage-hidden-sections')?.textContent || '{}');
  const setText = (node, value) => { if (node && node.textContent.trim() !== value) node.textContent = value; };
  const setAttribute = (node, name, value) => { if (node && node.getAttribute(name) !== value) node.setAttribute(name, value); };
  const synchronizeHero = () => {
-  const hero = root.querySelector('main section');
+  if (Object.hasOwn(hiddenSections, 'hero')) return;
+  const hero = root.querySelector('[data-homepage-hero]') || root.querySelector('main h1')?.closest('section');
   if (!hero) return;
   hero.dataset.homepageHero = '';
   const content = hero.querySelector(':scope > .relative.z-10');
@@ -1397,9 +1431,8 @@
   if (background) background.dataset.homepageHeroBackground = '';
   if (content) content.dataset.homepageHeroContent = '';
   const copy = content ? [...content.children].filter(node => node.matches('p, h1')) : [];
-  setText(copy[0], data.eyebrow);
-  setText(copy[1], data.title);
-  setText(copy[2], data.subtitle);
+  // Keep the Hero background and CTAs only, including after imported runtime rendering.
+  copy.forEach(node => node.remove());
   const actions = content?.querySelectorAll('a') || [];
   if (actions[0]?.parentElement) actions[0].parentElement.dataset.homepageHeroActions = '';
   setText(actions[0]?.lastChild, data.primary_cta_label);
@@ -1414,6 +1447,7 @@
   if (indicator) indicator.dataset.homepageHeroIndicator = '';
  };
  const synchronizeNewArrivals = () => {
+  if (Object.hasOwn(hiddenSections, 'new-arrivals')) return;
   const template = document.getElementById('homepage-new-arrivals-projection');
   if (!template) return;
   const projected = template.content.firstElementChild;
@@ -1423,6 +1457,7 @@
   current.replaceWith(projected.cloneNode(true));
  };
  const synchronizeHotSale = () => {
+  if (Object.hasOwn(hiddenSections, 'hot-sale')) return;
   const template = document.getElementById('homepage-hot-sale-projection');
   if (!template) return;
   const projected = template.content.firstElementChild;
@@ -1432,6 +1467,7 @@
   current.replaceWith(projected.cloneNode(true));
  };
  const synchronizeFutureStyle = () => {
+  if (Object.hasOwn(hiddenSections, 'future-style')) return;
   const template = document.getElementById('homepage-future-style-projection');
   if (!template) return;
   const projected = template.content.firstElementChild;
@@ -1441,6 +1477,7 @@
   current.replaceWith(projected.cloneNode(true));
  };
  const synchronizeLimitedEdition = () => {
+  if (Object.hasOwn(hiddenSections, 'limited-edition')) return;
   const template = document.getElementById('homepage-limited-edition-projection');
   if (!template) return;
   const projected = template.content.firstElementChild;
@@ -1450,6 +1487,7 @@
   current.replaceWith(projected.cloneNode(true));
  };
  const synchronizeExploreCollections = () => {
+  if (Object.hasOwn(hiddenSections, 'explore-collections')) return;
   const template = document.getElementById('homepage-explore-collections-projection');
   if (!template) return;
   const projected = template.content.firstElementChild;
@@ -1459,6 +1497,7 @@
   current.replaceWith(projected.cloneNode(true));
  };
  const synchronizeSummerEdit = () => {
+  if (Object.hasOwn(hiddenSections, 'summer-edit')) return;
   const projected = document.getElementById('homepage-summer-edit-projection')?.content.firstElementChild;
   if (!projected) return;
   const current = root.querySelector('[data-homepage-summer-edit]') || [...root.querySelectorAll('h2')].find(node => node.textContent.trim() === 'The Summer Edit')?.closest('.relative.z-10.px-4');
@@ -1466,6 +1505,7 @@
   current.replaceWith(projected.cloneNode(true));
  };
  const synchronizeDelivery = () => {
+  if (Object.hasOwn(hiddenSections, 'delivery')) return;
   const projected = document.getElementById('homepage-delivery-projection')?.content.firstElementChild;
   if (!projected) return;
   const current = root.querySelector('[data-homepage-delivery]') || [...root.querySelectorAll('h3')].find(node => node.textContent.trim() === 'Complimentary Delivery in Dar es Salaam')?.closest('.relative.z-10.bg-wt-cream');
@@ -1473,6 +1513,7 @@
   current.replaceWith(projected.cloneNode(true));
  };
  const synchronizeHandbags = () => {
+  if (Object.hasOwn(hiddenSections, 'handbags')) return;
   const projected = document.getElementById('homepage-handbags-projection')?.content.firstElementChild;
   if (!projected) return;
   const current = root.querySelector('[data-homepage-handbags]') || [...root.querySelectorAll('h2')].find(node => node.textContent.trim() === "Women's Handbags")?.closest('section');
@@ -1480,20 +1521,46 @@
   current.replaceWith(projected.cloneNode(true));
  };
  const synchronizeClientStories = () => {
+  if (Object.hasOwn(hiddenSections, 'client-stories')) return;
   const projected = document.getElementById('homepage-client-stories-projection')?.content.firstElementChild;
   if (!projected) return;
   const current = root.querySelector('[data-homepage-client-stories]') || [...root.querySelectorAll('h2')].find(node => node.textContent.trim() === 'What They Say')?.closest('section');
   if (!current || current.hasAttribute('data-homepage-client-stories')) return;
   current.replaceWith(projected.cloneNode(true));
  };
- const synchronize = () => { synchronizeHero(); synchronizeNewArrivals(); synchronizeHotSale(); synchronizeFutureStyle(); synchronizeLimitedEdition(); synchronizeExploreCollections(); synchronizeSummerEdit(); synchronizeDelivery(); synchronizeHandbags(); synchronizeClientStories(); };
+ const synchronizeVisibility = () => {
+  const sharedContainers = new Set();
+  Object.entries(hiddenSections).forEach(([key, section]) => {
+   const matches = new Set(root.querySelectorAll(`[${section.marker}]`));
+   root.querySelectorAll(section.heading_selector).forEach(heading => {
+    if (section.heading && heading.textContent.trim() !== section.heading) return;
+    const boundary = heading.closest(section.boundary);
+    if (boundary) matches.add(boundary);
+   });
+   matches.forEach(node => {
+    if (key === 'summer-edit' || key === 'delivery') {
+     const container = node.closest('section');
+     if (container) sharedContainers.add(container);
+    }
+    node.remove();
+   });
+  });
+  if (Object.hasOwn(hiddenSections, 'summer-edit') && Object.hasOwn(hiddenSections, 'delivery')) {
+   sharedContainers.forEach(container => container.remove());
+  }
+ };
+ const synchronize = () => { synchronizeVisibility(); synchronizeHero(); synchronizeNewArrivals(); synchronizeHotSale(); synchronizeFutureStyle(); synchronizeLimitedEdition(); synchronizeExploreCollections(); synchronizeSummerEdit(); synchronizeDelivery(); synchronizeHandbags(); synchronizeClientStories(); };
  const observer = new MutationObserver(synchronize);
  observer.observe(root, {childList: true, subtree: true});
  window.addEventListener('load', () => requestAnimationFrame(() => requestAnimationFrame(synchronize)), {once: true});
  synchronize();
 })();
 </script>
+@if($homepageVisibility['client-stories'])
 @include('frontend.partials.homepage-client-stories-script')
+@endif
+@if($homepageVisibility['handbags'])
 @include('frontend.partials.homepage-handbags-script')
+@endif
 @include('frontend.partials.pre-order-countdown-script')
 @endsection

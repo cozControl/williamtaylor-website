@@ -1,5 +1,6 @@
 <x-admin.layout title="Women's Handbags" eyebrow="Homepage" description="Manage the editorial hero and curated Products in this Homepage section." :breadcrumbs="['Homepage' => route('admin.homepage.edit'), 'Women\'s Handbags' => null]">
     <x-admin.flash :errors="$errors" />
+    <x-admin.homepage-section-visibility section-key="handbags" />
     <style>
         .homepage-handbags-editor .homepage-explore-collection-summary {grid-template-columns:5.5rem minmax(0,1fr)}
         .homepage-handbags-editor .homepage-explore-collection-summary > img {width:5.5rem}

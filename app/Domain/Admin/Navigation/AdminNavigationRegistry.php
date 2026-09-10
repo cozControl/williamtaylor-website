@@ -25,7 +25,9 @@ final class AdminNavigationRegistry
             new AdminNavigationItem('product-categories', 'Categories', 'admin.product-categories.index', PermissionRegistry::PRODUCTS_VIEW, 'Catalogue', 20, 20, 'Product category hierarchy.', 'categories', 'admin.product-categories.*'),
             new AdminNavigationItem('collections', 'Collections', 'admin.collections.index', PermissionRegistry::PRODUCTS_VIEW, 'Catalogue', 20, 30, 'Storefront ranges and featured edits.', 'collections', 'admin.collections.*'),
             new AdminNavigationItem('campaigns', 'Campaigns', 'admin.campaigns.index', PermissionRegistry::PRODUCTS_VIEW, 'Catalogue', 20, 40, 'Pre-Order Campaigns and publication schedules.', 'campaigns', 'admin.campaigns.*'),
-            new AdminNavigationItem('orders', 'Orders', 'admin.orders.index', PermissionRegistry::ORDERS_VIEW, 'Commerce', 25, 10, 'Customer Order operations.', 'orders', 'admin.orders.*'),
+            new AdminNavigationItem('inventory', 'Inventory', 'admin.inventory.index', PermissionRegistry::INVENTORY_VIEW, 'Catalogue', 20, 50, 'Variant stock and movement history.', 'catalogue', 'admin.inventory.*'),
+            new AdminNavigationItem('orders', 'Orders', 'admin.commerce.orders.index', PermissionRegistry::ORDERS_VIEW, 'Commerce', 25, 10, 'Customer Orders placed through the storefront.', 'orders', 'admin.commerce.orders.*'),
+            new AdminNavigationItem('demo-orders', 'Demo Orders', 'admin.orders.index', PermissionRegistry::ORDERS_VIEW, 'Commerce', 25, 90, 'Isolated demonstration fixtures.', 'orders', 'admin.orders.*'),
             new AdminNavigationItem('users', 'Users', 'admin.access.users.index', PermissionRegistry::USERS_VIEW, 'Administration', 40, 10, 'Staff access management.', 'users', 'admin.access.users.*'),
             new AdminNavigationItem('roles', 'Roles', 'admin.access.roles.index', PermissionRegistry::ROLES_VIEW, 'Administration', 40, 20, 'Role and permission management.', 'roles', 'admin.access.roles.*'),
             new AdminNavigationItem('audit', 'Audit log', 'admin.audit.index', PermissionRegistry::AUDIT_VIEW, 'Administration', 40, 30, 'Recorded administration activity.', 'audit', 'admin.audit.*'),
@@ -42,7 +44,7 @@ final class AdminNavigationRegistry
         return array_values(array_filter(
             $this->all(),
             fn (AdminNavigationItem $item): bool => Gate::forUser($user)->allows($item->permission)
-                && ($item->key !== 'orders' || app(DemoMode::class)->configured()),
+                && ($item->key !== 'demo-orders' || app(DemoMode::class)->configured()),
         ));
     }
 

@@ -4,6 +4,7 @@
     </x-slot:actions>
 
     <x-admin.flash :errors="$errors" />
+    <x-admin.homepage-section-visibility section-key="hero" />
 
     <form method="POST" action="{{ route('admin.homepage.hero.update') }}" class="homepage-hero-editor">
         @csrf

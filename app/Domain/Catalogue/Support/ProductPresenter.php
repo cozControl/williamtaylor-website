@@ -8,6 +8,7 @@ use App\Domain\Catalogue\Models\ProductCategory;
 use App\Domain\Catalogue\Models\ProductOption;
 use App\Domain\Catalogue\Models\ProductOptionValue;
 use App\Domain\Catalogue\Models\ProductVariant;
+use App\Domain\Inventory\Services\InventoryAvailabilityService;
 use App\Domain\Media\Contracts\MediaProvider;
 use App\Domain\Media\Models\MediaUsage;
 use App\Domain\Merchandising\Models\ProductRelation;
@@ -32,7 +33,11 @@ final class ProductPresenter
         $primaryCategory = $product->categories->first(fn (ProductCategory $category): bool => (bool) $category->getRelation('pivot')->getAttribute('is_primary')) ?? $product->categories->first();
         $related = ProductRelation::query()->active()->where('source_product_id', $product->id)->where('relation_kind', 'related')->with('target.currentDraftRevision')->orderBy('position')->limit(4)->get();
 
+        $this->cards->warmAvailability($related->pluck('target')->filter()->prepend($product));
+        $availability = app(InventoryAvailabilityService::class)->storefront([$product->id])[$product->id];
+
         return [
+            'is_available' => collect($availability)->contains('is_available', true),
             'id' => $product->id, 'slug' => $product->slug, 'title' => $product->currentDraftRevision->title,
             'short_description' => $product->currentDraftRevision->short_description, 'description_html' => $product->currentDraftRevision->description_html,
             'materials' => $product->currentDraftRevision->materials, 'fit' => $product->currentDraftRevision->fit, 'care' => $product->currentDraftRevision->care,
@@ -41,9 +46,9 @@ final class ProductPresenter
             'price' => $this->prices->format($product->base_price_minor, $product->currency),
             'compare_at_price' => $this->prices->format($product->compare_at_price_minor, $product->currency),
             'options' => $product->options->mapWithKeys(fn (ProductOption $option) => [$option->key => $option->values->map(fn (ProductOptionValue $value) => ['id' => $value->id, 'key' => $value->key, 'label' => $value->label, 'swatch_hex' => $value->swatch_hex])->values()->all()])->all(),
-            'variants' => $product->variants->map(fn (ProductVariant $variant) => ['id' => $variant->id, 'sku' => $variant->sku, 'values' => $variant->values->pluck('id')->values()->all(), 'price' => $this->prices->format($this->prices->effectiveMinor($product, $variant), $product->currency)])->values()->all(),
+            'variants' => $product->variants->map(fn (ProductVariant $variant) => ['is_available' => $availability[$variant->id]['is_available'] ?? false, 'id' => $variant->id, 'sku' => $variant->sku, 'values' => $variant->values->pluck('id')->values()->all(), 'price' => $this->prices->format($this->prices->effectiveMinor($product, $variant), $product->currency)])->values()->all(),
             'default_variant_id' => $product->default_variant_id,
-            'badges' => ProductBadge::query()->active()->where('product_id', $product->id)->orderBy('position')->pluck('badge_key')->all(),
+            'badges' => ProductBadge::query()->active()->where('product_id', $product->id)->where('badge_key', '!=', 'sold-out')->orderBy('position')->pluck('badge_key')->all(),
             'related' => $related->map(fn ($relation) => $this->cards->present($relation->target))->filter()->values()->all(),
         ];
     }

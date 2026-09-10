@@ -11,7 +11,7 @@ return [
         'brand' => ['name' => 'William Taylor', 'description' => 'Contemporary menswear designed in Tanzania', 'copyright_holder' => 'William Taylor', 'header_logo_id' => null, 'footer_logo_id' => null],
         'contact' => ['email' => 'info@williamtaylor.co.tz', 'telephone' => '+255656464876', 'whatsapp' => '+255656464876', 'address' => 'Dar Village Mall, Dar Es Salaam, Tanzania', 'business_hours' => '', 'cta_label' => 'Contact us'],
         'social_links' => [
-            ['platform' => 'instagram', 'label' => 'Instagram', 'url' => 'https://instagram.com/williamtaylor'],
+            ['platform' => 'instagram', 'label' => 'Instagram', 'url' => 'https://instagram.com/williamtaylorbrand'],
             ['platform' => 'facebook', 'label' => 'Facebook', 'url' => 'https://facebook.com'],
             ['platform' => 'x', 'label' => 'X', 'url' => 'https://twitter.com'],
             ['platform' => 'youtube', 'label' => 'YouTube', 'url' => 'https://youtube.com'],

@@ -67,7 +67,7 @@ $payload = $profile->currentDraftRevision->payload;
 $payload['brand']['description'] = 'Contemporary tailoring from Dar es Salaam';
 $payload['contact']['email'] = 'studio@example.test';
 $payload['contact']['whatsapp'] = '+255700000000';
-$payload['social_links'][] = ['platform' => 'instagram', 'url' => 'https://instagram.com/williamtaylor', 'label' => 'William Taylor on Instagram'];
+$payload['social_links'][] = ['platform' => 'instagram', 'url' => 'https://instagram.com/williamtaylorbrand', 'label' => 'William Taylor on Instagram'];
 $payload['footer']['description'] = 'Tailoring with purpose.';
 $save->handle($cms, $profile, $profile->current_draft_revision_id, $payload, 'Evidence profile');
 $sessionCookie = function (User $user): array {

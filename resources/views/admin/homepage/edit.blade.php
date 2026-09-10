@@ -28,7 +28,7 @@
         </header>
 
         <x-admin.homepage-section-summary
-            position="1"
+            section-key="hero" position="1"
             title="Homepage Hero"
             :summary="$hero->eyebrow.'. '.$hero->title.'. '.($heroHasImage ? 'Background image configured.' : 'Using the storefront default background image.')"
             :status="$heroHasImage ? 'Configured' : 'Using storefront default'"
@@ -38,7 +38,7 @@
         />
 
         <x-admin.homepage-section-summary
-            position="2"
+            section-key="new-arrivals" position="2"
             title="New Arrivals"
             :summary="$newArrivalsNeedsAttention
                 ? ($newArrivals['managed']
@@ -54,7 +54,7 @@
         />
 
         <x-admin.homepage-section-summary
-            position="3"
+            section-key="hot-sale" position="3"
             title="William's Hot Sale"
             :summary="$hero->hot_sale_managed
                 ? ($hotSale['managed'] ? 'Three editorial feature tiles are ready for the storefront.' : 'One or more editorial feature tiles needs attention.')
@@ -66,7 +66,7 @@
         />
 
         <x-admin.homepage-section-summary
-            position="4"
+            section-key="future-style" position="4"
             title="The Future of Style"
             :summary="$futureStyleSelected
                 ? $futureStyleAvailable.' of '.$futureStyleSelected.' selected Pre-Order '.Str::plural('Campaign', $futureStyleSelected).' currently available.'
@@ -78,7 +78,7 @@
         />
 
         <x-admin.homepage-section-summary
-            position="5"
+            section-key="limited-edition" position="5"
             title="Limited Edition"
             :summary="$limitedEditionSelected
                 ? $limitedEditionAvailable.' of '.$limitedEditionSelected.' selected Limited Edition '.Str::plural('Campaign', $limitedEditionSelected).' currently available.'
@@ -90,7 +90,7 @@
         />
 
         <x-admin.homepage-section-summary
-            position="6"
+            section-key="explore-collections" position="6"
             title="Explore the Collection"
             :summary="$hero->explore_collections_managed
                 ? $exploreCollections['eligible_count'].' of '.$exploreCollections['configured_count'].' selected '.Str::plural('Collection', $exploreCollections['configured_count']).' currently available.'
@@ -103,19 +103,19 @@
         @php
             $summerEdit = app(\App\Domain\Homepage\Support\HomepageSummerEditPresenter::class)->present();
         @endphp
-        <x-admin.homepage-section-summary position="7" title="The Summer Edit" :summary="'Seasonal editorial feature'.($summerEdit['managed'] && $summerEdit['eligible'] ? ' · '.$summerEdit['destination']['title'] : '')" :status="$summerEdit['managed'] ? ($summerEdit['eligible'] ? 'Configured' : 'Needs attention') : 'Using storefront default'" :tone="$summerEdit['managed'] ? ($summerEdit['eligible'] ? 'configured' : 'attention') : 'default'" :href="route('admin.homepage.summer-edit.edit')" action-label="Manage The Summer Edit" />
+        <x-admin.homepage-section-summary section-key="summer-edit" position="7" title="The Summer Edit" :summary="'Seasonal editorial feature'.($summerEdit['managed'] && $summerEdit['eligible'] ? ' · '.$summerEdit['destination']['title'] : '')" :status="$summerEdit['managed'] ? ($summerEdit['eligible'] ? 'Configured' : 'Needs attention') : 'Using storefront default'" :tone="$summerEdit['managed'] ? ($summerEdit['eligible'] ? 'configured' : 'attention') : 'default'" :href="route('admin.homepage.summer-edit.edit')" action-label="Manage The Summer Edit" />
         @php
             $delivery = app(\App\Domain\Homepage\Support\HomepageDeliveryPresenter::class)->present();
         @endphp
-        <x-admin.homepage-section-summary position="8" title="Complimentary Delivery" summary="Delivery information · Shop with Confidence" :status="$delivery['managed'] ? ($delivery['eligible'] ? 'Configured' : 'Needs attention') : 'Using storefront default'" :tone="$delivery['managed'] ? ($delivery['eligible'] ? 'configured' : 'attention') : 'default'" :href="route('admin.homepage.delivery.edit')" action-label="Manage Complimentary Delivery" />
+        <x-admin.homepage-section-summary section-key="delivery" position="8" title="Complimentary Delivery" summary="Delivery information · Shop with Confidence" :status="$delivery['managed'] ? ($delivery['eligible'] ? 'Configured' : 'Needs attention') : 'Using storefront default'" :tone="$delivery['managed'] ? ($delivery['eligible'] ? 'configured' : 'attention') : 'default'" :href="route('admin.homepage.delivery.edit')" action-label="Manage Complimentary Delivery" />
         @php
             $handbags = app(\App\Domain\Homepage\Support\HomepageHandbagsPresenter::class)->present();
         @endphp
-        <x-admin.homepage-section-summary position="9" title="Women's Handbags" summary="Editorial hero and six curated Products" :status="$handbags['managed'] ? ($handbags['eligible'] && $handbags['ready_count'] > 0 ? 'Configured' : 'Needs attention') : 'Using storefront default'" :tone="$handbags['managed'] ? ($handbags['eligible'] && $handbags['ready_count'] > 0 ? 'configured' : 'attention') : 'default'" :href="route('admin.homepage.handbags.edit')" action-label="Manage Women's Handbags" />
+        <x-admin.homepage-section-summary section-key="handbags" position="9" title="Women's Handbags" summary="Editorial hero and six curated Products" :status="$handbags['managed'] ? ($handbags['eligible'] && $handbags['ready_count'] > 0 ? 'Configured' : 'Needs attention') : 'Using storefront default'" :tone="$handbags['managed'] ? ($handbags['eligible'] && $handbags['ready_count'] > 0 ? 'configured' : 'attention') : 'default'" :href="route('admin.homepage.handbags.edit')" action-label="Manage Women's Handbags" />
         @php
             $clientStories = app(\App\Domain\Homepage\Support\HomepageClientStoriesPresenter::class)->present();
         @endphp
-        <x-admin.homepage-section-summary position="10" title="Client Stories" :summary="count($clientStories['stories']).' visible client stories ready for the storefront'" :status="$clientStories['managed'] ? ($clientStories['attention_count'] ? 'Needs attention' : (count($clientStories['stories']) ? 'Configured' : 'No visible stories')) : 'Using storefront default'" :tone="$clientStories['managed'] ? ($clientStories['attention_count'] ? 'attention' : 'configured') : 'default'" :href="route('admin.homepage.client-stories.edit')" action-label="Manage Client Stories" />
+        <x-admin.homepage-section-summary section-key="client-stories" position="10" title="Client Stories" :summary="count($clientStories['stories']).' visible client stories ready for the storefront'" :status="$clientStories['managed'] ? ($clientStories['attention_count'] ? 'Needs attention' : (count($clientStories['stories']) ? 'Configured' : 'No visible stories')) : 'Using storefront default'" :tone="$clientStories['managed'] ? ($clientStories['attention_count'] ? 'attention' : 'configured') : 'default'" :href="route('admin.homepage.client-stories.edit')" action-label="Manage Client Stories" />
 
 
     </div>

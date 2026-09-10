@@ -26,6 +26,7 @@ final class CollectionCardPresenter
             ->first();
         $revision = $collection->getRelationValue('currentDraftRevision');
         $mediaIsUsable = $usage !== null && $this->accessibility->isUsable($usage);
+        $this->products->warmAvailability($collection->products->pluck('product')->filter());
         $eligibleProducts = $collection->products
             ->filter(fn ($membership): bool => $membership->product !== null && $this->products->present($membership->product) !== null)
             ->count();
