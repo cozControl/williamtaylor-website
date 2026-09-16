@@ -31,7 +31,13 @@ try {
   assert(geometry.right <= width - 8);
   assert.equal(geometry.overflow, false);
   assert.equal(geometry.controls, 3);
-  assert.equal(geometry.background, 'rgba(0, 0, 0, 0)');
+  assert.equal(geometry.background, 'rgb(72, 33, 37)');
+  const footer = page.locator('#root footer');
+  assert.deepEqual(await footer.locator('h4').allTextContents().then(labels => labels.map(label => label.trim())), ['Shop', 'Pages', 'Visit']);
+  assert.equal(await footer.locator('svg.lucide-instagram').count(), 1);
+  assert.equal(await footer.locator('svg.lucide-facebook, svg.lucide-twitter, svg.lucide-youtube').count(), 0);
+  const expectedCollections = await page.locator('#public-projected-footer-template').evaluate(template => [...template.content.querySelectorAll('[data-catalogue-footer-links] a')].map(link => ({ label: link.textContent.trim(), url: link.href })));
+  assert.deepEqual(await footer.locator('[data-catalogue-footer-links] a').evaluateAll(links => links.map(link => ({ label: link.textContent.trim(), url: link.href }))), expectedCollections);
   await page.screenshot({ path: `${output}/home-${width}.png` });
   await page.locator('.wt-header-action[data-cart-open]').click();
   await page.locator('#wt-cart-drawer[open]').waitFor();
@@ -41,6 +47,7 @@ try {
   await page.evaluate(() => scrollTo(0, 300));
   await page.waitForTimeout(250);
   assert.equal(await page.locator('[data-canonical-shop-header][data-scrolled]').count(), 1);
+  assert.equal(await page.locator('.wt-minimal-header').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(72, 33, 37)');
   await page.screenshot({ path: `${output}/scrolled-${width}.png`, clip: { x: 0, y: 0, width, height: 160 } });
   results.push({ width, ...geometry, cartOpened: true, focusRestored: true, scrollState: true });
  }
@@ -57,7 +64,8 @@ try {
    document.querySelector('#root').append(fixture);
   }, background);
   await page.waitForTimeout(100);
-  assert.equal(await page.locator('.wt-header-brand').getAttribute('data-header-tone'), name === 'light' ? 'dark' : 'light');
+  assert.equal(await page.locator('.wt-minimal-header').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(72, 33, 37)');
+  assert.equal(await page.locator('.wt-minimal-header').evaluate(el => getComputedStyle(el).color), 'rgb(237, 226, 192)');
   await page.screenshot({ path: `${output}/contrast-${name}.png`, clip: { x: 0, y: 0, width: 1440, height: 120 } });
  }
  results.push({ contrastFixtures: ['light', 'dark', 'midtone', 'mixed'] });
