@@ -18,6 +18,12 @@ final class Collection extends Model
 
     protected $guarded = [];
 
+    /** @return HasMany<ProductCategory, $this> */
+    public function categories(): HasMany
+    {
+        return $this->hasMany(ProductCategory::class)->orderBy('position')->orderBy('name');
+    }
+
     protected function casts(): array
     {
         return ['archived_at' => 'immutable_datetime', 'lock_version' => 'integer', 'navigation_order' => 'integer'];

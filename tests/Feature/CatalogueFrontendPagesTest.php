@@ -31,30 +31,30 @@ class CatalogueFrontendPagesTest extends TestCase
             $this->assertSame(1, substr_count($html, '<head>'));
             $this->assertSame(1, substr_count($html, '<body>'));
             $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
-            $this->assertSame(1, substr_count($html, '<header data-canonical-shop-header class="fixed top-0 left-0 right-0 z-40">'));
+            $this->assertSame(1, substr_count($html, '<header data-canonical-shop-header data-smart-header="top"'));
             $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
             $this->assertSame(1, substr_count($html, '<footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">'));
             $this->assertSame(1, substr_count($html, '<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">'));
             $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
             $this->assertSame(1, substr_count($html, '/website/css/index-X8-QjRMe.css'));
-            $this->assertSame($routeName === 'products.index' ? 1 : 0, substr_count($html, '/website/js/index-DxdnTNDA.js'));
+            $this->assertSame(0, substr_count($html, '/website/js/index-DxdnTNDA.js'));
             $this->assertSame(1, substr_count($html, '/website/js/cart.js'));
             $this->assertStringNotContainsString('src="images/', $html);
             $this->assertStringNotContainsString('href="css/', $html);
             $this->assertStringNotContainsString('src="js/', $html);
-            $this->assertStringContainsString('href="'.route('collections.index').'"', $html);
-            $this->assertStringContainsString('href="'.route('products.index').'"', $html);
+            $this->assertStringContainsString('href="'.route('search').'"', $html);
+            $this->assertStringContainsString('href="'.route('login').'"', $html);
         }
     }
 
-    public function test_shop_preserves_visible_catalogue_controls_without_fake_backend_forms(): void
+    public function test_empty_global_shop_preserves_catalogue_controls_and_truthful_count(): void
     {
         $response = $this->get(route('products.index'))->assertOk();
 
         $response
-            ->assertSeeText('24 pieces')
+            ->assertSeeText('0 pieces')
             ->assertSeeText('Filters')
             ->assertSeeText('Newest')
-            ->assertSee('aria-label="Add to wishlist"', false);
+            ->assertSee('data-catalogue-empty', false);
     }
 }

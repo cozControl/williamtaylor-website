@@ -19,7 +19,8 @@ class AccountFrontendPagesTest extends TestCase
             ->assertOk()
             ->assertSeeText('Your wishlist is empty')
             ->assertSee('/website/css/index-X8-QjRMe.css', false)
-            ->assertSee('/website/js/index-DxdnTNDA.js', false);
+            ->assertDontSee('/website/js/index-DxdnTNDA.js', false)
+            ->assertSee('/website/js/catalogue-wishlist.js', false);
     }
 
     public function test_login_preserves_existing_fortify_contract_without_storefront_regions(): void

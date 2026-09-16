@@ -46,8 +46,19 @@ final class StartSnippePayment
 
     public function refresh(Payment $payment): Payment
     {
+        return $this->refreshPayment($payment, allowInitiation: true);
+    }
+
+    /** Legacy discovery/status are GET-only; an unsent Session is never created here. */
+    public function reconcile(Payment $payment): Payment
+    {
+        return $this->refreshPayment($payment, allowInitiation: false);
+    }
+
+    private function refreshPayment(Payment $payment, bool $allowInitiation): Payment
+    {
         if ($payment->method === 'mobile_money') {
-            return app(MobileMoneyPayment::class)->refresh($payment);
+            return $allowInitiation ? app(MobileMoneyPayment::class)->refresh($payment) : app(MobileMoneyPayment::class)->reconcile($payment);
         }
         if (DB::transactionLevel() !== 0) {
             throw new \LogicException('Reconciliation must not hold database locks across provider calls.');
@@ -55,7 +66,8 @@ final class StartSnippePayment
         $claimed = DB::transaction(function () use ($payment) {
             Order::query()->lockForUpdate()->findOrFail($payment->order_id);
             $payment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
-            if ($payment->active_order_id === null || $payment->io_lease_until?->isFuture() || $payment->next_reconcile_at?->isFuture()) {
+            if ($payment->provider !== 'snippe' || $payment->active_order_id === null || $payment->io_lease_until?->isFuture() || $payment->next_reconcile_at?->isFuture()
+                || in_array($payment->reconciliation_issue, [...MobileMoneyPayment::REVIEW_REASONS, 'session_mismatch'], true)) {
                 return false;
             }
             $payment->update(['io_lease_until' => now('UTC')->addMinutes(5)]);
@@ -77,6 +89,9 @@ final class StartSnippePayment
                     throw new SnippeException('session_outcome_unknown');
                 }
             } else {
+                if (! $allowInitiation) {
+                    throw new SnippeException('initiation_not_recorded', retryAfter: 300);
+                }
                 $operation = 'prepare';
                 $payload = $this->payload($payment);
                 $payment->update(['request_started_at' => now('UTC')]);

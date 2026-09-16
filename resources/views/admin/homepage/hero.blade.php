@@ -21,9 +21,16 @@
             </div>
 
             <div class="homepage-hero-media">
-                <div class="admin-section-heading"><p>Hero image</p><h2>Background image</h2></div>
-                <p class="admin-field-help">Leave this unselected to use the storefront default background image.</p>
-                <x-admin.media-picker id="homepage-hero-media" name="background_media_id" :selected="$selectedMedia" button-label="Choose media" change-label="Change media" :error="$errors->first('background_media_id')" />
+                <div class="admin-section-heading"><p>Hero image</p><h2>Desktop / Large Screen Image</h2></div>
+                <p class="admin-field-help">Recommended for wide desktop and laptop presentation. Leave unselected to use the storefront default background image.</p>
+                <input type="hidden" name="background_media_id" value="">
+                <x-admin.media-picker id="homepage-hero-media" name="background_media_id" :selected="$selectedMedia" preview-aspect="16 / 9" button-label="Choose media" change-label="Change media" :error="$errors->first('background_media_id')" />
+            </div>
+            <div class="homepage-hero-media" data-hero-mobile-editor>
+                <div class="admin-section-heading"><p>Hero image</p><h2>Mobile / Small Screen Image</h2></div>
+                <p class="admin-field-help">Optional. Recommended for portrait/mobile composition below 768px. If omitted, the desktop image will be used.</p>
+                <input type="hidden" name="mobile_background_media_id" value="">
+                <x-admin.media-picker id="homepage-hero-mobile-media" name="mobile_background_media_id" :selected="$selectedMobileMedia" preview-aspect="3 / 4" button-label="Choose mobile media" change-label="Change mobile media" :error="$errors->first('mobile_background_media_id')" />
             </div>
         </section>
 

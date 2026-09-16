@@ -15,6 +15,12 @@ final class ProductCategory extends Model
 
     protected $guarded = [];
 
+    /** @return BelongsTo<Collection, $this> */
+    public function collection(): BelongsTo
+    {
+        return $this->belongsTo(Collection::class);
+    }
+
     protected function casts(): array
     {
         return ['is_visible' => 'boolean', 'position' => 'integer', 'archived_at' => 'immutable_datetime'];

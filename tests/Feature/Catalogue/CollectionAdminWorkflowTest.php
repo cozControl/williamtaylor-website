@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Catalogue;
 
+use App\Domain\Catalogue\Actions\AssignProductMedia;
 use App\Domain\Catalogue\Models\Collection;
 use App\Domain\Catalogue\Models\CollectionProduct;
 use App\Domain\Catalogue\Models\Product;
+use App\Domain\Catalogue\Support\ProductStateFingerprint;
 use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
 use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\RoleRegistry;
@@ -16,6 +18,7 @@ use App\Domain\Media\Models\MediaUsage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class CollectionAdminWorkflowTest extends TestCase
@@ -51,11 +54,12 @@ final class CollectionAdminWorkflowTest extends TestCase
 
     public function test_manager_creates_updates_and_publishes_ordered_collection_with_ready_media(): void
     {
-        $this->artisan('catalogue:bootstrap-oxford', ['--user' => $this->manager->email])->assertSuccessful();
+        $this->artisan('catalogue:bootstrap-oxford', ['--collection' => CategoryOwner::for($this->manager->id)->slug, '--user' => $this->manager->email])->assertSuccessful();
         $oxford = Product::query()->where('slug', 'the-taylor-oxford-shirt')->sole();
         $oxford->forceFill(['catalogue_status' => 'ready'])->save();
         $second = Product::query()->create(['stable_key' => 'second-product', 'slug' => 'second-product', 'product_type' => 'apparel', 'catalogue_status' => 'draft', 'currency' => 'TZS', 'created_by' => $this->manager->id]);
         $image = $this->image(MediaAssetState::Ready);
+        app(AssignProductMedia::class)->handle($this->manager, $oxford, $image, app(ProductStateFingerprint::class)->for($oxford), 'primary');
 
         $this->actingAs($this->manager)->post(route('admin.collections.store'), [
             'name' => 'New Arrivals Test', 'slug' => 'new-arrivals-test', 'description' => 'The newest William Taylor pieces.',
@@ -71,10 +75,10 @@ final class CollectionAdminWorkflowTest extends TestCase
             ->assertSeeText('New Arrivals Test')->assertSeeText('The Taylor Oxford Shirt')
             ->assertSeeText('The newest William Taylor pieces.')
             ->assertSeeText('1 Result')
-            ->assertSee('data-collection-heading', false)
-            ->assertSee('data-collection-toolbar', false)
-            ->assertSee('data-collection-product-card', false)
-            ->assertSee('wt-collection-product-grid', false)
+            ->assertSee('data-catalogue-listing', false)
+            ->assertSee('data-catalogue-toolbar', false)
+            ->assertSee('data-catalogue-grid', false)
+            ->assertSee('grid-cols-2 md:grid-cols-3 lg:grid-cols-4', false)
             ->assertSee('data-storefront-grid-spacing="ecom-home-3a"', false)
             ->assertSee('data-storefront-product-card', false)
             ->assertSee('/website/images/eab6bab5d_bg.jpg', false)
@@ -83,14 +87,14 @@ final class CollectionAdminWorkflowTest extends TestCase
             ->assertDontSee('min-h-[28rem]', false)
             ->assertDontSeeText('Curated pieces')
             ->assertDontSeeText('Coming soon');
-        $this->assertSame(1, substr_count($publicCollection->getContent(), 'data-collection-product-card'));
+        $this->assertSame(1, substr_count($publicCollection->getContent(), 'data-storefront-product-card'));
 
         $this->actingAs($this->manager)->put(route('admin.collections.update', $collection), [
             'name' => 'New Arrivals Updated', 'slug' => 'new-arrivals-updated', 'description' => 'Updated storefront collection description.',
             'media_asset_id' => '', 'product_ids' => [$oxford->id], 'product_order' => [$oxford->id => 0], 'visibility' => 'hidden',
         ])->assertRedirect(route('admin.collections.edit', $collection))
             ->assertSessionHas('status', 'Collection updated successfully.');
-        $this->assertSame(1, Collection::query()->count());
+        $this->assertSame(2, Collection::query()->count()); // Edited Collection plus explicit Category owner fixture.
         $this->assertDatabaseHas('collection_revisions', ['collection_id' => $collection->id, 'title' => 'New Arrivals Updated', 'short_description' => 'Updated storefront collection description.']);
         $this->assertDatabaseHas('audit_records', ['resource_identifier' => $collection->id, 'action' => 'collection.visibility.changed']);
         $this->assertTrue(MediaAsset::query()->whereKey($image->id)->exists());
@@ -197,7 +201,7 @@ final class CollectionAdminWorkflowTest extends TestCase
 
     public function test_index_exposes_edit_and_edit_prefills_saved_collection_state(): void
     {
-        $this->artisan('catalogue:bootstrap-oxford', ['--user' => $this->manager->email])->assertSuccessful();
+        $this->artisan('catalogue:bootstrap-oxford', ['--collection' => CategoryOwner::for($this->manager->id)->slug, '--user' => $this->manager->email])->assertSuccessful();
         $product = Product::query()->where('slug', 'the-taylor-oxford-shirt')->sole();
         $image = $this->image(MediaAssetState::Ready, 'Default Collection image');
 

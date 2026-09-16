@@ -100,7 +100,7 @@
       @if($homepageVisibility['hero'])
 <section data-homepage-hero class="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
        <div data-homepage-hero-background class="absolute inset-0 transition-opacity duration-1500" style="opacity: 1;">
-        <img alt="" class="w-full h-full object-cover object-top" src="{{ $homepageHero['background_url'] }}"/>
+        @include('frontend.partials.homepage-hero-picture')
        </div>
        <div data-homepage-hero-content class="relative z-10 text-center px-6 max-w-5xl mx-auto" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 300;'>
         <div data-homepage-hero-actions class="flex flex-col sm:flex-row gap-4 justify-center" style="opacity: 1; transform: none;">
@@ -132,95 +132,6 @@
        </div>
       </section>
 @endif
-      <section class="bg-white border-y border-gray-100 py-6 lg:py-10">
-       <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
-        <div class="flex justify-center mb-6 hidden">
-         <span aria-hidden="true" class="inline-flex items-center justify-center bg-wt-oxblood rounded-full flex-shrink-0" style="width: 26px; height: 26px;">
-          <img alt="" class="mix-blend-screen object-contain" src="/website/images/cf030fe26_ICONlight.png" style="width: 18px; height: 18px;"/>
-         </span>
-        </div>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
-         <div class="flex flex-col items-center text-center gap-3" style="opacity: 1; transform: none;">
-          <svg class="lucide lucide-gem text-wt-gold" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-           <path d="M6 3h12l4 6-10 13L2 9Z">
-           </path>
-           <path d="M11 3 8 9l4 13 4-13-3-6">
-           </path>
-           <path d="M2 9h20">
-           </path>
-          </svg>
-          <div>
-           <p class="font-label text-xs tracking-widest uppercase text-wt-oxblood font-semibold">
-            Premium Fabrics
-           </p>
-           <p class="font-body text-xs text-gray-500 font-light mt-0.5">
-            Italian &amp; Belgian sourced
-           </p>
-          </div>
-         </div>
-         <div class="flex flex-col items-center text-center gap-3" style="opacity: 1; transform: none;">
-          <svg class="lucide lucide-scissors text-wt-gold" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-           <circle cx="6" cy="6" r="3">
-           </circle>
-           <path d="M8.12 8.12 12 12">
-           </path>
-           <path d="M20 4 8.12 15.88">
-           </path>
-           <circle cx="6" cy="18" r="3">
-           </circle>
-           <path d="M14.8 14.8 20 20">
-           </path>
-          </svg>
-          <div>
-           <p class="font-label text-xs tracking-widest uppercase text-wt-oxblood font-semibold">
-            Handcrafted Details
-           </p>
-           <p class="font-body text-xs text-gray-500 font-light mt-0.5">
-            Finished by hand in Dar es Salaam
-           </p>
-          </div>
-         </div>
-         <div class="flex flex-col items-center text-center gap-3" style="opacity: 1; transform: none;">
-          <svg class="lucide lucide-truck text-wt-gold" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-           <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2">
-           </path>
-           <path d="M15 18H9">
-           </path>
-           <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14">
-           </path>
-           <circle cx="17" cy="18" r="2">
-           </circle>
-           <circle cx="7" cy="18" r="2">
-           </circle>
-          </svg>
-          <div>
-           <p class="font-label text-xs tracking-widest uppercase text-wt-oxblood font-semibold">
-            Express Delivery
-           </p>
-           <p class="font-body text-xs text-gray-500 font-light mt-0.5">
-            Same-day in Dar es Salaam
-           </p>
-          </div>
-         </div>
-         <div class="flex flex-col items-center text-center gap-3" style="opacity: 1; transform: none;">
-          <svg class="lucide lucide-rotate-ccw text-wt-gold" fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-           <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8">
-           </path>
-           <path d="M3 3v5h5">
-           </path>
-          </svg>
-          <div>
-           <p class="font-label text-xs tracking-widest uppercase text-wt-oxblood font-semibold">
-            Easy Returns
-           </p>
-           <p class="font-body text-xs text-gray-500 font-light mt-0.5">
-            14-day free returns
-           </p>
-          </div>
-         </div>
-        </div>
-       </div>
-      </section>
       @if($homepageVisibility['new-arrivals'])
 @if($homepageNewArrivals['managed'])
        @include('frontend.partials.homepage-new-arrivals')
@@ -587,104 +498,8 @@
       </section>
       @endif
 @endif
-       @if($homepageVisibility['hot-sale'])
-@if($homepageHotSale['managed'])
-       @include('frontend.partials.homepage-hot-sale')
-       @else
-       <section class="py-12 lg:py-20 bg-white">
-       <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
-        <div class="text-center mb-10 lg:mb-14">
-         <span aria-hidden="true" class="inline-flex items-center justify-center bg-wt-oxblood rounded-full flex-shrink-0 mb-3" style="width: 29px; height: 29px;">
-          <img alt="" class="mix-blend-screen object-contain" src="/website/images/cf030fe26_ICONlight.png" style="width: 20px; height: 20px;"/>
-         </span>
-         <p class="section-subtitle mb-2 text-wt-gold">
-          Limited Time
-         </p>
-         <h2 class="section-title text-wt-oxblood" style='font-family: Avenir, "Avenir Next", "Helvetica Neue", sans-serif; font-weight: 300;'>
-          William's Hot Sale
-         </h2>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-         <div class="group relative overflow-hidden aspect-[3/4] cursor-pointer" style="opacity: 1; transform: none;">
-          <a href="{{ route('products.index', ['sort' => 'newest']) }}">
-           <img alt="The Atelier Edit" class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-108" src="/website/images/86df796c0_thumb.jpg"/>
-           <div class="absolute inset-0 bg-gradient-to-t from-wt-oxblood/80 via-wt-oxblood/20 to-transparent">
-           </div>
-           <div class="absolute top-3 left-3 w-7 h-7 rounded-full bg-wt-gold/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <span class="font-label text-[9px] font-bold text-wt-oxblood">
-             01
-            </span>
-           </div>
-           <div class="absolute inset-0 flex flex-col items-center justify-end p-4 lg:p-6 text-center">
-            <div class="group-hover:-translate-y-2 transition-transform duration-300">
-             <h3 class="font-heading text-xl lg:text-2xl text-wt-cream mb-1.5">
-              The Atelier Edit
-             </h3>
-             <p class="font-body text-xs lg:text-sm text-wt-cream/70 font-light mb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              Statement pieces from the house, hand-finished in Dar es Salaam.
-             </p>
-             <span class="font-label text-xs tracking-widest uppercase text-wt-gold border-b border-wt-gold pb-0.5">
-              Discover →
-             </span>
-            </div>
-           </div>
-          </a>
-         </div>
-         <div class="group relative overflow-hidden aspect-[3/4] cursor-pointer" style="opacity: 1; transform: none;">
-          <a href="{{ route('collections.index') }}">
-           <video autoplay="" class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-108" loop="" playsinline="" src="https://media.base44.com/videos/public/6a4d9ad469285a7e6df866f1/2eaa51040_3333.mp4">
-           </video>
-           <div class="absolute inset-0 bg-gradient-to-t from-wt-oxblood/80 via-wt-oxblood/20 to-transparent">
-           </div>
-           <div class="absolute top-3 left-3 w-7 h-7 rounded-full bg-wt-gold/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <span class="font-label text-[9px] font-bold text-wt-oxblood">
-             02
-            </span>
-           </div>
-           <div class="absolute inset-0 flex flex-col items-center justify-end p-4 lg:p-6 text-center">
-            <div class="group-hover:-translate-y-2 transition-transform duration-300">
-             <h3 class="font-heading text-xl lg:text-2xl text-wt-cream mb-1.5">
-              The Shopping Experience
-             </h3>
-             <p class="font-body text-xs lg:text-sm text-wt-cream/70 font-light mb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              Carry the collection home in signature William Taylor style.
-             </p>
-             <span class="font-label text-xs tracking-widest uppercase text-wt-gold border-b border-wt-gold pb-0.5">
-              Discover →
-             </span>
-            </div>
-           </div>
-          </a>
-         </div>
-         <div class="group relative overflow-hidden aspect-[3/4] cursor-pointer" style="opacity: 1; transform: none;">
-          <a href="{{ route('products.index') }}">
-           <img alt="The Signature Bag" class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-108" src="/website/images/8572d276e_thumb.jpg"/>
-           <div class="absolute inset-0 bg-gradient-to-t from-wt-oxblood/80 via-wt-oxblood/20 to-transparent">
-           </div>
-           <div class="absolute top-3 left-3 w-7 h-7 rounded-full bg-wt-gold/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <span class="font-label text-[9px] font-bold text-wt-oxblood">
-             03
-            </span>
-           </div>
-           <div class="absolute inset-0 flex flex-col items-center justify-end p-4 lg:p-6 text-center">
-            <div class="group-hover:-translate-y-2 transition-transform duration-300">
-             <h3 class="font-heading text-xl lg:text-2xl text-wt-cream mb-1.5">
-              The Signature Bag
-             </h3>
-             <p class="font-body text-xs lg:text-sm text-wt-cream/70 font-light mb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              Oxblood and gold — the William Taylor hallmark, carried worldwide.
-             </p>
-             <span class="font-label text-xs tracking-widest uppercase text-wt-gold border-b border-wt-gold pb-0.5">
-              Discover →
-             </span>
-            </div>
-           </div>
-          </a>
-         </div>
-        </div>
-       </div>
-       </section>
-       @endif
+@if($homepageVisibility['hot-sale'])
+@include('frontend.partials.homepage-hot-sale')
 @endif
        @if($homepageVisibility['future-style'])
 @include('frontend.partials.homepage-future-style')
@@ -711,7 +526,7 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
          <div class="group relative overflow-hidden aspect-[3/4] cursor-pointer" style="opacity: 1; transform: none;">
-          <a href="html/mens-wear.html">
+          <a href="{{ app(\App\Domain\Catalogue\Support\StorefrontShopNavigationPresenter::class)->canonicalCollectionLink('html/mens-wear.html') }}">
            <img alt="Men's Wear" class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-108" src="/website/images/1c4c991a1_ethumb.jpg" style="--tw-scale-x: 1.08; --tw-scale-y: 1.08;"/>
            <div class="absolute inset-0 bg-gradient-to-t from-wt-oxblood/80 via-wt-oxblood/20 to-transparent">
            </div>
@@ -731,7 +546,7 @@
           </a>
          </div>
          <div class="group relative overflow-hidden aspect-[3/4] cursor-pointer" style="opacity: 1; transform: none;">
-          <a href="html/unisex.html">
+          <a href="{{ app(\App\Domain\Catalogue\Support\StorefrontShopNavigationPresenter::class)->canonicalCollectionLink('html/unisex.html') }}">
            <img alt="Unisex" class="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-108" src="/website/images/a5552b423_3.jpg" style="--tw-scale-x: 1.08; --tw-scale-y: 1.08;"/>
            <div class="absolute inset-0 bg-gradient-to-t from-wt-oxblood/80 via-wt-oxblood/20 to-transparent">
            </div>
@@ -751,7 +566,7 @@
           </a>
          </div>
          <div class="group relative overflow-hidden aspect-[3/4] cursor-pointer" style="opacity: 1; transform: none;">
-          <a href="html/accessories.html">
+          <a href="{{ app(\App\Domain\Catalogue\Support\StorefrontShopNavigationPresenter::class)->canonicalCollectionLink('html/accessories.html') }}">
            <video autoplay="" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108" loop="" playsinline="" src="https://media.base44.com/videos/public/6a4d9ad469285a7e6df866f1/eb1f94bda_SnapInsta-Ai_3923038057139474583_77059721635.mp4">
            </video>
            <div class="absolute inset-0 bg-gradient-to-t from-wt-oxblood/80 via-wt-oxblood/20 to-transparent">
@@ -1225,7 +1040,8 @@
       </section>
 @endif
 @endif
-      <section class="py-12 lg:py-20 bg-wt-offwhite">
+      @if($homepageVisibility['follow-the-journey'])
+<section data-homepage-follow-the-journey class="py-12 lg:py-20 bg-wt-offwhite">
        <div class="max-w-screen-xl mx-auto px-4 lg:px-12">
         <div class="text-center mb-8 lg:mb-12">
          <div class="flex items-center justify-center gap-3 mb-3">
@@ -1343,6 +1159,7 @@
         </div>
        </div>
       </section>
+@endif
      </div>
     </main>
     @include('frontend.partials.footer')
@@ -1360,10 +1177,9 @@
 <template id="homepage-new-arrivals-projection">@include('frontend.partials.homepage-new-arrivals')</template>
 @endif
 @endif
-@if($homepageHotSale['managed'])
 @if($homepageVisibility['hot-sale'])
+@include('frontend.partials.homepage-hot-sale-styles')
 <template id="homepage-hot-sale-projection">@include('frontend.partials.homepage-hot-sale')</template>
-@endif
 @endif
 @if($homepageVisibility['future-style'])
 <template id="homepage-future-style-projection">@include('frontend.partials.homepage-future-style')</template>
@@ -1411,6 +1227,9 @@
 </style>
 @endif
 <script type="application/json" id="homepage-hidden-sections">@json($homepageHiddenSections)</script>
+@if($homepageVisibility['hero'])
+<template id="homepage-hero-media-projection">@include('frontend.partials.homepage-hero-picture')</template>
+@endif
 <script type="application/json" id="homepage-hero-data">@json($homepageVisibility['hero'] ? $homepageHero : [])</script>
 <script>
 (() => {
@@ -1422,7 +1241,7 @@
  // Keep native anchor navigation ahead of the imported router's delegated handlers.
  // Capture on document because the imported runtime also captures events on root.
  const preserveHeroNavigation = event => {
-  const link = event.target instanceof Element ? event.target.closest('[data-homepage-hero-actions] a') : null;
+  const link = event.target instanceof Element ? event.target.closest('[data-homepage-hero-actions] a, [data-homepage-hot-sale] a') : null;
   if (!link || !root.contains(link)) return;
   event.stopImmediatePropagation();
  };
@@ -1448,7 +1267,10 @@
   setAttribute(actions[0], 'href', data.primary_cta_url);
   setText(actions[1], data.secondary_cta_label);
   setAttribute(actions[1], 'href', data.secondary_cta_url);
-  setAttribute(hero.querySelector(':scope > div.absolute.inset-0 img'), 'src', data.background_url);
+  if (background && !background.querySelector('[data-responsive-hero-media]')) {
+   const picture = document.getElementById('homepage-hero-media-projection')?.content.firstElementChild;
+   if (picture) background.replaceChildren(picture.cloneNode(true));
+  }
   const scrollLabel = [...hero.querySelectorAll('span')].find(node => node.textContent.trim() === 'Scroll');
   if (scrollLabel?.parentElement) scrollLabel.parentElement.dataset.homepageHeroScroll = '';
   scrollLabel?.parentElement?.classList.toggle('hidden', !data.scroll_indicator_enabled);
@@ -1538,6 +1360,7 @@
   current.replaceWith(projected.cloneNode(true));
  };
  const synchronizeFollowLabel = () => {
+  if (Object.hasOwn(hiddenSections, 'follow-the-journey')) return;
   const section = [...root.querySelectorAll('h2')].find(node => node.textContent.trim() === 'Follow the Journey')?.closest('section');
   const button = section?.querySelector('a.btn-outline');
   if (!button) return;
@@ -1565,7 +1388,13 @@
    sharedContainers.forEach(container => container.remove());
   }
  };
- const synchronize = () => { synchronizeVisibility(); synchronizeHero(); synchronizeNewArrivals(); synchronizeHotSale(); synchronizeFutureStyle(); synchronizeLimitedEdition(); synchronizeExploreCollections(); synchronizeSummerEdit(); synchronizeDelivery(); synchronizeHandbags(); synchronizeClientStories(); synchronizeFollowLabel(); };
+ const removeRetiredFeatureStrip = () => {
+  // The imported bundle can recreate the retired static strip after hydration.
+  root.querySelectorAll('main section').forEach(section => {
+   if (section.querySelector('.lucide-gem') && section.querySelector('.lucide-scissors') && section.querySelector('.lucide-truck') && section.querySelector('.lucide-rotate-ccw')) section.remove();
+  });
+ };
+ const synchronize = () => { removeRetiredFeatureStrip(); synchronizeVisibility(); synchronizeHero(); synchronizeNewArrivals(); synchronizeHotSale(); synchronizeFutureStyle(); synchronizeLimitedEdition(); synchronizeExploreCollections(); synchronizeSummerEdit(); synchronizeDelivery(); synchronizeHandbags(); synchronizeClientStories(); synchronizeFollowLabel(); };
  const observer = new MutationObserver(synchronize);
  observer.observe(root, {childList: true, subtree: true});
  window.addEventListener('load', () => requestAnimationFrame(() => requestAnimationFrame(synchronize)), {once: true});

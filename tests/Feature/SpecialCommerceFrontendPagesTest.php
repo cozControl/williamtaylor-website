@@ -28,7 +28,7 @@ class SpecialCommerceFrontendPagesTest extends TestCase
         foreach (['preorders.index', 'limited-edition.index', 'gift-cards.index'] as $routeName) {
             $html = StorefrontMarkup::active($this->get(route($routeName))->assertOk()->getContent());
 
-            foreach (['<html lang="en">', '<head>', '<body>', 'aria-label="Close announcement"', '<header data-canonical-shop-header class="fixed top-0 left-0 right-0 z-40">', 'Sign the Ledger', '<footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">', '<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">', 'aria-label="Chat on WhatsApp"', '/website/css/index-X8-QjRMe.css'] as $needle) {
+            foreach (['<html lang="en">', '<head>', '<body>', 'aria-label="Close announcement"', '<header data-canonical-shop-header data-smart-header="top"', 'Sign the Ledger', '<footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">', '<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">', 'aria-label="Chat on WhatsApp"', '/website/css/index-X8-QjRMe.css'] as $needle) {
                 $this->assertSame(1, substr_count($html, $needle), "Unexpected region count for {$needle} on {$routeName}");
             }
             $this->assertSame(in_array($routeName, ['preorders.index', 'limited-edition.index'], true) ? 0 : 1, substr_count($html, '/website/js/index-DxdnTNDA.js'));

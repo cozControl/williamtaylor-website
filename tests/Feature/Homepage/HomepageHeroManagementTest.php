@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Homepage;
 
+use App\Domain\Audit\Models\AuditRecord;
 use App\Domain\Catalogue\Models\Collection;
 use App\Domain\Catalogue\Models\CollectionRevision;
 use App\Domain\Homepage\Models\HomepageHero;
 use App\Domain\Homepage\Support\HomepageHeroPresenter;
+use App\Domain\Homepage\Support\HomepageSectionVisibility;
 use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
 use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\RoleRegistry;
@@ -16,6 +18,8 @@ use App\Domain\Media\Models\MediaAsset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Livewire\Mechanisms\FrontendAssets\FrontendAssets;
+use Tests\Support\StorefrontMarkup;
 use Tests\TestCase;
 
 final class HomepageHeroManagementTest extends TestCase
@@ -48,7 +52,7 @@ final class HomepageHeroManagementTest extends TestCase
             ->assertSeeTextInOrder(['Homepage', 'Site settings', 'Pages', 'Navigation', 'Announcements', 'Media library']);
     }
 
-    public function test_homepage_workspace_lists_ten_registered_sections_in_storefront_order(): void
+    public function test_homepage_workspace_lists_eleven_registered_sections_in_storefront_order(): void
     {
         $response = $this->actingAs($this->manager)->get(route('admin.homepage.edit'))->assertOk()
             ->assertSee('data-admin-ui-revision="ecom-home-2e"', false)
@@ -83,7 +87,7 @@ final class HomepageHeroManagementTest extends TestCase
             ->assertDontSeeText('projection')
             ->assertDontSeeText('presenter');
 
-        $this->assertSame(10, substr_count($response->getContent(), 'data-homepage-section='));
+        $this->assertSame(11, substr_count($response->getContent(), 'data-homepage-section='));
         $this->assertDatabaseHas('homepage_heroes', ['id' => HomepageHero::SINGLETON_ID]);
     }
 
@@ -191,7 +195,7 @@ final class HomepageHeroManagementTest extends TestCase
         foreach ([
             '<section data-homepage-hero',
             'New Arrivals',
-            "William's Hot Sale",
+            '<section data-homepage-hot-sale',
             'The Future of Style',
             'LIMITED EDITION',
             'Explore the Collection',
@@ -208,7 +212,7 @@ final class HomepageHeroManagementTest extends TestCase
         $defaults = HomepageHero::defaults();
         $this->assertDatabaseCount('homepage_heroes', 0);
         $this->get(route('home'))->assertOk()
-            ->assertSeeText($defaults['eyebrow'])
+            ->assertSee('homepage-hero-data', false)
             ->assertSeeText($defaults['title'])
             ->assertSeeText($defaults['subtitle'])
             ->assertSeeText($defaults['primary_cta_label'])
@@ -250,6 +254,116 @@ final class HomepageHeroManagementTest extends TestCase
         $payload['primary_cta_destination'] = 'collection:'.Str::ulid();
         $payload['secondary_cta_destination'] = 'https://example.com';
         $this->put(route('admin.homepage.hero.update'), $payload)->assertSessionHasErrors(['primary_cta_destination', 'secondary_cta_destination']);
+    }
+
+    public function test_responsive_media_can_be_saved_replaced_removed_and_legacy_updates_preserve_it(): void
+    {
+        $this->actingAs($this->manager)->get(route('admin.homepage.hero.edit'))->assertOk()
+            ->assertSeeText('Desktop / Large Screen Image')->assertSeeText('Mobile / Small Screen Image');
+        $hero = HomepageHero::query()->sole();
+        $desktop = $this->image();
+        $mobile = $this->image();
+        $replacement = $this->image();
+        $save = function (array $extra) use ($hero, $desktop) {
+            return $this->put(route('admin.homepage.hero.update'), [...HomepageHero::defaults(), 'lock_version' => $hero->fresh()->lock_version, 'background_media_id' => $desktop->id, ...$extra]);
+        };
+        $save([])->assertSessionHasNoErrors();
+        $desktopUrl = app(HomepageHeroPresenter::class)->present()['background_url'];
+        $this->exportEvidence('desktop-only.html', $this->get(route('home'))->assertOk()->getContent());
+        $this->assertNull(app(HomepageHeroPresenter::class)->present()['mobile_background_url']);
+        $save(['mobile_background_media_id' => $mobile->id])->assertSessionHasNoErrors();
+        $projection = app(HomepageHeroPresenter::class)->present();
+        $this->assertSame($desktopUrl, $projection['background_url']);
+        $this->assertStringContainsString($mobile->provider_public_id, $projection['mobile_background_url']);
+        $this->assertDatabaseHas('media_usages', ['owner_identifier' => $hero->id, 'field_role' => HomepageHero::MOBILE_MEDIA_ROLE, 'media_asset_id' => $mobile->id, 'decorative_override' => true]);
+        $this->assertSame(1, $mobile->usages()->count());
+        $audit = AuditRecord::query()->where('action', 'homepage.hero.updated')->orderByDesc('created_at')->orderByDesc('id')->firstOrFail();
+        $this->assertSame($mobile->id, $audit->after_summary['media'][HomepageHero::MOBILE_MEDIA_ROLE]);
+        $html = $this->get(route('home'))->assertOk()->getContent();
+        $this->exportEvidence('responsive.html', $html);
+        $this->exportEvidence('admin.html', $this->get(route('admin.homepage.hero.edit'))->assertOk()->getContent());
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($html);
+        $xpath = new \DOMXPath($dom);
+        $this->assertSame($projection['mobile_background_url'], $xpath->query('//*[@id="root"]//picture[@data-responsive-hero-media]/source')->item(0)->getAttribute('srcset'));
+        $this->assertSame('(max-width: 767px)', $xpath->query('//*[@id="root"]//picture/source')->item(0)->getAttribute('media'));
+        $this->assertSame($desktopUrl, $xpath->query('//*[@id="root"]//picture//img')->item(0)->getAttribute('src'));
+        $this->assertSame('', $xpath->query('//*[@id="root"]//picture//img')->item(0)->getAttribute('alt'));
+        $this->get(route('admin.homepage.hero.edit'))->assertOk()->assertSee($mobile->id);
+        $save(['mobile_background_media_id' => $replacement->id])->assertSessionHasNoErrors();
+        $replacedProjection = app(HomepageHeroPresenter::class)->present();
+        $this->assertStringContainsString($replacement->provider_public_id, $replacedProjection['mobile_background_url']);
+        $this->get(route('home'))->assertOk()->assertSee(e($replacedProjection['mobile_background_url']), false)->assertDontSee($mobile->provider_public_id, false);
+        $this->assertSame(0, $mobile->usages()->count());
+        $this->assertSame(1, $replacement->usages()->count());
+        $save([])->assertSessionHasNoErrors();
+        $this->assertSame(1, $replacement->usages()->count());
+        $save(['mobile_background_media_id' => null])->assertSessionHasNoErrors();
+        $this->assertSame(0, $replacement->usages()->count());
+        $this->assertNull(app(HomepageHeroPresenter::class)->present()['mobile_background_url']);
+        $this->assertSame($desktopUrl, app(HomepageHeroPresenter::class)->present()['background_url']);
+        $this->assertDatabaseCount('homepage_heroes', 1);
+        $this->assertDatabaseHas('media_assets', ['id' => $mobile->id]);
+    }
+
+    public function test_mobile_media_validation_authorization_visibility_and_unavailable_fallback(): void
+    {
+        $this->actingAs($this->manager)->get(route('admin.homepage.hero.edit'));
+        $hero = HomepageHero::query()->sole();
+        $image = $this->image();
+        $payload = [...HomepageHero::defaults(), 'lock_version' => $hero->lock_version, 'mobile_background_media_id' => $image->id];
+        $ordinary = User::factory()->create(['email_verified_at' => now()]);
+        $ordinary->givePermissionTo('admin.access');
+        $this->actingAs($ordinary)->put(route('admin.homepage.hero.update'), $payload)->assertForbidden();
+        $this->assertSame(0, $image->usages()->count());
+        $this->actingAs($this->manager);
+        foreach (['missing', [$image->id]] as $invalid) {
+            $this->put(route('admin.homepage.hero.update'), [...$payload, 'mobile_background_media_id' => $invalid])->assertSessionHasErrors('mobile_background_media_id');
+        }
+        $image->update(['confirmed_at' => null]);
+        $this->put(route('admin.homepage.hero.update'), $payload)->assertSessionHasErrors('mobile_background_media_id');
+        $image->update(['confirmed_at' => now(), 'resource_type' => MediaResourceType::Video]);
+        $this->put(route('admin.homepage.hero.update'), $payload)->assertSessionHasErrors('mobile_background_media_id');
+        $image->update(['resource_type' => MediaResourceType::Image]);
+        $this->put(route('admin.homepage.hero.update'), $payload)->assertSessionHasNoErrors();
+        app(HomepageSectionVisibility::class)->setVisible($this->manager, 'hero', false);
+        $html = $this->get(route('home'))->assertOk()->getContent();
+        $this->assertStringNotContainsString('<picture data-responsive-hero-media', $html);
+        $this->assertSame(1, $image->usages()->count());
+        $image->update(['archived_at' => now(), 'state' => MediaAssetState::Archived]);
+        $this->assertNull(app(HomepageHeroPresenter::class)->present()['mobile_background_url']);
+        $this->assertSame(HomepageHeroPresenter::FALLBACK_IMAGE, app(HomepageHeroPresenter::class)->present()['background_url']);
+    }
+
+    public function test_retired_feature_strip_is_absent_from_server_composition(): void
+    {
+        $html = StorefrontMarkup::active($this->get(route('home'))->assertOk()->getContent());
+        $this->assertStringNotContainsString('Premium Fabrics', $html);
+        $this->assertStringNotContainsString('Handcrafted Details', $html);
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($html);
+        $xpath = new \DOMXPath($dom);
+        $next = $xpath->query('//*[@data-homepage-hero]/following-sibling::*[1]')->item(0);
+        $this->assertNotNull($next);
+        $this->assertStringContainsString('New Arrivals', $next->textContent);
+    }
+
+    private function exportEvidence(string $name, string $html): void
+    {
+        if (getenv('UI_FRONTEND_1B_EVIDENCE') !== '1') {
+            return;
+        }
+        $directory = storage_path('app/ui-frontend-1b-evidence');
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+        // Multiple HTTP requests in one PHPUnit process may consume Livewire's
+        // auto-injection flag. Supply its normal script for the offline capture.
+        if ($name === 'admin.html' && ! str_contains($html, '/livewire.js?')) {
+            app(FrontendAssets::class)->hasRenderedScripts = false;
+            $html = str_replace('</body>', FrontendAssets::scripts().'</body>', $html);
+        }
+        file_put_contents($directory.'/'.$name, $html);
     }
 
     private function image(): MediaAsset

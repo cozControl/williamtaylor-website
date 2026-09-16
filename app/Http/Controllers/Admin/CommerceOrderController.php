@@ -165,7 +165,7 @@ final class CommerceOrderController extends Controller
             if ($payment->io_lease_until?->isFuture() || $payment->next_reconcile_at?->isFuture()) {
                 $message = 'A payment check is already running or waiting for its next permitted check. Please try again later.';
             } else {
-                $result = $reconcile->refresh($payment);
+                $result = $reconcile->reconcile($payment);
                 $message = $result->reconciliation_issue !== null || $result->failure_code !== null
                     ? 'Payment verification needs review. See the recorded payment information below.'
                     : 'Payment check finished. The latest verified status is shown below.';

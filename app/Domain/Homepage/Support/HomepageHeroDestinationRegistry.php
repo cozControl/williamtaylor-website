@@ -3,6 +3,7 @@
 namespace App\Domain\Homepage\Support;
 
 use App\Domain\Catalogue\Models\Collection;
+use App\Domain\Catalogue\Support\StorefrontShopNavigationPresenter;
 use Illuminate\Support\Facades\Schema;
 
 final class HomepageHeroDestinationRegistry
@@ -31,7 +32,7 @@ final class HomepageHeroDestinationRegistry
         }
 
         return match ($destination) {
-            'new_arrivals' => route('products.index', ['sort' => 'newest']),
+            'new_arrivals' => app(StorefrontShopNavigationPresenter::class)->present()['new_arrivals']['url'] ?? route('products.index', ['sort' => 'newest']),
             'collections' => route('collections.index'),
             default => throw new \InvalidArgumentException("Unknown Homepage Hero destination [{$destination}]."),
         };

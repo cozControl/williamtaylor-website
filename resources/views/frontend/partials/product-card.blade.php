@@ -1,4 +1,4 @@
-<div class="group relative" data-storefront-product-card style="opacity: 1; transform: none;">
+<div class="group relative" data-storefront-product-card data-product-slug="{{ $card['slug'] }}" style="opacity: 1; transform: none;">
     <div class="relative overflow-hidden bg-gray-100 aspect-[3/4]">
         <a href="{{ $card['url'] }}">
             @if ($card['image'])

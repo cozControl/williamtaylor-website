@@ -21,27 +21,13 @@
         <h1 class="font-heading text-5xl text-wt-cream">
          Wishlist
         </h1>
-        <p class="font-body text-sm text-wt-cream/60 font-light mt-3">
-         0 saved pieces
+        <p data-wishlist-count class="font-body text-sm text-wt-cream/60 font-light mt-3">
+         {{ $wishlistCards->count() }} saved pieces
         </p>
        </div>
       </div>
       <div class="max-w-screen-xl mx-auto px-6 lg:px-12 py-16">
-       <div class="text-center py-20">
-        <svg class="lucide lucide-heart mx-auto text-gray-300 mb-4" fill="none" height="40" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="40" xmlns="http://www.w3.org/2000/svg">
-         <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z">
-         </path>
-        </svg>
-        <h2 class="font-heading text-3xl text-wt-oxblood mb-3">
-         Your wishlist is empty
-        </h2>
-        <p class="font-body text-sm text-gray-500 font-light mb-8">
-         Save pieces you love and come back when you're ready.
-        </p>
-        <a class="btn-gold px-10 py-4" href="{{ route('products.index') }}">
-         Explore the Collection
-        </a>
-       </div>
+       <div data-canonical-wishlist data-url="{{ route('wishlist.index') }}">@include('frontend.partials.wishlist-items')</div>
       </div>
      </div>
     </main>

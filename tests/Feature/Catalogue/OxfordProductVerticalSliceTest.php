@@ -8,6 +8,7 @@ use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\RoleRegistry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class OxfordProductVerticalSliceTest extends TestCase
@@ -18,7 +19,7 @@ final class OxfordProductVerticalSliceTest extends TestCase
     {
         $actor = User::factory()->create(['email' => 'owner@example.com']);
 
-        $this->artisan('catalogue:bootstrap-oxford', ['--user' => $actor->email])->assertSuccessful();
+        $this->artisan('catalogue:bootstrap-oxford', ['--collection' => CategoryOwner::for($actor->id)->slug, '--user' => $actor->email])->assertSuccessful();
         $product = Product::query()->where('slug', 'the-taylor-oxford-shirt')->with(['options.values', 'variants.values'])->sole();
 
         $this->assertSame(2, $product->options->count());
@@ -27,7 +28,7 @@ final class OxfordProductVerticalSliceTest extends TestCase
         $this->assertSame('WT-SH-001', $product->defaultVariant->sku);
 
         $lock = $product->lock_version;
-        $this->artisan('catalogue:bootstrap-oxford', ['--user' => $actor->email])->assertSuccessful();
+        $this->artisan('catalogue:bootstrap-oxford', ['--collection' => CategoryOwner::for($actor->id)->slug, '--user' => $actor->email])->assertSuccessful();
         $this->assertSame(1, Product::query()->where('slug', 'the-taylor-oxford-shirt')->count());
         $this->assertSame($lock, $product->fresh()->lock_version);
     }
@@ -36,7 +37,7 @@ final class OxfordProductVerticalSliceTest extends TestCase
     {
         $actor = User::factory()->create(['email' => 'owner@example.com']);
         $this->get('/products/the-taylor-oxford-shirt')->assertOk()->assertSeeText('The Taylor Oxford Shirt');
-        $this->artisan('catalogue:bootstrap-oxford', ['--user' => $actor->email])->assertSuccessful();
+        $this->artisan('catalogue:bootstrap-oxford', ['--collection' => CategoryOwner::for($actor->id)->slug, '--user' => $actor->email])->assertSuccessful();
         $product = Product::query()->where('slug', 'the-taylor-oxford-shirt')->firstOrFail();
         $product->forceFill(['catalogue_status' => 'ready'])->save();
 
@@ -64,7 +65,7 @@ final class OxfordProductVerticalSliceTest extends TestCase
         app(ProvisionRegisteredAccess::class)->handle();
         $manager = User::factory()->create(['email' => 'manager@example.com', 'email_verified_at' => now()]);
         app(ControlledRoleMutation::class)->run(fn () => $manager->assignRole(RoleRegistry::CMS_MANAGER));
-        $this->artisan('catalogue:bootstrap-oxford', ['--user' => $manager->email])->assertSuccessful();
+        $this->artisan('catalogue:bootstrap-oxford', ['--collection' => CategoryOwner::for($manager->id)->slug, '--user' => $manager->email])->assertSuccessful();
         $product = Product::query()->where('slug', 'the-taylor-oxford-shirt')->firstOrFail();
 
         $payload = [

@@ -13,7 +13,7 @@ You are not authorized to run any command matching or invoking:
 
 unless the user's latest message contains this exact token:
 
-`AUTHORIZE_BE6A1_FULL_AUDIT`
+`AUTHORIZE_BE6AXB_FULL_AUDIT`
 
 Passing focused or checkpoint tests does not grant this authorization.
 

@@ -15,7 +15,29 @@ final class HomepageHotSalePresenter
     /** @return array<string, mixed> */
     public function present(): array
     {
-        $fallback = [...HomepageHero::hotSaleDefaults(), 'managed' => false, 'tiles' => []];
+        $defaults = HomepageHero::hotSaleDefaults();
+        $fallbackMedia = [
+            1 => ['image', '/website/images/86df796c0_thumb.jpg'],
+            2 => ['video', 'https://media.base44.com/videos/public/6a4d9ad469285a7e6df866f1/2eaa51040_3333.mp4'],
+            3 => ['image', '/website/images/8572d276e_thumb.jpg'],
+        ];
+        $fallbackTiles = [];
+        foreach ($fallbackMedia as $position => [$type, $url]) {
+            $destination = $defaults["hot_sale_tile_{$position}_destination"];
+            if (! is_string($destination)) {
+                throw new \LogicException('Hot Sale default destinations must be registry keys.');
+            }
+            $fallbackTiles[] = [
+                'position' => $position,
+                'title' => $defaults["hot_sale_tile_{$position}_title"],
+                'copy' => $defaults["hot_sale_tile_{$position}_copy"],
+                'cta_label' => $defaults["hot_sale_tile_{$position}_cta_label"],
+                'url' => $this->destinations->url($destination),
+                'media_type' => $type, 'media' => $url,
+                'alt' => $defaults["hot_sale_tile_{$position}_title"],
+            ];
+        }
+        $fallback = [...$defaults, 'managed' => false, 'tiles' => $fallbackTiles];
         if (! app(HomepageRenderSnapshot::class)->hasColumns(['hot_sale_managed', 'hot_sale_heading'])) {
             return $fallback;
         }
@@ -43,7 +65,7 @@ final class HomepageHotSalePresenter
                 'cta_label' => $homepage->{"hot_sale_tile_{$position}_cta_label"},
                 'url' => $this->destinations->url($homepage->{"hot_sale_tile_{$position}_destination"}),
                 'media_type' => $asset->resource_type->value,
-                'media' => $this->media->deliveryUrl($asset->provider_public_id, $asset->resource_type->value, 'product_card', $asset->focal_x === null ? null : (float) $asset->focal_x, $asset->focal_y === null ? null : (float) $asset->focal_y),
+                'media' => $this->media->deliveryUrl($asset->provider_public_id, $asset->resource_type->value, 'editorial_content', $asset->focal_x === null ? null : (float) $asset->focal_x, $asset->focal_y === null ? null : (float) $asset->focal_y),
                 'alt' => $effectiveAlt,
             ];
         })->filter()->values();

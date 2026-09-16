@@ -4,18 +4,23 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <!-- SEO -->
   <title>
-   William Taylor - Contemporary Menswear | Crafted for the Modern Gentleman
+   {{ $catalogueSeo['title'] ?? 'William Taylor - Contemporary Menswear | Crafted for the Modern Gentleman' }}
   </title>
-  <meta content="William Taylor - Luxury contemporary menswear crafted in Tanzania. Shop exclusive pieces, limited editions, and pre-order designs. Free delivery in Dar es Salaam." name="description"/>
+  <meta content="{{ $catalogueSeo['description'] ?? 'William Taylor - Luxury contemporary menswear crafted in Tanzania. Shop exclusive pieces, limited editions, and pre-order designs. Free delivery in Dar es Salaam.' }}" name="description"/>
   <meta content="William Taylor, luxury menswear, Tanzania fashion, Dar es Salaam, contemporary menswear, limited edition" name="keywords"/>
   <!-- Open Graph -->
-  <meta content="William Taylor - Contemporary Menswear" property="og:title"/>
-  <meta content="Crafted for the Modern Gentleman. Contemporary menswear designed in Tanzania, worn worldwide." property="og:description"/>
+  <meta content="{{ $catalogueSeo['title'] ?? 'William Taylor - Contemporary Menswear' }}" property="og:title"/>
+  <meta content="{{ $catalogueSeo['description'] ?? 'Crafted for the Modern Gentleman. Contemporary menswear designed in Tanzania, worn worldwide.' }}" property="og:description"/>
   <meta content="https://media.base44.com/images/public/6a4d9ad469285a7e6df866f1/48af4981b_new.png" property="og:image"/>
   <meta content="website" property="og:type"/>
+  @isset($catalogueSeo)
+   <link rel="canonical" href="{{ $catalogueSeo['url'] }}">
+   <meta property="og:url" content="{{ $catalogueSeo['url'] }}">
+   <meta name="robots" content="{{ $catalogueSeo['robots'] }}">
+  @endisset
   <!-- Twitter -->
   <meta content="summary_large_image" name="twitter:card"/>
-  <meta content="William Taylor - Contemporary Menswear" name="twitter:title"/>
+  <meta content="{{ $catalogueSeo['title'] ?? 'William Taylor - Contemporary Menswear' }}" name="twitter:title"/>
   <!-- Avenir & Marion are system fonts; fallbacks are handled in CSS -->
   @if($loadImportedStorefrontRuntime ?? true)
    <script crossorigin="" src="/website/js/index-DxdnTNDA.js" type="module"></script>

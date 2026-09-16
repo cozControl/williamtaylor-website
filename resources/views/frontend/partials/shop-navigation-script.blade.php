@@ -1,23 +1,83 @@
 <template id="public-shop-header-template">@include('frontend.partials.header')</template>
-<style>
- [data-canonical-shop-header] [hidden]{display:none!important}
- .wt-shop-dropdown{max-height:min(70vh,36rem);overflow-y:auto;overscroll-behavior:contain;width:12rem;animation:wt-shop-enter .15s ease-out}
- [data-canonical-shop-header] [aria-current="page"],[data-shop-active]{color:var(--color-wt-gold,#c4a35a)}
- [data-canonical-shop-header] a:focus-visible,[data-canonical-shop-header] button:focus-visible{outline:2px solid #c4a35a;outline-offset:3px}
- .wt-mobile-navigation{position:fixed;inset:0;z-index:60}
- .wt-mobile-panel{width:85%;max-width:24rem;z-index:1;animation:wt-drawer-enter .3s ease-out}
- .wt-mobile-panel a,.wt-mobile-panel button{min-height:44px}
- [data-public-menu-close]{display:flex;align-items:center;justify-content:center;min-width:44px}
- @keyframes wt-shop-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
- @keyframes wt-drawer-enter{from{transform:translateX(-100%)}to{transform:translateX(0)}}
- @media(prefers-reduced-motion:reduce){.wt-shop-dropdown,.wt-mobile-panel{animation:none}}
- @media(min-width:1024px){.wt-mobile-navigation{display:none}}
-</style>
 <script>
 (() => {
  const root = document.getElementById('root');
  if (!root) return;
  let boundHeader;
+ let scrollFrame = 0, lastY = Math.max(0, window.scrollY), direction = 0, distance = 0;
+ const updateTone = () => {
+  if (!boundHeader) return;
+  if (window.scrollY > 20) {
+   boundHeader.querySelectorAll('[data-header-tone]').forEach(control => { control.dataset.headerTone = 'dark'; });
+   return;
+  }
+  const media = [...root.querySelectorAll('main img, main video')].filter(node => node.tagName === 'VIDEO' ? node.readyState > 0 : node.complete && node.naturalWidth > 0);
+  // Decorative backgrounds deliberately ignore pointer events, so they are
+  // absent from elementsFromPoint even though they are visually above the page.
+  const decorations = [...root.querySelectorAll('[style]')].filter(node => {
+   if (boundHeader.contains(node)) return false;
+   const style = getComputedStyle(node);
+   return style.pointerEvents === 'none' && (style.backgroundImage !== 'none' || !['transparent', 'rgba(0, 0, 0, 0)'].includes(style.backgroundColor));
+  }).reverse();
+  boundHeader.querySelectorAll('.wt-header-brand,.wt-header-action').forEach(control => {
+   const bounds = control.getBoundingClientRect(), x = bounds.x + bounds.width / 2, y = bounds.y + bounds.height / 2;
+   let light = false;
+   // Media can contain changing light and dark regions. Use white with a fine
+   // dark edge instead of pixel inversion, which disappears over mid-grey.
+   if (window.scrollY <= 20) {
+    light = media.some(node => { const box = node.getBoundingClientRect(); return box.left <= x && box.right >= x && box.top <= y && box.bottom >= y; });
+    if (!light) {
+     const covering = decorations.filter(node => { const box = node.getBoundingClientRect(); return box.left <= x && box.right >= x && box.top <= y && box.bottom >= y; });
+     for (const node of [...covering, ...document.elementsFromPoint(x, y)]) {
+      if (boundHeader.contains(node)) continue;
+      const style = getComputedStyle(node);
+      if (style.backgroundImage !== 'none') { light = true; break; }
+      const rgba = style.backgroundColor.match(/[\d.]+/g)?.map(Number);
+      if (rgba && (rgba[3] ?? 1) >= .9) {
+       light = .2126 * rgba[0] + .7152 * rgba[1] + .0722 * rgba[2] < 150;
+       break;
+      }
+     }
+    }
+   }
+   control.dataset.headerTone = light ? 'light' : 'dark';
+  });
+ };
+ const interacting = () => boundHeader?.contains(document.activeElement)
+  || document.querySelector('#wt-cart-drawer[open]')
+  || boundHeader?.querySelector('[aria-expanded="true"],dialog[open]');
+ const updateScroll = () => {
+  scrollFrame = 0;
+  if (!boundHeader) return;
+  const y = Math.max(0, Math.min(window.scrollY, document.documentElement.scrollHeight - window.innerHeight));
+  const delta = y - lastY;
+  lastY = y;
+  const scrolled = y > 20;
+  const toneChanged = boundHeader.hasAttribute('data-scrolled') !== scrolled;
+  boundHeader.toggleAttribute('data-scrolled', scrolled);
+  let state = boundHeader.dataset.smartHeader || 'top';
+  if (scrolled && state === 'top') state = 'visible-scrolled';
+  if (!scrolled || interacting()) {
+   state = scrolled ? 'visible-scrolled' : 'top';
+   direction = 0; distance = 0;
+  } else if (delta !== 0) {
+   const nextDirection = Math.sign(delta);
+   distance = nextDirection === direction ? distance + Math.abs(delta) : Math.abs(delta);
+   direction = nextDirection;
+   if (direction > 0 && y > 96 && distance >= 12) state = 'hidden-scrolled';
+   else if (direction < 0 && distance >= 8) state = 'visible-scrolled';
+   else if (state === 'top') state = 'visible-scrolled';
+  }
+  if (boundHeader.dataset.smartHeader !== state) boundHeader.dataset.smartHeader = state;
+  if (toneChanged || !scrolled) updateTone();
+ };
+ const queueScroll = () => { if (!scrollFrame) scrollFrame = requestAnimationFrame(updateScroll); };
+ const measureAnnouncement = () => {
+  const height = boundHeader?.querySelector('[data-header-announcement]')?.getBoundingClientRect().height || 0;
+  boundHeader?.style.setProperty('--wt-announcement-height', `${height}px`);
+  updateTone();
+ };
+ const announcementObserver = new ResizeObserver(measureAnnouncement);
  const synchronize = () => {
   let header = root.querySelector('header');
   if (!header) return;
@@ -26,54 +86,54 @@
    if (!canonical) return;
    header.replaceWith(canonical); header = canonical;
   }
-  if (boundHeader === header) return;
+  if (boundHeader === header) { updateTone(); return; }
+  announcementObserver.disconnect();
   boundHeader = header;
-  const group = header.querySelector('[data-shop-dropdown]');
-  const toggle = group.querySelector('[data-shop-toggle]');
-  const dropdown = group.querySelector('.wt-shop-dropdown');
-  let timer;
-  const show = open => { clearTimeout(timer); dropdown.hidden = !open; toggle.setAttribute('aria-expanded', String(open)); };
-  group.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') show(true); });
-  group.addEventListener('pointerleave', event => { if (event.pointerType !== 'mouse') return; timer = setTimeout(() => { if (!group.contains(document.activeElement)) show(false); }, 150); });
-  toggle.addEventListener('click', () => show(dropdown.hidden));
-  group.addEventListener('focusout', event => { if (!group.contains(event.relatedTarget)) show(false); });
-  group.addEventListener('keydown', event => {
-   if (event.key === 'Escape') { show(false); toggle.focus(); }
-   if (event.key === 'ArrowDown' && event.target === toggle) { event.preventDefault(); show(true); dropdown.querySelector('a')?.focus(); }
-  });
-  const menu = header.querySelector('#public-mobile-navigation');
-  const opener = header.querySelector('[data-public-menu-open]');
-  const closer = menu.querySelector('[data-public-menu-close]');
-  const close = (restore = true) => { menu.hidden = true; opener.setAttribute('aria-expanded', 'false'); if (restore) opener.focus(); };
-  opener.addEventListener('click', () => { menu.hidden = false; opener.setAttribute('aria-expanded', 'true'); closer.focus(); });
-  closer.addEventListener('click', () => close());
-  menu.querySelector('[data-public-menu-backdrop]').addEventListener('click', () => close());
-  const accordion = menu.querySelector('[data-mobile-shop-toggle]');
-  const links = menu.querySelector('#public-mobile-shop-links');
-  accordion.addEventListener('click', () => { links.hidden = !links.hidden; accordion.setAttribute('aria-expanded', String(!links.hidden)); });
-  menu.addEventListener('click', event => { if (event.target.closest('a')) close(false); });
-  menu.addEventListener('keydown', event => {
-   if (event.key === 'Escape') { event.preventDefault(); close(); }
-   if (event.key !== 'Tab') return;
-   const items = [...menu.querySelectorAll('a[href],button:not([disabled])')].filter(item => !item.closest('[hidden]'));
-   const first = items[0], last = items[items.length - 1];
-   if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-   if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-  });
-  header.querySelector('[data-public-back]')?.addEventListener('click', event => { if (document.referrer && new URL(document.referrer).origin === location.origin) { event.preventDefault(); history.back(); } });
+  const announcement = header.querySelector('[data-header-announcement]');
+  announcementObserver.observe(announcement);
+  announcement.querySelector('button')?.addEventListener('click', () => { announcement.hidden = true; measureAnnouncement(); });
+  measureAnnouncement();
   updateScroll();
  };
- const updateScroll = () => {
-  const nav = boundHeader?.querySelector('nav');
-  if (nav) nav.style.boxShadow = window.scrollY > 20 ? '0 4px 30px rgba(0,0,0,.25)' : 'none';
- };
- document.addEventListener('click', event => {
-  const group = boundHeader?.querySelector('[data-shop-dropdown]');
-  if (group && !group.contains(event.target)) { group.querySelector('.wt-shop-dropdown').hidden = true; group.querySelector('[data-shop-toggle]').setAttribute('aria-expanded', 'false'); }
- });
- window.addEventListener('scroll', updateScroll, {passive:true});
- window.addEventListener('resize', () => { if (window.innerWidth >= 1024 && boundHeader) { boundHeader.querySelector('#public-mobile-navigation').hidden = true; boundHeader.querySelector('[data-public-menu-open]').setAttribute('aria-expanded','false'); } });
+ window.addEventListener('scroll', queueScroll, {passive:true});
+ document.addEventListener('focusin', queueScroll);
+ document.addEventListener('focusout', queueScroll);
+ new MutationObserver(queueScroll).observe(document.body, {subtree:true,attributes:true,attributeFilter:['open','aria-expanded']});
+ window.addEventListener('resize', updateTone, {passive:true});
+ root.addEventListener('load', updateTone, true);
+ root.addEventListener('loadeddata', updateTone, true);
  new MutationObserver(synchronize).observe(root, {childList:true,subtree:true});
  synchronize();
 })();
+</script>
+
+<script>
+ (() => {
+  const collectionUrls = @json($shopNavigation['collection_urls']);
+  const collectionIndex = @json(route('collections.index'));
+  const collectionDestinations = new Set(@json(array_values($shopNavigation['collection_urls'])).concat(@json(route('collections.index'))).map(url => { const target = new URL(url, location.origin); return target.origin + target.pathname; }));
+  const canonicalize = link => {
+   const target = new URL(link.href, location.origin);
+   if (target.origin !== location.origin) return;
+   const legacy = target.pathname.match(/^\/html\/(mens-wear|womens-wear|unisex|accessories|shoes|handbags|new-arrivals)\.html$/);
+   const collection = target.pathname.match(/^\/collections\/([^/]+)$/);
+   const slug = legacy?.[1] || collection?.[1] || (target.pathname === '/shop' ? target.searchParams.get('collection') : null);
+   if (!slug) return;
+   target.searchParams.delete('collection');
+   const destination = (collectionUrls[slug] || collectionIndex) + target.search + target.hash;
+   if (link.href !== destination) link.href = destination;
+  };
+  const root = document.getElementById('root');
+  const synchronize = () => root?.querySelectorAll('a[href]').forEach(canonicalize);
+  if (root) new MutationObserver(synchronize).observe(root, {childList:true,subtree:true});
+  synchronize();
+  // Imported SPA handlers must not replace canonical Collection navigation.
+  document.addEventListener('click', event => {
+   const link = event.target.closest('a[href]');
+   if (!link) return;
+   canonicalize(link);
+   const target = new URL(link.href, location.origin);
+   if (collectionDestinations.has(target.origin + target.pathname)) event.stopImmediatePropagation();
+  }, true);
+ })();
 </script>

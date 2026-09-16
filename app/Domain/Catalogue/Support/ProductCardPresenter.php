@@ -3,10 +3,8 @@
 namespace App\Domain\Catalogue\Support;
 
 use App\Domain\Catalogue\Models\Product;
-use App\Domain\Catalogue\Models\ProductBadge;
 use App\Domain\Inventory\Services\InventoryAvailabilityService;
 use App\Domain\Media\Contracts\MediaProvider;
-use App\Domain\Media\Models\MediaUsage;
 
 final class ProductCardPresenter
 {
@@ -21,12 +19,12 @@ final class ProductCardPresenter
     /** @return array<string, mixed>|null */
     public function present(Product $product): ?array
     {
-        $product->loadMissing(['currentDraftRevision', 'options.values']);
+        $product->loadMissing(['currentDraftRevision', 'options.values', 'mediaUsages.asset', 'badges']);
         if ($product->archived_at !== null || $product->catalogue_status !== 'ready' || $product->currentDraftRevision === null || $product->base_price_minor === null) {
             return null;
         }
 
-        $usage = MediaUsage::query()->with('asset')->where('owner_type', Product::class)->where('owner_identifier', $product->id)->where('field_role', ProductMediaRoleRegistry::PRIMARY)->first();
+        $usage = $product->mediaUsages->firstWhere('field_role', ProductMediaRoleRegistry::PRIMARY);
 
         return [
             'is_available' => collect(app(InventoryAvailabilityService::class)->storefront([$product->id])[$product->id])->contains('is_available', true),
@@ -39,7 +37,7 @@ final class ProductCardPresenter
                 'url' => $this->media->deliveryUrl($usage->asset->provider_public_id, $usage->asset->resource_type->value, 'product_card', $usage->asset->focal_x !== null ? (float) $usage->asset->focal_x : null, $usage->asset->focal_y !== null ? (float) $usage->asset->focal_y : null),
                 'alt' => $usage->alt_text_override ?: $usage->asset->default_alt_text ?: $usage->asset->internal_title,
             ],
-            'badges' => ProductBadge::query()->active()->where('product_id', $product->id)->where('badge_key', '!=', 'sold-out')->orderBy('position')->pluck('badge_key')->all(),
+            'badges' => $product->badges->whereNull('archived_at')->where('badge_key', '!=', 'sold-out')->sortBy('position')->pluck('badge_key')->values()->all(),
             'colours' => $product->options->firstWhere('key', 'colour')?->values
                 ->where('is_active', true)
                 ->map(fn ($value) => ['label' => $value->label, 'swatch_hex' => $value->swatch_hex])

@@ -1,4 +1,3 @@
-@if($publicSiteChrome?->navigation || $publicSiteChrome?->footerGroups || $publicSiteChrome?->announcement || $publicSiteChrome?->profile)
 <template id="public-projected-footer-template">@include('frontend.partials.footer')</template>
 <template id="public-projected-whatsapp-template">@include('frontend.partials.whatsapp-action')</template>
 <script>
@@ -23,7 +22,6 @@
   window.addEventListener('load', () => requestAnimationFrame(() => requestAnimationFrame(synchronize)), { once: true });
  })();
 </script>
-@endif
 
 <script>
  (() => {

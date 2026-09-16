@@ -23,7 +23,7 @@ final class SnippePaymentController
                 app(MobileMoneyPayment::class)->start($order);
             } elseif ($payment) {
                 // Historical hosted records remain reconcilable, without creating new Sessions.
-                app(StartSnippePayment::class)->refresh($payment);
+                app(StartSnippePayment::class)->reconcile($payment);
             }
         } catch (SnippeException|\InvalidArgumentException) {
             // The committed Order and reservation remain available.
@@ -45,6 +45,10 @@ final class SnippePaymentController
         abort_unless(config('snippe.enabled'), 404);
         $order = Order::query()->where('confirmation_reference', $reference)->firstOrFail();
         if ($order->status !== OrderStatus::PendingConfirmation || $order->payment_status !== 'unpaid') {
+            return redirect()->route('checkout.confirmation', $reference);
+        }
+        $payment = $order->payments()->latest('id')->first();
+        if ($payment?->method === 'mobile_money' && ! $payment->retrySafe()) {
             return redirect()->route('checkout.confirmation', $reference);
         }
 

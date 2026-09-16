@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class SnippePaymentTest extends TestCase
@@ -44,7 +45,7 @@ final class SnippePaymentTest extends TestCase
         app(ProvisionRegisteredAccess::class)->handle();
         $this->manager = User::factory()->create(['email_verified_at' => now()]);
         app(ControlledRoleMutation::class)->run(fn () => $this->manager->assignRole(RoleRegistry::SUPER_ADMINISTRATOR));
-        $this->category = ProductCategory::query()->create([
+        $this->category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id,
             'name' => 'Explore',
             'slug' => 'explore',
             'is_visible' => true,
@@ -90,6 +91,42 @@ final class SnippePaymentTest extends TestCase
         app(StartSnippePayment::class)->start(Order::query()->sole());
 
         return [Order::query()->sole(), Payment::query()->sole(), $product->defaultVariant];
+    }
+
+    public function test_scheduler_preserves_unsent_hosted_attempt_without_creating_a_session(): void
+    {
+        [$order, $payment, $variant] = $this->order();
+        // Simulate a historical prepared record before its first send.
+        DB::table('commerce_payments')->where('id', $payment->id)->update(['provider_session_reference' => null, 'provider_payment_reference' => null, 'provider_checkout_url' => null, 'request_started_at' => null, 'next_reconcile_at' => null]);
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        Http::fake(['*' => Http::response([], 503)]);
+        $this->artisan('payments:reconcile-snippe')->assertExitCode(1);
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('commerce_payments', 1);
+        $this->assertSame($order->id, $payment->fresh()->active_order_id);
+        $this->assertSame('initiation_not_recorded', $payment->fresh()->reconciliation_issue);
+        $this->assertNull($payment->fresh()->request_started_at);
+        $this->assertSame(3, app(InventoryAvailabilityService::class)->availableToSell($variant));
+        $this->assertDatabaseHas('inventory_reservations', ['status' => 'active']);
+    }
+
+    public function test_scheduler_discovers_lost_hosted_reference_using_get_only(): void
+    {
+        [$order, $payment] = $this->order();
+        DB::table('commerce_payments')->where('id', $payment->id)->update(['provider_session_reference' => null, 'provider_checkout_url' => null, 'next_reconcile_at' => null]);
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        Http::fake(['https://api.snippe.sh/api/v1/sessions*' => function ($request) use ($payment, $order) {
+            $this->assertSame('GET', $request->method());
+
+            return Http::response(['data' => [['reference' => 'sess_test', 'status' => 'pending', 'amount' => 250000, 'currency' => 'TZS', 'checkout_url' => 'https://snippe.me/checkout/test', 'metadata' => ['payment_attempt' => $payment->attempt_key, 'order_id' => $order->id]]]]);
+        }]);
+        $this->artisan('payments:reconcile-snippe')->assertExitCode(0);
+        Http::assertSentCount(1);
+        Http::assertNotSent(fn ($request) => $request->method() !== 'GET');
+        $this->assertSame('sess_test', $payment->fresh()->provider_session_reference);
+        $this->assertDatabaseCount('commerce_payments', 1);
     }
 
     private function event(array $changes = [], string $type = 'payment.completed'): array

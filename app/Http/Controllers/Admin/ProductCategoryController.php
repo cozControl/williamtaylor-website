@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Domain\Audit\Actions\RecordAuditEvent;
+use App\Domain\Catalogue\Models\Collection as CatalogueCollection;
 use App\Domain\Catalogue\Models\ProductCategory;
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Domain\Media\Contracts\MediaProvider;
@@ -24,11 +25,14 @@ final class ProductCategoryController
     public function index(Request $request): View
     {
         $search = trim((string) $request->query('search'));
-        $categories = ProductCategory::query()->with('parent')->withCount('products')
+        $collectionFilter = $request->validate(['collection' => ['nullable', 'string', Rule::exists('collections', 'id')]])['collection'] ?? '';
+        $collections = CatalogueCollection::query()->with('currentDraftRevision')->orderBy('slug')->get();
+        $categories = ProductCategory::query()->with(['parent', 'collection.currentDraftRevision'])->withCount('products')
+            ->when($collectionFilter !== '', fn ($query) => $query->where('collection_id', $collectionFilter))
             ->when($search !== '', fn ($query) => $query->where(fn ($nested) => $nested->where('name', 'like', "%{$search}%")->orWhere('slug', 'like', "%{$search}%")))
             ->orderByRaw('parent_id is not null')->orderBy('position')->orderBy('name')->paginate(30)->withQueryString();
 
-        return view('admin.product-categories.index', compact('categories', 'search'));
+        return view('admin.product-categories.index', compact('categories', 'search', 'collections', 'collectionFilter'));
     }
 
     public function create(MediaProvider $media, ReadyImagePickerQuery $images): View
@@ -41,7 +45,7 @@ final class ProductCategoryController
         $category = DB::transaction(function () use ($request, $audit): ProductCategory {
             $data = $this->validated($request);
             $category = ProductCategory::query()->create([...$data, 'created_by' => $request->user()->id, 'updated_by' => $request->user()->id]);
-            $audit->handle('product-category.created', $category, $request->user(), null, ['slug' => $category->slug, 'visible' => $category->is_visible], PermissionRegistry::PRODUCTS_MANAGE);
+            $audit->handle('product-category.created', $category, $request->user(), null, ['slug' => $category->slug, 'collection_id' => $category->collection_id, 'visible' => $category->is_visible], PermissionRegistry::PRODUCTS_MANAGE);
 
             return $category;
         }, 3);
@@ -57,11 +61,17 @@ final class ProductCategoryController
     public function update(Request $request, ProductCategory $productCategory, RecordAuditEvent $audit): RedirectResponse
     {
         DB::transaction(function () use ($request, $productCategory, $audit): void {
+            $productCategory = ProductCategory::query()->lockForUpdate()->findOrFail($productCategory->id);
             $data = $this->validated($request, $productCategory);
+            if ($data['collection_id'] !== $productCategory->collection_id) {
+                if ($productCategory->children()->exists() || $productCategory->products()->whereDoesntHave('collectionMemberships', fn ($q) => $q->whereNull('archived_at')->where('collection_id', $data['collection_id']))->exists()) {
+                    throw ValidationException::withMessages(['collection_id' => 'Every assigned Product must already belong to the destination Collection. Move child Categories explicitly first. Product placements are never moved automatically.']);
+                }
+            }
             if (($data['parent_id'] ?? null) && $this->wouldCreateCycle($productCategory, $data['parent_id'])) {
                 abort(422, 'A Category cannot be moved below its own child.');
             }
-            $before = $productCategory->only(['name', 'slug', 'parent_id', 'description', 'image_media_asset_id', 'is_visible', 'position']);
+            $before = $productCategory->only(['name', 'slug', 'collection_id', 'parent_id', 'description', 'image_media_asset_id', 'is_visible', 'position']);
             $productCategory->fill([...$data, 'updated_by' => $request->user()->id])->save();
             $audit->handle('product-category.updated', $productCategory, $request->user(), $before, $productCategory->only(array_keys($before)), PermissionRegistry::PRODUCTS_MANAGE);
         }, 3);
@@ -87,13 +97,16 @@ final class ProductCategoryController
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:160'],
-            'slug' => ['required', 'string', 'max:160', Rule::unique('product_categories', 'slug')->ignore($category?->id)],
-            'parent_id' => ['nullable', 'string', Rule::exists('product_categories', 'id')->whereNull('archived_at'), Rule::notIn(array_filter([$category?->id]))],
+            'collection_id' => ['required', 'string', Rule::exists('collections', 'id')->whereNull('archived_at')],
+            'slug' => ['required', 'string', 'max:160', Rule::unique('product_categories', 'slug')->where('collection_id', $request->input('collection_id'))->ignore($category?->id)],
+            'parent_id' => ['nullable', 'string', Rule::exists('product_categories', 'id')->whereNull('archived_at')->where('collection_id', $request->input('collection_id')), Rule::notIn(array_filter([$category?->id]))],
             'description' => ['nullable', 'string', 'max:5000'],
             'image_media_asset_id' => ['nullable', 'string', Rule::exists('media_assets', 'id')->where(fn ($query) => $query->where('state', MediaAssetState::Ready->value)->where('resource_type', MediaResourceType::Image->value)->whereNull('archived_at'))],
             'is_visible' => ['required', 'boolean'],
             'position' => ['required', 'integer', 'min:0', 'max:65535'],
         ]);
+        // Serialize ownership changes with canonical Collection membership operations.
+        CatalogueCollection::query()->whereKey($data['collection_id'])->lockForUpdate()->firstOrFail();
         $mediaId = $data['image_media_asset_id'] ?? null;
         if ($mediaId !== null && app(ReadyImagePickerQuery::class)->findEligible($mediaId) === null) {
             throw ValidationException::withMessages(['image_media_asset_id' => 'The selected image is no longer available.']);
@@ -123,6 +136,7 @@ final class ProductCategoryController
 
         return view('admin.product-categories.form', [
             'category' => $category,
+            'collections' => CatalogueCollection::query()->active()->with('currentDraftRevision')->orderBy('slug')->get(),
             'parents' => $this->parents($category->exists ? $category : null),
             'selectedMedia' => $selectedMedia,
         ]);

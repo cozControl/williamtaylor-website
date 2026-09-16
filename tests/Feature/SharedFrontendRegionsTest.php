@@ -29,7 +29,7 @@ class SharedFrontendRegionsTest extends TestCase
         $this->assertSame(1, substr_count($html, '<head>'));
         $this->assertSame(1, substr_count($html, '<body>'));
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
-        $this->assertSame(1, substr_count($html, '<header data-canonical-shop-header class="fixed top-0 left-0 right-0 z-40">'));
+        $this->assertSame(1, substr_count($html, '<header data-canonical-shop-header data-smart-header="top"'));
         $this->assertSame(1, substr_count($html, '<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">'));
         $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
         $this->assertSame(1, substr_count($html, '<footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">'));

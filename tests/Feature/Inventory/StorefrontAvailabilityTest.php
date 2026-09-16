@@ -21,6 +21,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class StorefrontAvailabilityTest extends TestCase
@@ -37,7 +38,7 @@ final class StorefrontAvailabilityTest extends TestCase
         app(ProvisionRegisteredAccess::class)->handle();
         $this->manager = User::factory()->create(['email_verified_at' => now()]);
         app(ControlledRoleMutation::class)->run(fn () => $this->manager->assignRole(RoleRegistry::SUPER_ADMINISTRATOR));
-        $this->category = ProductCategory::query()->create([
+        $this->category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id,
             'name' => 'Explore',
             'slug' => 'explore',
             'is_visible' => true,
@@ -72,7 +73,7 @@ final class StorefrontAvailabilityTest extends TestCase
             $button = $xp->query('//*[@data-product-purchase]')->item(0);
             $this->assertSame($quantity === 0, $button->hasAttribute('disabled'));
             $this->assertStringNotContainsString('index-DxdnTNDA.js', $response->getContent());
-            $cards = $this->get(route('collections.show', $collection))->assertOk()->assertSee(route('products.show', $product), false)->viewData('products');
+            $cards = $this->get(route('collections.show', $collection))->assertOk()->assertSee(route('products.show', $product), false)->viewData('productCards');
             $this->assertCount(1, $cards);
             $this->assertSame($quantity > 0, $cards[0]['is_available']);
             $this->assertSame($quantity, app(InventoryAvailabilityService::class)->availableToSell($variant));
@@ -135,7 +136,7 @@ final class StorefrontAvailabilityTest extends TestCase
         $collection = $this->collection('Listed Collection', [$second, $first], true);
         HomepageHero::query()->create(['id' => HomepageHero::SINGLETON_ID, ...HomepageHero::defaults(), 'new_arrivals_collection_id' => $collection->id, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
         $this->get(route('home'))->assertOk()->assertSee('data-inventory-out-of-stock', false)->assertSee(route('products.show', $first), false);
-        $cards = $this->get(route('collections.show', $collection))->assertOk()->viewData('products');
+        $cards = $this->get(route('collections.show', $collection))->assertOk()->viewData('productCards');
         $this->assertSame(['second-listed', 'first-listed'], $cards->pluck('slug')->all());
         $this->assertFalse($cards[0]['is_available']);
         $this->assertFalse($cards[1]['is_available']);

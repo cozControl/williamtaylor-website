@@ -3,6 +3,7 @@
 namespace Tests\Feature\Homepage;
 
 use App\Domain\Homepage\Models\HomepageHero;
+use App\Domain\Homepage\Support\HomepageHotSalePresenter;
 use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
 use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\RoleRegistry;
@@ -13,6 +14,7 @@ use App\Domain\Media\Models\MediaAsset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Tests\Support\CollectionCatalogueFixture;
 use Tests\TestCase;
 
 final class HomepageHotSaleManagementTest extends TestCase
@@ -46,6 +48,63 @@ final class HomepageHotSaleManagementTest extends TestCase
             ->assertSeeTextInOrder(['Back to Homepage', 'Save changes']);
     }
 
+    public function test_each_tile_can_save_a_collection_destination_and_follow_its_current_slug(): void
+    {
+        $fixture = new CollectionCatalogueFixture($this->manager);
+        $collections = [$fixture->collection('formal-wear'), $fixture->collection('casual-wear'), $fixture->collection('handbags')];
+        $response = $this->actingAs($this->manager)->get(route('admin.homepage.hot-sale.edit'))->assertOk();
+        foreach ($collections as $collection) {
+            $response->assertSee('value="collection:'.$collection->id.'"', false);
+            $this->assertSame(3, substr_count($response->getContent(), 'value="collection:'.$collection->id.'"'));
+        }
+        $homepage = HomepageHero::query()->sole();
+        $payload = $this->payload($homepage, [$this->image('atelier'), $this->video('experience'), $this->image('signature')]);
+        foreach ($collections as $index => $collection) {
+            $payload['hot_sale_tile_'.($index + 1).'_destination'] = 'collection:'.$collection->id;
+        }
+        $this->put(route('admin.homepage.hot-sale.update'), $payload)->assertSessionHasNoErrors()->assertRedirect();
+        $homepage->refresh();
+        foreach ($collections as $index => $collection) {
+            $this->assertSame('collection:'.$collection->id, $homepage->{'hot_sale_tile_'.($index + 1).'_destination'});
+        }
+        $tiles = app(HomepageHotSalePresenter::class)->present()['tiles'];
+        foreach ($collections as $index => $collection) {
+            $this->assertSame(route('collections.show', $collection->slug), $tiles[$index]['url']);
+        }
+        $collections[0]->update(['slug' => 'formal-edit']);
+        $this->assertSame(route('collections.show', 'formal-edit'), app(HomepageHotSalePresenter::class)->present()['tiles'][0]['url']);
+        $this->get(route('home'))->assertOk()->assertSee(route('collections.show', 'formal-edit'), false);
+
+        $collections[1]->update(['archived_at' => now()]);
+        $collections[2]->update(['catalogue_status' => 'draft']);
+        $tiles = app(HomepageHotSalePresenter::class)->present()['tiles'];
+        $this->assertSame(route('collections.index'), $tiles[1]['url']);
+        $this->assertSame(route('collections.index'), $tiles[2]['url']);
+        $this->get(route('admin.homepage.hot-sale.edit'))->assertOk()->assertSeeText('Collection unavailable — choose a destination')
+            ->assertDontSee('value="collection:'.$collections[1]->id.'"', false)
+            ->assertDontSee('value="collection:'.$collections[2]->id.'"', false);
+    }
+
+    public function test_unavailable_and_arbitrary_collection_destinations_are_rejected_without_changing_tiles(): void
+    {
+        $fixture = new CollectionCatalogueFixture($this->manager);
+        $draft = $fixture->collection('draft-collection');
+        $draft->update(['catalogue_status' => 'draft']);
+        $archived = $fixture->collection('archived-collection');
+        $archived->update(['archived_at' => now()]);
+        $this->actingAs($this->manager)->get(route('admin.homepage.hot-sale.edit'))->assertOk()
+            ->assertDontSee('value="collection:'.$draft->id.'"', false)
+            ->assertDontSee('value="collection:'.$archived->id.'"', false);
+        $homepage = HomepageHero::query()->sole();
+        $payload = $this->payload($homepage, [$this->image('atelier'), $this->video('experience'), $this->image('signature')]);
+        foreach (['collection:'.$draft->id, 'collection:'.$archived->id, 'collection:'.Str::ulid(), 'https://example.com'] as $invalid) {
+            $this->put(route('admin.homepage.hot-sale.update'), [...$payload, 'hot_sale_tile_1_destination' => $invalid])
+                ->assertSessionHasErrors('hot_sale_tile_1_destination');
+            $this->assertSame('shop_newest', $homepage->fresh()->hot_sale_tile_1_destination);
+            $this->assertDatabaseCount('media_usages', 2); // Collection cover usages only.
+        }
+    }
+
     public function test_manager_saves_three_editorial_tiles_and_public_homepage_uses_exact_composition(): void
     {
         $this->actingAs($this->manager)->get(route('admin.homepage.edit'))->assertOk();
@@ -68,10 +127,37 @@ final class HomepageHotSaleManagementTest extends TestCase
             ->assertSeeTextInOrder(['The Atelier Edit', 'The Shopping Experience', 'The Signature Bag'])
             ->assertSeeText('Discover')->assertSee(route('products.index', ['sort' => 'newest']), false)
             ->assertSee(route('collections.index'), false)->assertSee(route('products.index'), false)
-            ->assertSee('aspect-[3/4]', false)->assertSee('md:grid-cols-3', false)
+            ->assertSee('wt-hot-sale-grid', false)
             ->assertSee('<video', false)->assertSee('autoplay muted loop playsinline', false)
             ->assertSee('group-hover:scale-108', false)->assertSee('group-hover:-translate-y-2', false);
-        $this->assertSame(6, substr_count($response->getContent(), 'data-hot-sale-tile'));
+        $this->assertSame(6, substr_count($response->getContent(), '<article data-hot-sale-tile='));
+    }
+
+    public function test_full_bleed_composition_restores_section_headings_and_preserves_stored_copy(): void
+    {
+        $this->actingAs($this->manager)->get(route('admin.homepage.hot-sale.edit'))->assertOk()
+            ->assertSee('name="hot_sale_heading"', false)->assertSee('name="hot_sale_eyebrow"', false);
+        $homepage = HomepageHero::query()->sole();
+        $homepage->update(['hot_sale_heading' => 'Historical heading', 'hot_sale_eyebrow' => 'Historical eyebrow']);
+        $images = [$this->image('atelier'), $this->video('experience'), $this->image('signature')];
+        $payload = $this->payload($homepage->fresh(), $images);
+        unset($payload['hot_sale_heading'], $payload['hot_sale_eyebrow']);
+        $this->put(route('admin.homepage.hot-sale.update'), $payload)->assertSessionHasNoErrors();
+        $this->assertSame('Historical heading', $homepage->fresh()->hot_sale_heading);
+        $this->assertSame('Historical eyebrow', $homepage->fresh()->hot_sale_eyebrow);
+        $html = $this->get(route('home'))->assertOk()->getContent();
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($html);
+        $xpath = new \DOMXPath($dom);
+        $section = $xpath->query('//main//section[@data-homepage-hot-sale]')->item(0);
+        $this->assertNotNull($section);
+        $this->assertSame(2, $xpath->query('.//h2|.//*[contains(@class,"section-subtitle")]', $section)->length);
+        $this->assertSame(3, $xpath->query('.//article[@data-hot-sale-tile]', $section)->length);
+        $this->assertSame(['The Atelier Edit', 'The Shopping Experience', 'The Signature Bag'], array_map(fn ($node) => trim($node->textContent), iterator_to_array($xpath->query('.//h3', $section))));
+        $this->assertSame(1, $xpath->query('./div[contains(@class,"wt-hot-sale-grid")]', $section)->length);
+        $this->assertStringContainsString('Historical heading', $section->textContent);
+        $this->assertStringContainsString('grid-template-columns:repeat(2,minmax(0,1fr))', $html);
+        $this->assertStringContainsString('grid-column:1 / -1', $html);
     }
 
     public function test_invalid_media_preserves_content_and_unavailable_config_falls_back_safely(): void
@@ -88,7 +174,7 @@ final class HomepageHotSaleManagementTest extends TestCase
 
         $this->actingAs($this->manager)->put(route('admin.homepage.hot-sale.update'), $this->payload($homepage->fresh(), $images))->assertRedirect();
         $images[1]->forceFill(['archived_at' => now()])->save();
-        $this->get(route('home'))->assertOk()->assertDontSee('data-homepage-hot-sale', false)->assertSeeText("William's Hot Sale");
+        $this->get(route('home'))->assertOk()->assertSee('data-homepage-hot-sale', false)->assertSeeText('The Atelier Edit');
         $this->actingAs($this->manager)->get(route('admin.homepage.edit'))->assertOk()
             ->assertSeeText('One or more editorial feature tiles needs attention.')
             ->assertSeeText('Needs attention');

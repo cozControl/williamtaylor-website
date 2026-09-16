@@ -71,7 +71,7 @@ final class ProductController
             ->whereIn('owner_identifier', $products->getCollection()->pluck('id'))->where('field_role', ProductMediaRoleRegistry::PRIMARY)->get()->keyBy('owner_identifier')
             ->map(fn ($usage) => $media->deliveryUrl($usage->asset->provider_public_id, $usage->asset->resource_type->value, 'admin_thumbnail', null, null));
 
-        $categories = ProductCategory::query()->with('parent')->whereNull('archived_at')->orderBy('name')->get();
+        $categories = ProductCategory::query()->with(['parent', 'collection.currentDraftRevision'])->whereNull('archived_at')->orderBy('name')->get();
         $storefrontResolvable = $products->getCollection()->mapWithKeys(
             fn (Product $product): array => [$product->id => $presenter->resolve($product->slug) !== null]
         );
@@ -81,7 +81,7 @@ final class ProductController
 
     public function create(Request $request, MediaProvider $media, ReadyImagePickerQuery $images): View
     {
-        $categories = ProductCategory::query()->with('parent')->whereNull('archived_at')->orderBy('name')->get();
+        $categories = ProductCategory::query()->with(['parent', 'collection.currentDraftRevision'])->whereNull('archived_at')->orderBy('name')->get();
         $relatedCandidates = Product::query()->active()->where('catalogue_status', 'ready')->with('currentDraftRevision')->orderBy('slug')->get();
         $oldPrimaryMediaId = $request->old('primary_media_id');
         $primarySelected = $this->presentDraftMedia(is_string($oldPrimaryMediaId) ? [$oldPrimaryMediaId] : [], $media, $images);
@@ -202,7 +202,7 @@ final class ProductController
         $mediaAlts = $usages->pluck('alt_text_override', 'media_asset_id')->all();
         $colourSelected = $colourUsages->map(fn ($items) => $items->filter(fn (MediaUsage $usage): bool => $images->findEligible($usage->media_asset_id) !== null)->map($present)->values()->all());
         $colourOrders = $colourUsages->map(fn ($items) => $items->pluck('sort_order', 'media_asset_id')->all());
-        $categories = ProductCategory::query()->with('parent')->whereNull('archived_at')->orderBy('name')->get();
+        $categories = ProductCategory::query()->with(['parent', 'collection.currentDraftRevision'])->whereNull('archived_at')->orderBy('name')->get();
         $relatedIds = ProductRelation::query()->active()->where('source_product_id', $product->id)->where('relation_kind', 'related')->orderBy('position')->pluck('target_product_id')->all();
         $relatedCandidates = Product::query()->active()->whereKeyNot($product->id)->where('catalogue_status', 'ready')->with('currentDraftRevision')->orderBy('slug')->get();
         $storefrontReadiness = $readiness->evaluate($product);

@@ -4,8 +4,8 @@
     'summary',
     'status',
     'tone' => 'default',
-    'href',
-    'actionLabel',
+    'href' => null,
+    'actionLabel' => null,
     'sectionKey',
 ])
 @php
@@ -37,6 +37,6 @@
                 </button>
             </form>
         @endcan
-        <a class="admin-secondary-button" href="{{ $href }}">{{ $actionLabel }}</a>
+        @if($href)<a class="admin-secondary-button" href="{{ $href }}">{{ $actionLabel }}</a>@endif
     </div>
 </article>

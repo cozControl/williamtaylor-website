@@ -15,6 +15,8 @@ final class HomepageHero extends Model
 
     public const MEDIA_ROLE = 'background';
 
+    public const MOBILE_MEDIA_ROLE = 'background_mobile';
+
     public const HOT_SALE_MEDIA_ROLES = [
         1 => 'hot_sale_tile_1',
         2 => 'hot_sale_tile_2',

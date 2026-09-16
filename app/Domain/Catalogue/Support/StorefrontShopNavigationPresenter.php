@@ -18,6 +18,7 @@ final class StorefrontShopNavigationPresenter
             return request()->attributes->get('storefront.shop_navigation');
         }
         $items = [];
+        $collectionUrls = [];
         $visibility = app(HomepageSectionVisibility::class)->resolve();
         $newArrivals = null;
         if (Schema::hasColumns('collections', ['navigation_order'])) {
@@ -26,6 +27,7 @@ final class StorefrontShopNavigationPresenter
             foreach ($collections as $collection) {
                 $current = request()->route('collection');
                 $entry = $this->entry($collection->currentDraftRevision->title, route('collections.show', $collection->slug), request()->routeIs('collections.show') && $current instanceof Collection && $current->id === $collection->id);
+                $collectionUrls[$collection->slug] = $entry['url'];
                 if ($collection->id === $selectedId || ($selectedId === null && $collection->slug === 'new-arrivals')) {
                     $newArrivals = [...$entry, 'label' => 'New Arrivals'];
                 } else {
@@ -63,10 +65,32 @@ final class StorefrontShopNavigationPresenter
             }
             $editorial[] = new PublicNavigationItemView($item->key, $item->link, $item->visibility, $this->editorialItems($item->children));
         }
-        $result = ['label' => $shopLabel, 'active' => request()->routeIs('collections.*', 'preorders.*', 'limited-edition.*'), 'all_collections' => $all, 'collections' => $items, 'new_arrivals' => $newArrivals, 'pre_order' => $preorder, 'limited_edition' => $limited, 'special' => $special, 'top_links' => $topLinks, 'editorial' => $editorial];
+        $result = ['label' => $shopLabel, 'active' => request()->routeIs('products.index', 'collections.*', 'preorders.*', 'limited-edition.*'), 'all_collections' => $all, 'collections' => $items, 'new_arrivals' => $newArrivals, 'pre_order' => $preorder, 'limited_edition' => $limited, 'special' => $special, 'top_links' => $topLinks, 'editorial' => $editorial, 'collection_urls' => $collectionUrls];
         request()->attributes->set('storefront.shop_navigation', $result);
 
         return $result;
+    }
+
+    public function canonicalCollectionLink(string $url): string
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        if ($host !== null && $host !== false && $host !== parse_url(url('/'), PHP_URL_HOST)) {
+            return $url;
+        }
+        $path = '/'.ltrim((string) parse_url($url, PHP_URL_PATH), '/');
+        parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+        $slug = null;
+        if (preg_match('~^/collections/([^/]+)$~', $path, $matches)) {
+            $slug = $matches[1];
+        }
+        if ($path === '/shop' && is_string($query['collection'] ?? null)) {
+            $slug = $query['collection'];
+        }
+        if (preg_match('~^/html/(mens-wear|womens-wear|unisex|accessories|shoes|handbags|new-arrivals)\.html$~', $path, $matches)) {
+            $slug = $matches[1];
+        }
+
+        return $slug === null ? $url : ($this->present()['collection_urls'][$slug] ?? route('collections.index'));
     }
 
     /** @return array{label: string, url: string, active: bool} */

@@ -60,7 +60,7 @@
         </div>
         <ul class="space-y-2.5">
          @foreach($group->links as $link)
-         <li><a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ $link->url }}" @if($link->newTab) target="_blank" rel="noopener noreferrer" @endif><span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3"></span>{{ $link->label }}</a></li>
+         <li><a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ app(\App\Domain\Catalogue\Support\StorefrontShopNavigationPresenter::class)->canonicalCollectionLink($link->url) }}" @if($link->newTab) target="_blank" rel="noopener noreferrer" @endif><span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3"></span>{{ $link->label }}</a></li>
          @endforeach
         </ul>
        </div>
@@ -73,49 +73,10 @@
          <div class="w-6 h-px bg-wt-gold/40">
          </div>
         </div>
-        <ul class="space-y-2.5">
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="html/mens-wear.html">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Men's Wear
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="html/unisex.html">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Unisex
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="html/accessories.html">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Accessories
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ route('limited-edition.index') }}">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Limited Edition
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ route('preorders.index') }}">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           Pre-Order
-          </a>
-         </li>
-         <li>
-          <a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ route('products.index', ['sort' => 'newest']) }}">
-           <span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3">
-           </span>
-           New Arrivals
-          </a>
-         </li>
+        <ul class="space-y-2.5" data-catalogue-footer-links>
+         @foreach ([$shopNavigation['all_collections'], ...$shopNavigation['collections'], ...$shopNavigation['special']] as $entry)
+          <li><a class="group inline-flex items-center gap-2 font-body text-sm text-wt-cream/70 hover:text-wt-gold font-light transition-colors" href="{{ $entry['url'] }}"><span class="w-0 h-px bg-wt-gold transition-all duration-300 group-hover:w-3"></span>{{ $entry['label'] }}</a></li>
+         @endforeach
         </ul>
        </div>
        <div class="lg:col-span-2">

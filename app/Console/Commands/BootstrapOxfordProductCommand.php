@@ -8,6 +8,7 @@ use App\Domain\Catalogue\Actions\CreateProductOptionValue;
 use App\Domain\Catalogue\Actions\CreateProductRevision;
 use App\Domain\Catalogue\Actions\CreateProductVariant;
 use App\Domain\Catalogue\Actions\SetDefaultProductVariant;
+use App\Domain\Catalogue\Models\Collection;
 use App\Domain\Catalogue\Models\Product;
 use App\Domain\Catalogue\Models\ProductCategory;
 use App\Domain\Catalogue\Support\OxfordProductPresenter;
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 
 final class BootstrapOxfordProductCommand extends Command
 {
-    protected $signature = 'catalogue:bootstrap-oxford {--user= : Existing administrator email recorded as creator}';
+    protected $signature = 'catalogue:bootstrap-oxford {--user= : Existing administrator email recorded as creator} {--collection= : Existing Collection slug for the shirt Category}';
 
     protected $description = 'Create the canonical Taylor Oxford Shirt once without overwriting existing product data.';
 
@@ -38,10 +39,16 @@ final class BootstrapOxfordProductCommand extends Command
             return self::FAILURE;
         }
 
-        $created = DB::transaction(function () use ($actor): Product {
+        $collection = Collection::query()->active()->where('slug', (string) $this->option('collection'))->first();
+        if ($collection === null) {
+            $this->components->error('Provide an existing Category owner with --collection=collection-slug.');
+
+            return self::FAILURE;
+        }
+        $created = DB::transaction(function () use ($actor, $collection): Product {
             $product = app(CreateProduct::class)->handle($actor, 'taylor-oxford-shirt', OxfordProductPresenter::SLUG);
             $category = ProductCategory::query()->firstOrCreate(
-                ['slug' => 'mens-shirts'],
+                ['collection_id' => $collection->id, 'slug' => 'mens-shirts'],
                 ['name' => "Men's Shirts", 'description' => 'Tailored and casual shirts.', 'is_visible' => true, 'position' => 10, 'created_by' => $actor->id, 'updated_by' => $actor->id],
             );
             $product->forceFill(['base_price_minor' => 28500000, 'currency' => 'TZS'])->save();

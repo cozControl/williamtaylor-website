@@ -19,6 +19,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class HomepageFutureStyleManagementTest extends TestCase
@@ -35,7 +36,7 @@ final class HomepageFutureStyleManagementTest extends TestCase
         app(ProvisionRegisteredAccess::class)->handle();
         $this->manager = User::factory()->create(['email_verified_at' => now()]);
         app(ControlledRoleMutation::class)->run(fn () => $this->manager->assignRole(RoleRegistry::CMS_MANAGER));
-        $this->category = ProductCategory::query()->create(['name' => 'Pre-Order', 'slug' => 'pre-order-products', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $this->category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Pre-Order', 'slug' => 'pre-order-products', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
     }
 
     public function test_campaign_admin_is_authorized_and_validation_preserves_input(): void

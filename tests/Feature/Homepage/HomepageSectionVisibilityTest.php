@@ -50,19 +50,24 @@ final class HomepageSectionVisibilityTest extends TestCase
     public function test_defaults_registry_workspace_editors_and_single_settings_query(): void
     {
         $registry = HomepageSectionRegistry::all();
-        $this->assertCount(10, $registry);
-        $this->assertSame(range(1, 10), array_column($registry, 'position'));
-        $this->assertArrayNotHasKey('follow-the-journey', $registry);
+        $this->assertCount(11, $registry);
+        $this->assertSame(range(1, 11), array_column($registry, 'position'));
+        $this->assertSame('Follow the Journey', $registry['follow-the-journey']['title']);
         DB::enableQueryLog();
         $page = $this->actingAs($this->manager)->get(route('admin.homepage.edit'))->assertOk();
         $queries = collect(DB::getQueryLog())->filter(fn (array $query): bool => str_contains($query['query'], 'from "homepage_section_settings"'));
         $this->assertCount(1, $queries);
         DB::disableQueryLog();
-        $this->assertSame(10, substr_count($page->getContent(), 'data-section-visibility="visible"'));
-        $this->assertSame(10, substr_count($page->getContent(), 'role="switch" aria-checked="true"'));
+        $this->assertSame(11, substr_count($page->getContent(), 'data-section-visibility="visible"'));
+        $this->assertSame(11, substr_count($page->getContent(), 'role="switch" aria-checked="true"'));
         foreach ($registry as $key => $section) {
             $this->assertTrue($section['default_visible']);
             $page->assertSee(route('admin.homepage.visibility.update', $key), false);
+            if ($key === 'follow-the-journey') {
+                $this->assertSame('admin.homepage.edit', $section['edit_route']);
+
+                continue;
+            }
             $this->get(route($section['edit_route']))->assertOk()->assertSee('data-editor-section-visibility="'.$key.'"', false)->assertSeeText('Manage visibility on Homepage');
         }
         $this->assertDatabaseCount('homepage_section_settings', 0);
@@ -142,7 +147,7 @@ final class HomepageSectionVisibilityTest extends TestCase
         $this->assertStringContainsString('synchronizeVisibility(); synchronizeHero();', $html);
         $this->assertStringContainsString('node.remove();', $html);
         $this->assertStringNotContainsString("const hero = root.querySelector('main section')", $html);
-        $response->assertSeeText('Follow the Journey');
+        $this->assertSame(0, $xpath->query('//main//h2[normalize-space()="Follow the Journey"]')->length);
     }
 
     public function test_shared_summer_delivery_container_respects_independent_visibility(): void
@@ -153,5 +158,37 @@ final class HomepageSectionVisibilityTest extends TestCase
         $visibility->setVisible($this->manager, 'summer-edit', true);
         $visibility->setVisible($this->manager, 'delivery', false);
         $this->get(route('home'))->assertOk()->assertSeeText('Shop the Edit')->assertDontSeeText('Shop with Confidence');
+    }
+
+    public function test_follow_journey_switch_preserves_content_and_audits_authorized_changes(): void
+    {
+        $url = route('admin.homepage.visibility.update', 'follow-the-journey');
+        $ordinary = User::factory()->create(['email_verified_at' => now()]);
+        $this->actingAs($ordinary)->put($url, ['is_visible' => '0'])->assertForbidden();
+        $before = HomepageHero::findOrFail(HomepageHero::SINGLETON_ID)->getAttributes();
+        $visible = $this->actingAs($this->manager)->get(route('home'))->assertOk()->getContent();
+        $this->put($url, ['is_visible' => '0'])->assertRedirect(route('admin.homepage.edit'));
+        $this->assertDatabaseHas('homepage_section_settings', ['section_key' => 'follow-the-journey', 'is_visible' => false]);
+        $hidden = $this->get(route('home'))->assertOk()->assertDontSee('<section data-homepage-follow-the-journey', false)->getContent();
+        $admin = $this->get(route('admin.homepage.edit'))->assertOk()->assertSee('data-homepage-section="11"', false)->assertSee('aria-label="Follow the Journey visibility"', false)->getContent();
+        $this->put($url, ['is_visible' => '1'])->assertRedirect(route('admin.homepage.edit'));
+        $restored = $this->get(route('home'))->assertOk()->assertSee('<section data-homepage-follow-the-journey', false)->getContent();
+        preg_match('/<section data-homepage-follow-the-journey.*?<\/section>/s', $visible, $originalSection);
+        preg_match('/<section data-homepage-follow-the-journey.*?<\/section>/s', $restored, $restoredSection);
+        $this->assertNotEmpty($originalSection);
+        $this->assertSame($originalSection, $restoredSection);
+        $this->assertSame($before, HomepageHero::findOrFail(HomepageHero::SINGLETON_ID)->getAttributes());
+        $this->assertSame(2, AuditRecord::where('action', 'homepage.section_visibility.updated')->count());
+        $audit = AuditRecord::where('action', 'homepage.section_visibility.updated')->latest('created_at')->first();
+        $this->assertSame($this->manager->id, $audit->actor_user_id);
+        if (getenv('UI_FRONTEND_1C_EVIDENCE') === '1') {
+            $directory = storage_path('app/ui-frontend-1c-evidence');
+            if (! is_dir($directory)) {
+                mkdir($directory, 0755, true);
+            }
+            foreach (compact('visible', 'hidden', 'restored', 'admin') as $name => $html) {
+                file_put_contents($directory.'/'.$name.'.html', $html);
+            }
+        }
     }
 }

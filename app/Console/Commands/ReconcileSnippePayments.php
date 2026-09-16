@@ -10,7 +10,7 @@ final class ReconcileSnippePayments extends Command
 {
     protected $signature = 'payments:reconcile-snippe {--limit=10}';
 
-    protected $description = 'Reconcile a bounded batch of outstanding Snippe payments without exposing customer payloads';
+    protected $description = 'Reconcile outstanding Snippe payments using provider reads only; never initiate payments';
 
     public function handle(StartSnippePayment $service): int
     {
@@ -34,7 +34,7 @@ final class ReconcileSnippePayments extends Command
                 break;
             }
             try {
-                $result = $service->refresh($payment);
+                $result = $service->reconcile($payment);
                 $failed += $result->reconciliation_issue !== null ? 1 : 0;
                 $count++;
             } catch (\Throwable) {

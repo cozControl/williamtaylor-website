@@ -17,7 +17,6 @@
                 <x-admin.field label="Heading" for="hot-sale-heading" :error="$errors->first('hot_sale_heading')"><input id="hot-sale-heading" name="hot_sale_heading" value="{{ old('hot_sale_heading', $homepage->hot_sale_heading) }}" maxlength="160" required></x-admin.field>
             </div>
         </section>
-
         @foreach ([1, 2, 3] as $position)
             @php
                 $titleField = "hot_sale_tile_{$position}_title";
@@ -33,7 +32,16 @@
                     <x-admin.field label="Title" for="hot-sale-{{ $position }}-title" :error="$errors->first($titleField)"><input id="hot-sale-{{ $position }}-title" name="{{ $titleField }}" value="{{ old($titleField, data_get($homepage, $titleField)) }}" maxlength="160" required></x-admin.field>
                     <x-admin.field label="Action label" for="hot-sale-{{ $position }}-cta" :error="$errors->first($ctaField)"><input id="hot-sale-{{ $position }}-cta" name="{{ $ctaField }}" value="{{ old($ctaField, data_get($homepage, $ctaField)) }}" maxlength="80" required></x-admin.field>
                     <x-admin.field label="Short copy" for="hot-sale-{{ $position }}-copy" :error="$errors->first($copyField)"><textarea id="hot-sale-{{ $position }}-copy" name="{{ $copyField }}" maxlength="320" required>{{ old($copyField, data_get($homepage, $copyField)) }}</textarea></x-admin.field>
-                    <x-admin.field label="Destination" for="hot-sale-{{ $position }}-destination" :error="$errors->first($destinationField)"><select id="hot-sale-{{ $position }}-destination" name="{{ $destinationField }}">@foreach($destinations as $value => $label)<option value="{{ $value }}" @selected(old($destinationField, data_get($homepage, $destinationField)) === $value)>{{ $label }}</option>@endforeach</select></x-admin.field>
+                    <x-admin.field label="Destination" for="hot-sale-{{ $position }}-destination" :error="$errors->first($destinationField)">
+                        <select id="hot-sale-{{ $position }}-destination" name="{{ $destinationField }}" required>
+                            @if(! array_key_exists(old($destinationField, data_get($homepage, $destinationField)), $destinations))
+                                <option value="" selected disabled>Collection unavailable — choose a destination</option>
+                            @endif
+                            @foreach($destinations as $value => $label)
+                                <option value="{{ $value }}" @selected(old($destinationField, data_get($homepage, $destinationField)) === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </x-admin.field>
                 </div>
                 <div class="admin-section-heading"><p>Tile image</p><h3>Ready Media</h3></div>
                 <p class="admin-field-help">Choose a confirmed ready image or video with meaningful alternative text. Removing this usage preserves the Media Asset.</p>

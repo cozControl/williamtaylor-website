@@ -32,7 +32,7 @@
         <span class="text-gray-300">
          /
         </span>
-        <a class="text-gray-400 hover:text-wt-oxblood transition-colors uppercase" href="/collections/mens-wear">
+        <a class="text-gray-400 hover:text-wt-oxblood transition-colors uppercase" href="{{ route('collections.index') }}">
          Men's Trousers
         </a>
         <span class="text-gray-300">

@@ -69,7 +69,7 @@ final class PublicSiteContentProjectionTest extends TestCase
 
         $this->assertNotNull($navigation);
         $this->assertSame('Governed Shop', $navigation->items[0]->link->label);
-        $this->get('/')->assertOk()->assertSee('Governed Shop');
+        $this->get('/')->assertOk()->assertDontSee('Governed Shop');
     }
 
     public function test_projection_cache_can_be_invalidated_without_flushing_unrelated_cache(): void
@@ -163,10 +163,10 @@ final class PublicSiteContentProjectionTest extends TestCase
         $this->publishedBudgetNavigation('Route Budget Public');
 
         $homepage = $this->queryCount(function (): void {
-            $this->get('/')->assertOk()->assertSee('Route Budget Public');
+            $this->get('/')->assertOk()->assertDontSee('Route Budget Public');
         }, siteContentOnly: true);
         $product = $this->queryCount(function (): void {
-            $this->get('/products/the-taylor-oxford-shirt')->assertOk()->assertSee('Route Budget Public');
+            $this->get('/products/the-taylor-oxford-shirt')->assertOk()->assertDontSee('Route Budget Public');
         }, siteContentOnly: true);
 
         $this->assertLessThanOrEqual(6, $homepage, 'Enabled homepage exceeded projection query budget.');

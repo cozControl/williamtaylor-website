@@ -21,6 +21,7 @@ use App\Domain\Media\Models\MediaUsage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class EcomCatalogueCoreTest extends TestCase
@@ -42,18 +43,18 @@ final class EcomCatalogueCoreTest extends TestCase
         $ordinary = User::factory()->create(['email_verified_at' => now()]);
         $this->actingAs($ordinary)->post(route('admin.product-categories.store'), [])->assertForbidden();
 
-        $this->actingAs($this->manager)->post(route('admin.product-categories.store'), [
+        $this->actingAs($this->manager)->post(route('admin.product-categories.store'), ['collection_id' => CategoryOwner::for($this->manager->id)->id,
             'name' => 'Men', 'slug' => 'men', 'parent_id' => null, 'description' => 'Menswear', 'is_visible' => '1', 'position' => 0,
         ])->assertRedirect();
         $parent = ProductCategory::query()->where('slug', 'men')->sole();
-        $this->actingAs($this->manager)->post(route('admin.product-categories.store'), [
+        $this->actingAs($this->manager)->post(route('admin.product-categories.store'), ['collection_id' => CategoryOwner::for($this->manager->id)->id,
             'name' => 'Shirts', 'slug' => 'shirts', 'parent_id' => $parent->id, 'description' => 'Shirts', 'is_visible' => '0', 'position' => 1,
         ])->assertRedirect();
 
         $child = ProductCategory::query()->where('slug', 'shirts')->sole();
         $this->assertSame($parent->id, $child->parent_id);
         $this->assertFalse($child->is_visible);
-        $this->actingAs($this->manager)->post(route('admin.product-categories.store'), [
+        $this->actingAs($this->manager)->post(route('admin.product-categories.store'), ['collection_id' => CategoryOwner::for($this->manager->id)->id,
             'name' => 'Duplicate', 'slug' => 'shirts', 'is_visible' => '1', 'position' => 2,
         ])->assertSessionHasErrors('slug');
 
@@ -95,7 +96,7 @@ final class EcomCatalogueCoreTest extends TestCase
 
     public function test_manager_creates_complete_colour_and_size_product_in_one_save(): void
     {
-        $category = ProductCategory::query()->create(['name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
         $ivoryImage = $this->image();
 
         $response = $this->actingAs($this->manager)->post(route('admin.products.store'), [
@@ -132,7 +133,7 @@ final class EcomCatalogueCoreTest extends TestCase
 
     public function test_blank_slug_is_generated_and_create_form_does_not_require_it_in_browser(): void
     {
-        $category = ProductCategory::query()->create(['name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
         $this->actingAs($this->manager)->get(route('admin.products.create'))->assertOk()
             ->assertSee('id="product-slug" name="slug" value="" maxlength="160"', false)
             ->assertDontSee('id="product-slug" name="slug" value="" required', false);
@@ -157,7 +158,7 @@ final class EcomCatalogueCoreTest extends TestCase
 
     public function test_invalid_swatch_returns_field_error_and_preserves_colour_draft(): void
     {
-        $category = ProductCategory::query()->create(['name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
         $response = $this->actingAs($this->manager)->from(route('admin.products.create'))->post(route('admin.products.store'), [
             'title' => 'Invalid Swatch Shirt', 'slug' => '', 'currency' => 'TZS', 'base_price' => '90,000', 'status' => 'hidden',
             'primary_category_id' => $category->id, 'gallery_media_ids' => [],
@@ -190,7 +191,7 @@ final class EcomCatalogueCoreTest extends TestCase
 
     public function test_creation_supports_size_only_and_no_option_products(): void
     {
-        $category = ProductCategory::query()->create(['name' => 'Accessories', 'slug' => 'accessories', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Accessories', 'slug' => 'accessories', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
         foreach ([['size-only-belt', ['size-30' => '30', 'size-32' => '32', 'size-34' => '34'], 3], ['no-option-scarf', [], 1]] as [$slug, $sizes, $count]) {
             $variants = $this->draftVariants([], $sizes, $slug);
             $response = $this->actingAs($this->manager)->post(route('admin.products.store'), [
@@ -215,7 +216,7 @@ final class EcomCatalogueCoreTest extends TestCase
 
     public function test_new_active_product_uses_canonical_dynamic_storefront_route(): void
     {
-        $category = ProductCategory::query()->create(['name' => 'Tailoring', 'slug' => 'tailoring', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Tailoring', 'slug' => 'tailoring', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
         $image = $this->image();
         $this->actingAs($this->manager)->post(route('admin.products.store'), [
             'title' => 'Generic Navy Overshirt', 'slug' => 'generic-navy-overshirt', 'short_description' => 'Layered tailoring.',
@@ -251,7 +252,7 @@ final class EcomCatalogueCoreTest extends TestCase
     public function test_category_media_picker_selection_persists_and_removal_preserves_asset(): void
     {
         $image = $this->image();
-        $this->actingAs($this->manager)->post(route('admin.product-categories.store'), [
+        $this->actingAs($this->manager)->post(route('admin.product-categories.store'), ['collection_id' => CategoryOwner::for($this->manager->id)->id,
             'name' => 'Editorial', 'slug' => 'editorial', 'description' => 'Editorial pieces',
             'image_media_asset_id' => $image->id, 'is_visible' => '1', 'position' => 0,
         ])->assertRedirect();
@@ -261,7 +262,7 @@ final class EcomCatalogueCoreTest extends TestCase
         $this->actingAs($this->manager)->get(route('admin.product-categories.edit', $category))
             ->assertOk()->assertSee($image->id, false)->assertSeeText('Remove');
 
-        $this->actingAs($this->manager)->put(route('admin.product-categories.update', $category), [
+        $this->actingAs($this->manager)->put(route('admin.product-categories.update', $category), ['collection_id' => $category->collection_id,
             'name' => 'Editorial', 'slug' => 'editorial', 'description' => 'Editorial pieces',
             'image_media_asset_id' => '', 'is_visible' => '1', 'position' => 0,
         ])->assertRedirect();
@@ -290,8 +291,8 @@ final class EcomCatalogueCoreTest extends TestCase
 
     public function test_product_can_have_primary_and_additional_categories(): void
     {
-        $parent = ProductCategory::query()->create(['name' => 'Men', 'slug' => 'men', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
-        $shirts = ProductCategory::query()->create(['name' => 'Shirts', 'slug' => 'shirts', 'parent_id' => $parent->id, 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $parent = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Men', 'slug' => 'men', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $shirts = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Shirts', 'slug' => 'shirts', 'parent_id' => $parent->id, 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
         $product = app(CreateProduct::class)->handle($this->manager, 'classic-shirt', 'classic-shirt');
         $product->categories()->sync([$shirts->id => ['is_primary' => true, 'position' => 0], $parent->id => ['is_primary' => false, 'position' => 1]]);
 
@@ -301,7 +302,7 @@ final class EcomCatalogueCoreTest extends TestCase
 
     public function test_colour_gallery_is_owned_by_colour_and_can_be_removed_without_deleting_asset(): void
     {
-        $this->artisan('catalogue:bootstrap-oxford', ['--user' => $this->manager->email])->assertSuccessful();
+        $this->artisan('catalogue:bootstrap-oxford', ['--collection' => CategoryOwner::for($this->manager->id)->slug, '--user' => $this->manager->email])->assertSuccessful();
         $product = Product::query()->where('slug', 'the-taylor-oxford-shirt')->with('options.values')->sole();
         $colour = $product->options->firstWhere('key', 'colour')->values->first();
         $asset = $this->image();
@@ -321,7 +322,7 @@ final class EcomCatalogueCoreTest extends TestCase
 
     public function test_dynamic_product_uses_default_colour_gallery_and_exposes_safe_colour_fallback(): void
     {
-        $category = ProductCategory::query()->create(['name' => 'Gallery', 'slug' => 'gallery', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Gallery', 'slug' => 'gallery', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
         $primary = $this->image();
         $blackFirst = $this->image();
         $blackSecond = $this->image();

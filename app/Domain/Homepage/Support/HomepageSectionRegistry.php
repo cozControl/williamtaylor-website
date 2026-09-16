@@ -18,10 +18,11 @@ final class HomepageSectionRegistry
             'delivery' => ['Complimentary Delivery', 'delivery', 'data-homepage-delivery', 'Complimentary Delivery in Dar es Salaam', 'main h3', '.relative.z-10.bg-wt-cream'],
             'handbags' => ["Women's Handbags", 'handbags', 'data-homepage-handbags', "Women's Handbags", 'main h2', 'section'],
             'client-stories' => ['Client Stories', 'client-stories', 'data-homepage-client-stories', 'What They Say', 'main h2', 'section'],
+            'follow-the-journey' => ['Follow the Journey', null, 'data-homepage-follow-the-journey', 'Follow the Journey', 'main h2', 'section'],
         ];
         $result = [];
         foreach ($sections as $key => [$title, $route, $marker, $heading, $headingSelector, $boundary]) {
-            $result[$key] = ['title' => $title, 'position' => count($result) + 1, 'default_visible' => true, 'edit_route' => 'admin.homepage.'.$route.'.edit', 'marker' => $marker, 'heading' => $heading, 'heading_selector' => $headingSelector, 'boundary' => $boundary];
+            $result[$key] = ['title' => $title, 'position' => count($result) + 1, 'default_visible' => true, 'edit_route' => $route === null ? 'admin.homepage.edit' : 'admin.homepage.'.$route.'.edit', 'marker' => $marker, 'heading' => $heading, 'heading_selector' => $headingSelector, 'boundary' => $boundary];
         }
 
         return $result;

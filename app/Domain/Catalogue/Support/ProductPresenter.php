@@ -21,7 +21,7 @@ final class ProductPresenter
     public function resolve(string $slug): ?array
     {
         $product = Product::query()->where('slug', $slug)->whereNull('archived_at')->where('catalogue_status', 'ready')
-            ->with(['currentDraftRevision', 'categories', 'options' => fn ($query) => $query->active()->with(['values' => fn ($values) => $values->active()->where('is_active', true)]), 'variants' => fn ($query) => $query->active()->with('values'), 'defaultVariant'])->first();
+            ->with(['currentDraftRevision', 'categories.collection.currentDraftRevision', 'options' => fn ($query) => $query->active()->with(['values' => fn ($values) => $values->active()->where('is_active', true)]), 'variants' => fn ($query) => $query->active()->with('values'), 'defaultVariant'])->first();
         if ($product === null || ! $this->readiness->evaluate($product)->ready) {
             return null;
         }
@@ -42,7 +42,7 @@ final class ProductPresenter
             'short_description' => $product->currentDraftRevision->short_description, 'description_html' => $product->currentDraftRevision->description_html,
             'materials' => $product->currentDraftRevision->materials, 'fit' => $product->currentDraftRevision->fit, 'care' => $product->currentDraftRevision->care,
             'features' => $product->currentDraftRevision->features, 'images' => $images, 'colour_images' => $colourImages,
-            'category' => $primaryCategory ? ['name' => $primaryCategory->name, 'slug' => $primaryCategory->slug] : null,
+            'category' => $primaryCategory ? ['name' => $primaryCategory->name, 'slug' => $primaryCategory->slug, 'url' => $primaryCategory->collection->catalogue_status === 'ready' && $primaryCategory->collection->archived_at === null ? route('collections.show', ['collection' => $primaryCategory->collection->slug, 'category' => $primaryCategory->slug]) : route('products.index')] : null,
             'price' => $this->prices->format($product->base_price_minor, $product->currency),
             'compare_at_price' => $this->prices->format($product->compare_at_price_minor, $product->currency),
             'options' => $product->options->mapWithKeys(fn (ProductOption $option) => [$option->key => $option->values->map(fn (ProductOptionValue $value) => ['id' => $value->id, 'key' => $value->key, 'label' => $value->label, 'swatch_hex' => $value->swatch_hex])->values()->all()])->all(),

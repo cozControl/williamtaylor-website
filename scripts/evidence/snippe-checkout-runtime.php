@@ -6,6 +6,7 @@ use App\Domain\Catalogue\Actions\CreateProduct;
 use App\Domain\Catalogue\Actions\CreateProductRevision;
 use App\Domain\Catalogue\Actions\CreateProductVariant;
 use App\Domain\Catalogue\Actions\SetDefaultProductVariant;
+use App\Domain\Catalogue\Models\Collection;
 use App\Domain\Catalogue\Models\ProductCategory;
 use App\Domain\Catalogue\Support\ProductStateFingerprint;
 use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
@@ -70,7 +71,8 @@ if (PHP_SAPI === 'cli' && ($argv[1] ?? '') === 'seed') {
     $image = MediaAsset::create(['provider_asset_id' => 'browser-image', 'provider_public_id' => 'browser/image', 'resource_type' => 'image', 'format' => 'jpg', 'mime_type' => 'image/jpeg', 'original_filename' => 'shirt.jpg', 'internal_title' => 'Shirt', 'default_alt_text' => 'Oxford shirt', 'accessibility_classification' => 'informative', 'is_decorative' => false, 'state' => 'ready', 'bytes' => 1000, 'uploaded_by' => $actor->id, 'confirmed_at' => now()]);
     $product->refresh();
     app(AssignProductMedia::class)->handle($actor, $product, $image, app(ProductStateFingerprint::class)->for($product), 'primary');
-    $category = ProductCategory::create(['name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'created_by' => $actor->id, 'updated_by' => $actor->id]);
+    $owner = Collection::create(['slug' => 'checkout-fixture', 'collection_type' => 'curated', 'created_by' => $actor->id]);
+    $category = ProductCategory::create(['collection_id' => $owner->id, 'name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'created_by' => $actor->id, 'updated_by' => $actor->id]);
     $product->categories()->attach($category->id, ['is_primary' => true, 'position' => 0]);
     $product->update(['base_price_minor' => 12500000, 'catalogue_status' => 'ready']);
     app(InventoryLedgerService::class)->post($actor, $variant, StockLocation::main(), MovementType::Receipt, 50, 'Disposable browser stock');

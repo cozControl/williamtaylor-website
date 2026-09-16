@@ -16,6 +16,7 @@
   @else
    @include('frontend.partials.document-head')
   @endif
+  @include('frontend.partials.header-styles')
  </head>
  <body>
   @yield('content')
@@ -23,5 +24,6 @@
   @include('frontend.partials.shop-navigation-script')
   @include('frontend.partials.purchase-boundary')
   @include('frontend.partials.cart-shell')
+  <script src="{{ asset('website/js/catalogue-wishlist.js') }}" defer></script>
  </body>
 </html>

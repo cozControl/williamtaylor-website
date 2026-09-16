@@ -5,9 +5,10 @@
         @csrf
         @if ($category->exists) @method('PUT') @endif
         <div class="admin-section-heading"><p>Category details</p><h2>Storefront classification</h2></div>
+        <x-admin.field label="Collection" for="category-collection" help="Categories belong to one Collection. Changing this does not move Products." :error="$errors->first('collection_id')"><select id="category-collection" name="collection_id" required><option value="">Choose a Collection</option>@foreach ($collections as $collection)<option value="{{ $collection->id }}" @selected(old('collection_id', $category->collection_id) === $collection->id)>{{ $collection->currentDraftRevision?->title ?? $collection->slug }}</option>@endforeach</select></x-admin.field>
         <x-admin.field label="Name" for="category-name" :error="$errors->first('name')"><input id="category-name" name="name" value="{{ old('name', $category->name) }}" required autocomplete="off"></x-admin.field>
         <x-admin.field label="Slug" for="category-slug" help="Generated from the name when left blank." :error="$errors->first('slug')"><input id="category-slug" name="slug" value="{{ old('slug', $category->slug) }}" autocomplete="off"></x-admin.field>
-        <x-admin.field label="Parent category" for="category-parent" help="Choose Top level when this Category has no parent." :error="$errors->first('parent_id')"><select id="category-parent" name="parent_id"><option value="">Top level</option>@foreach ($parents as $parent)<option value="{{ $parent->id }}" @selected(old('parent_id', $category->parent_id) === $parent->id)>{{ $parent->name }}</option>@endforeach</select></x-admin.field>
+        <x-admin.field label="Parent category" for="category-parent" help="Choose a parent in the same Collection, or Top level." :error="$errors->first('parent_id')"><select id="category-parent" name="parent_id"><option value="">Top level</option>@foreach ($parents as $parent)<option data-collection="{{ $parent->collection_id }}" value="{{ $parent->id }}" @selected(old('parent_id', $category->parent_id) === $parent->id)>{{ $parent->name }}</option>@endforeach</select></x-admin.field>
         <x-admin.field class="admin-form-wide" label="Description" for="category-description" help="Explain what shoppers will find in this Category." :error="$errors->first('description')"><textarea id="category-description" name="description" rows="5">{{ old('description', $category->description) }}</textarea></x-admin.field>
         <div class="admin-field admin-form-wide">
             <span class="admin-field-label">Category image</span><span class="admin-field-help">Choose a ready image. Removing this association preserves the Media Asset.</span>
@@ -18,5 +19,12 @@
         <x-admin.field label="Display order" for="category-position" help="Lower numbers appear first." :error="$errors->first('position')"><input id="category-position" type="number" min="0" name="position" value="{{ old('position', $category->position ?? 0) }}"></x-admin.field>
         <div class="admin-page-actions admin-form-wide"><button class="admin-primary-button">Save Category</button></div>
     </form>
+    <script>
+        (() => {
+            const collection = document.getElementById('category-collection'), parent = document.getElementById('category-parent');
+            const sync = () => { for (const option of parent.options) { option.hidden = option.disabled = !!option.value && option.dataset.collection !== collection.value; if (option.disabled && option.selected) parent.value = ''; } };
+            collection.addEventListener('change', sync); sync();
+        })();
+    </script>
     @if ($category->exists)<form method="POST" action="{{ route('admin.product-categories.archive', $category) }}" onsubmit="return confirm('Archive this Category? Product assignments will be preserved.');">@csrf @method('PATCH')<button class="admin-secondary-button">Archive Category</button></form>@endif
 </x-admin.layout>

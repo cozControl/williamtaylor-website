@@ -69,27 +69,28 @@ final class HomepageController
             ['id' => HomepageHero::SINGLETON_ID],
             [...HomepageHero::defaults(), 'created_by' => $request->user()->id, 'updated_by' => $request->user()->id],
         );
-        $persistedSelectedId = MediaUsage::query()->where('owner_type', HomepageHero::class)
+        $usages = MediaUsage::query()->where('owner_type', HomepageHero::class)
             ->where('owner_identifier', $hero->id)
-            ->where('field_role', HomepageHero::MEDIA_ROLE)
-            ->value('media_asset_id');
-        $oldSelectedId = old('background_media_id');
-        $selectedId = is_string($oldSelectedId)
-            ? $oldSelectedId
-            : (is_string($persistedSelectedId) ? $persistedSelectedId : '');
-        $selectedAsset = $selectedId === '' ? null : $images->findEligible($selectedId);
-        $selectedMedia = $selectedAsset === null ? [] : [[
-            'id' => $selectedAsset->id,
-            'title' => $selectedAsset->internal_title,
-            'filename' => $selectedAsset->original_filename,
-            'alt' => '',
-            'thumbnail' => $media->deliveryUrl($selectedAsset->provider_public_id, $selectedAsset->resource_type->value, 'admin_thumbnail', null, null),
-        ]];
+            ->whereIn('field_role', [HomepageHero::MEDIA_ROLE, HomepageHero::MOBILE_MEDIA_ROLE])
+            ->pluck('media_asset_id', 'field_role');
+        $selections = [];
+        foreach (['background_media_id' => HomepageHero::MEDIA_ROLE, 'mobile_background_media_id' => HomepageHero::MOBILE_MEDIA_ROLE] as $field => $role) {
+            $selectedId = $request->session()->hasOldInput($field) ? old($field) : ($usages[$role] ?? null);
+            $selectedAsset = filled($selectedId) && is_string($selectedId) ? $images->findEligible($selectedId) : null;
+            $selections[$field] = $selectedAsset === null ? [] : [[
+                'id' => $selectedAsset->id,
+                'title' => $selectedAsset->internal_title,
+                'filename' => $selectedAsset->original_filename,
+                'alt' => '',
+                'thumbnail' => $media->deliveryUrl($selectedAsset->provider_public_id, $selectedAsset->resource_type->value, 'admin_thumbnail', null, null),
+            ]];
+        }
 
         return view('admin.homepage.hero', [
             'hero' => $hero,
             'destinations' => $destinations->labels(),
-            'selectedMedia' => $selectedMedia,
+            'selectedMedia' => $selections['background_media_id'],
+            'selectedMobileMedia' => $selections['mobile_background_media_id'],
         ]);
     }
 
@@ -107,6 +108,7 @@ final class HomepageController
             'secondary_cta_destination' => ['required', Rule::in(array_keys($destinations->labels()))],
             'scroll_indicator_enabled' => ['required', 'boolean'],
             'background_media_id' => ['nullable', 'string'],
+            'mobile_background_media_id' => ['sometimes', 'nullable', 'string'],
         ]);
         $asset = null;
         if (filled($data['background_media_id'] ?? null)) {
@@ -115,8 +117,15 @@ final class HomepageController
                 return back()->withInput()->withErrors(['background_media_id' => 'The selected Hero image is no longer available.']);
             }
         }
+        $mobileAsset = null;
+        if (filled($data['mobile_background_media_id'] ?? null)) {
+            $mobileAsset = $images->findEligible((string) $data['mobile_background_media_id']);
+            if ($mobileAsset === null) {
+                return back()->withInput()->withErrors(['mobile_background_media_id' => 'The selected mobile Hero image is no longer available.']);
+            }
+        }
         $hero = HomepageHero::query()->whereKey(HomepageHero::SINGLETON_ID)->firstOrFail();
-        $update->handle($request->user(), $hero, $data, $asset);
+        $update->handle($request->user(), $hero, $data, $asset, $mobileAsset);
 
         return redirect()->route('admin.homepage.hero.edit')->with('status', 'Homepage Hero updated successfully.');
     }
@@ -182,9 +191,9 @@ final class HomepageController
     public function updateHotSale(Request $request, HomepageHotSaleDestinationRegistry $destinations, ReadyHotSaleMediaQuery $images, UpdateHomepageHotSale $update): RedirectResponse
     {
         $rules = [
+            'hot_sale_eyebrow' => ['sometimes', 'required', 'string', 'max:120', 'not_regex:/[<>]/'],
+            'hot_sale_heading' => ['sometimes', 'required', 'string', 'max:160', 'not_regex:/[<>]/'],
             'lock_version' => ['required', 'integer'],
-            'hot_sale_eyebrow' => ['required', 'string', 'max:120', 'not_regex:/[<>]/'],
-            'hot_sale_heading' => ['required', 'string', 'max:160', 'not_regex:/[<>]/'],
         ];
         foreach ([1, 2, 3] as $position) {
             $rules["hot_sale_tile_{$position}_title"] = ['required', 'string', 'max:160', 'not_regex:/[<>]/'];

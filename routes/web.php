@@ -12,6 +12,9 @@ use App\Http\Controllers\SnippePaymentController;
 use App\Http\Controllers\StorefrontCollectionController;
 use App\Http\Controllers\StorefrontCollectionsController;
 use App\Http\Controllers\StorefrontProductController;
+use App\Http\Controllers\StorefrontSearchController;
+use App\Http\Controllers\StorefrontShopController;
+use App\Http\Controllers\StorefrontWishlistController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomepageController::class)->name('home');
@@ -29,12 +32,13 @@ Route::delete('cart/items/{variant}', [CartController::class, 'destroy'])->block
 Route::get('about', AboutController::class)->name('about');
 
 Route::get('collections', StorefrontCollectionsController::class)->name('collections.index');
+Route::get('search', StorefrontSearchController::class)->name('search');
 Route::get('collections/{collection:slug}', StorefrontCollectionController::class)->name('collections.show');
-Route::view('shop', 'frontend.shop')->name('products.index');
+Route::get('shop', StorefrontShopController::class)->name('products.index');
 Route::get('pre-order', PreOrderController::class)->name('preorders.index');
 Route::get('limited-edition', LimitedEditionController::class)->name('limited-edition.index');
 Route::view('gift-cards', 'frontend.gift-cards')->name('gift-cards.index');
-Route::view('wishlist', 'frontend.wishlist')->name('wishlist.index');
+Route::get('wishlist', StorefrontWishlistController::class)->name('wishlist.index');
 
 Route::prefix('products')->name('products.')->group(function () {
     Route::get('the-taylor-oxford-shirt', StorefrontProductController::class)

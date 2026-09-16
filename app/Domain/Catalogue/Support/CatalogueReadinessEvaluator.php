@@ -5,6 +5,7 @@ namespace App\Domain\Catalogue\Support;
 use App\Domain\Catalogue\Data\CatalogueReadinessResult;
 use App\Domain\Catalogue\Models\Product;
 use App\Domain\Media\Models\MediaUsage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 final class CatalogueReadinessEvaluator
@@ -13,6 +14,17 @@ final class CatalogueReadinessEvaluator
         private ProductTypeRegistry $types,
         private ProductMediaAccessibility $accessibility,
     ) {}
+
+    /**
+     * Database form of the public readiness boundary, shared by catalogue listings.
+     * Publication remains explicit; stock is deliberately independent of readiness.
+     *
+     * @return Builder<Product>
+     */
+    public function publicQuery(): Builder
+    {
+        return app(CatalogueReadinessQuery::class)->query();
+    }
 
     /** @param Collection<int, MediaUsage>|null $resolvedMedia */
     public function evaluate(Product $p, ?Collection $resolvedMedia = null): CatalogueReadinessResult

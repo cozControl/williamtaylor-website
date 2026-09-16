@@ -13,6 +13,7 @@
    }
   });
   document.querySelectorAll('[data-cart-count]').forEach(node => { if(node.textContent !== String(count)) node.textContent = count; if(node.hasAttribute('data-cart-badge')) node.hidden=count === 0; });
+  document.querySelectorAll('.wt-header-action[data-cart-open]').forEach(node => node.setAttribute('aria-label', `Open cart, ${count} items`));
  };
  const render = data => { count = data.cart.item_count; document.querySelectorAll('[data-cart-content]').forEach(node => {node.innerHTML = data.html;}); syncCount(); announce(data.message); };
  const request = async (url, method='GET', body=null) => {

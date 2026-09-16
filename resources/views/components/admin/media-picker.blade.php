@@ -14,6 +14,7 @@
     'error' => null,
     'endpoint' => null,
     'assetLabel' => 'images',
+    'previewAspect' => null,
 ])
 
 <div @class(['admin-picker', 'admin-field-invalid' => $error]) x-data="adminMediaPicker(@js([
@@ -24,7 +25,7 @@
     <div class="admin-picker-selection" x-show="selected.length">
         <template x-for="asset in selected" :key="asset.id">
             <article class="admin-picker-selected-card">
-                <img :src="asset.thumbnail" :alt="asset.alt || ''">
+                <img :src="asset.thumbnail" :alt="asset.alt || ''" @if($previewAspect) style="width:128px;max-width:35%;height:auto;aspect-ratio:{{ $previewAspect }};object-fit:contain" @endif>
                 <div><strong x-text="asset.title"></strong><small x-text="asset.filename"></small></div>
                 <button type="button" class="admin-secondary-button" @click="remove(asset.id)">Remove</button>
                 <input type="hidden" :name="mode === 'multiple' ? '{{ $name }}[]' : '{{ $name }}'" :value="asset.id">

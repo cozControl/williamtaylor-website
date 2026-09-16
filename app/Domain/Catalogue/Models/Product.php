@@ -2,6 +2,7 @@
 
 namespace App\Domain\Catalogue\Models;
 
+use App\Domain\Media\Models\MediaUsage;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -20,6 +21,18 @@ final class Product extends Model
     protected $keyType = 'string';
 
     protected $guarded = [];
+
+    /** @return HasMany<MediaUsage, $this> */
+    public function mediaUsages(): HasMany
+    {
+        return $this->hasMany(MediaUsage::class, 'owner_identifier')->where('owner_type', self::class);
+    }
+
+    /** @return HasMany<CollectionProduct, $this> */
+    public function collectionMemberships(): HasMany
+    {
+        return $this->hasMany(CollectionProduct::class);
+    }
 
     protected function casts(): array
     {

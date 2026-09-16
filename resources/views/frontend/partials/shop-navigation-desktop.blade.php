@@ -15,7 +15,7 @@
  @endforeach
  @foreach($shopNavigation['editorial'] as $item)
   @if($item->visibility !== 'mobile')
-   <a class="font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200" href="{{ $item->link->url }}" @if($item->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $item->link->label }}</a>
+   <a class="font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200" href="{{ app(\App\Domain\Catalogue\Support\StorefrontShopNavigationPresenter::class)->canonicalCollectionLink($item->link->url) }}" @if($item->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $item->link->label }}</a>
   @endif
  @endforeach
 </div>

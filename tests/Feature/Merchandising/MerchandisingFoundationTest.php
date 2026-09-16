@@ -47,6 +47,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class MerchandisingFoundationTest extends TestCase
@@ -244,7 +245,7 @@ final class MerchandisingFoundationTest extends TestCase
         app(AssignProductMedia::class)->handle($this->actor, $product, $this->image(), app(ProductStateFingerprint::class)->for($product), 'primary');
         $product = $product->fresh();
         $product->update(['base_price_minor' => 10000]);
-        $category = ProductCategory::create(['name' => 'Test category', 'slug' => 'category-'.$product->id, 'is_visible' => true, 'created_by' => $this->actor->id, 'updated_by' => $this->actor->id]);
+        $category = ProductCategory::create(['collection_id' => CategoryOwner::for($this->actor->id)->id, 'name' => 'Test category', 'slug' => 'category-'.$product->id, 'is_visible' => true, 'created_by' => $this->actor->id, 'updated_by' => $this->actor->id]);
         $product->categories()->attach($category->id, ['is_primary' => true, 'position' => 0]);
         $this->assertSame([], app(CatalogueReadinessEvaluator::class)->evaluate($product->fresh())->failureCodes);
         $product->forceFill(['catalogue_status' => 'ready'])->save();

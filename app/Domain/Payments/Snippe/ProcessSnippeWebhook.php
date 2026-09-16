@@ -96,7 +96,7 @@ final class ProcessSnippeWebhook
                     $payment->update(['status' => PaymentStatus::AttentionRequired, 'reconciliation_issue' => $outcome]);
                 }
             } else {
-                $payment = app(MobileMoneyPayment::class)->refresh($payment, webhook: true);
+                $payment = app(MobileMoneyPayment::class)->reconcile($payment, webhook: true);
                 $outcome = $payment->reconciliation_issue ?? ($payment->active_order_id === null ? 'processed' : 'verification_pending');
             }
         }

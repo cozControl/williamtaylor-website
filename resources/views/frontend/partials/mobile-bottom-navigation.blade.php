@@ -3,22 +3,22 @@
       <div class="flex items-center justify-around h-16 px-2">
        <a class="relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full" href="/">
         <div class="relative">
-         <svg class="lucide lucide-house text-wt-gold" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
+         <svg class="lucide lucide-house {{ ($activeBottomTab ?? 'home') === 'shop' ? 'text-wt-cream/60' : 'text-wt-gold' }}" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
           <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8">
           </path>
           <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z">
           </path>
          </svg>
         </div>
-        <span class="font-label text-[9px] tracking-wide uppercase text-wt-gold font-semibold">
+        <span class="font-label text-[9px] tracking-wide uppercase {{ ($activeBottomTab ?? 'home') === 'shop' ? 'text-wt-cream/50' : 'text-wt-gold font-semibold' }}">
          Home
         </span>
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-wt-gold" style="opacity: 1;">
-        </div>
+        @unless(($activeBottomTab ?? 'home') === 'shop')<div class="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-wt-gold" style="opacity: 1;">
+        </div>@endunless
        </a>
        <a class="relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full" href="{{ route('products.index') }}">
         <div class="relative">
-         <svg class="lucide lucide-grid3x3 text-wt-cream/60" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
+         <svg class="lucide lucide-grid3x3 {{ ($activeBottomTab ?? 'home') === 'shop' ? 'text-wt-gold' : 'text-wt-cream/60' }}" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg">
           <rect height="18" rx="2" width="18" x="3" y="3">
           </rect>
           <path d="M3 9h18">
@@ -31,9 +31,10 @@
           </path>
          </svg>
         </div>
-        <span class="font-label text-[9px] tracking-wide uppercase text-wt-cream/50">
+        <span class="font-label text-[9px] tracking-wide uppercase {{ ($activeBottomTab ?? 'home') === 'shop' ? 'text-wt-gold font-semibold' : 'text-wt-cream/50' }}">
          Shop
         </span>
+        @if(($activeBottomTab ?? 'home') === 'shop')<div class="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-wt-gold"></div>@endif
        </a>
        <a class="relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full" href="{{ route('products.index') }}">
         <div class="relative">

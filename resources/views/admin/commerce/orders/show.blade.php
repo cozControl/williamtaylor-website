@@ -49,6 +49,8 @@
                     <div class="order-section-heading"><h3>Snippe · Attempt {{ $loop->iteration }} · {{ $payment->status->value === 'completed' ? 'Successful' : ($payment->active_order_id ? 'Current' : ($payment->status->value === 'failed' ? 'Failed' : 'Closed')) }}</h3>@include('admin.commerce.orders.badge', ['value' => $payment->status])</div>
                     @if($payment->reconciliation_issue)<div class="order-attention"><strong>Needs attention</strong><p>{{ $presenter->issue($payment->reconciliation_issue) }}</p></div>@elseif($payment->failure_code)<p>{{ $presenter->issue($payment->failure_code) }}</p>@endif
                     <dl class="order-fields">
+                        <dt>Attempt ID</dt><dd>{{ $payment->id }}</dd>
+                        @if($payment->failure_code && $payment->reconciliation_issue)<dt>Previous operation</dt><dd>{{ $presenter->issue($payment->failure_code) }}</dd>@endif
                         <dt>Provider</dt><dd>{{ ucfirst($payment->provider) }}</dd>
                         <dt>Method</dt><dd>{{ $payment->method === 'mobile_money' ? 'Mobile Money' : 'Hosted Session' }}</dd>
                         @if($payment->method === 'mobile_money')<dt>Payer phone</dt><dd>{{ $payment->maskedPhone() }}</dd>@endif
@@ -65,7 +67,7 @@
                             <form method="POST" action="{{ route('admin.commerce.orders.payments.check', [$order, $payment]) }}">@csrf<button class="admin-secondary-button">Check payment status</button></form>
                             <p class="inventory-muted">Checks verified Snippe status. Existing retry delays and in-progress checks are respected.</p>
                         @else<p class="inventory-muted">Payment checks are unavailable until Snippe is enabled and configured. Order history remains available.</p>@endif
-                    @elseif($payment->active_order_id)<p class="inventory-muted">Payment outcome is unresolved. Automatic reconciliation and Snippe review must establish the existing payment before an Admin payment check is available.</p>@endif
+                    @elseif($payment->active_order_id)<p class="inventory-muted">Payment outcome is unresolved. Scheduled checks never send a payment request. Review the existing attempt with Snippe before any separately authorized initiation recovery.</p>@endif
                 </article>
             @empty<p>No online payment attempt is recorded for this Order.</p>@endforelse
         </section>

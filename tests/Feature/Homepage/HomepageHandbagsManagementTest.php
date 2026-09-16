@@ -17,6 +17,7 @@ use App\Domain\Media\Models\MediaAsset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class HomepageHandbagsManagementTest extends TestCase
@@ -33,7 +34,7 @@ final class HomepageHandbagsManagementTest extends TestCase
         app(ProvisionRegisteredAccess::class)->handle();
         $this->manager = User::factory()->create(['email_verified_at' => now()]);
         app(ControlledRoleMutation::class)->run(fn () => $this->manager->assignRole(RoleRegistry::CMS_MANAGER));
-        $this->category = ProductCategory::query()->create([
+        $this->category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id,
             'name' => 'Explore',
             'slug' => 'explore',
             'is_visible' => true,

@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class ProductMediaUsageTest extends TestCase
@@ -183,7 +184,7 @@ final class ProductMediaUsageTest extends TestCase
         app(SetDefaultProductVariant::class)->handle($this->actor, $product, $variant, $this->state($product));
 
         $product->update(['base_price_minor' => 10000]);
-        $category = ProductCategory::create(['name' => 'Test category', 'slug' => 'category-'.$product->id, 'is_visible' => true, 'created_by' => $this->actor->id, 'updated_by' => $this->actor->id]);
+        $category = ProductCategory::create(['collection_id' => CategoryOwner::for($this->actor->id)->id, 'name' => 'Test category', 'slug' => 'category-'.$product->id, 'is_visible' => true, 'created_by' => $this->actor->id, 'updated_by' => $this->actor->id]);
         $product->categories()->attach($category->id, ['is_primary' => true, 'position' => 0]);
 
         return $product->fresh();

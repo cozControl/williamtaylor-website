@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class MobileMoneyPaymentTest extends TestCase
@@ -46,7 +47,7 @@ final class MobileMoneyPaymentTest extends TestCase
         app(ProvisionRegisteredAccess::class)->handle();
         $this->manager = User::factory()->create(['email_verified_at' => now()]);
         app(ControlledRoleMutation::class)->run(fn () => $this->manager->assignRole(RoleRegistry::SUPER_ADMINISTRATOR));
-        $this->category = ProductCategory::query()->create([
+        $this->category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id,
             'name' => 'Explore',
             'slug' => 'explore',
             'is_visible' => true,
@@ -469,6 +470,186 @@ final class MobileMoneyPaymentTest extends TestCase
         $this->assertDatabaseCount('commerce_orders', 0);
         $this->assertDatabaseCount('commerce_payments', 0);
         Http::assertNothingSent();
+    }
+
+    public static function scheduledProviderStates(): array
+    {
+        return [['pending'], ['completed'], ['expired'], ['failed'], ['voided']];
+    }
+
+    #[DataProvider('scheduledProviderStates')]
+    public function test_scheduled_reconciliation_is_get_only_and_uses_canonical_finality(string $state): void
+    {
+        [$order, $payment, $variant] = $this->checkout();
+        $this->remote($state);
+        $payment->update(['next_reconcile_at' => null]);
+        $this->artisan('payments:reconcile-snippe', ['--limit' => 10])->assertExitCode(0);
+        Http::assertSentCount(1);
+        Http::assertNotSent(fn ($request) => $request->method() !== 'GET');
+        $this->assertDatabaseCount('commerce_payments', 1);
+        $this->assertDatabaseCount('commerce_orders', 1);
+        $this->assertSame($state, $payment->fresh()->status->value);
+        $this->assertSame($state === 'completed' ? 'paid' : 'unpaid', $order->fresh()->payment_status);
+        $this->assertSame($state === 'completed' ? 3 : 5, app(InventoryAvailabilityService::class)->onHand($variant));
+        $this->assertDatabaseHas('inventory_reservations', ['status' => match ($state) {
+            'pending' => 'active', 'completed' => 'consumed', default => 'released',
+        }]);
+    }
+
+    public static function missingReferenceStates(): array
+    {
+        return [['unrecorded'], ['local_failure'], ['ambiguous'], ['stale'], ['sticky'], ['leased'], ['rate_limited'], ['definite_rejection']];
+    }
+
+    #[DataProvider('missingReferenceStates')]
+    public function test_scheduler_never_posts_or_allocates_an_attempt_without_a_reference(string $condition): void
+    {
+        [$order, $payment, $variant] = $this->checkout($condition === 'definite_rejection' ? 400 : 503);
+        $changes = ['next_reconcile_at' => null];
+        if (in_array($condition, ['unrecorded', 'local_failure'], true)) {
+            $changes += ['request_started_at' => null, 'status' => 'created', 'failure_code' => $condition === 'local_failure' ? 'https_required' : null, 'reconciliation_issue' => null];
+        } elseif ($condition === 'stale') {
+            $changes['request_started_at'] = now()->subHours(24);
+        } elseif ($condition === 'sticky') {
+            $changes['reconciliation_issue'] = 'evidence_mismatch';
+        } elseif ($condition === 'leased') {
+            $changes += ['io_lease_until' => now()->addMinute(), 'io_lease_token' => 'existing-worker'];
+        } elseif ($condition === 'rate_limited') {
+            $changes = ['next_reconcile_at' => now()->addMinute(), 'failure_code' => 'rate_limited'];
+        }
+        $payment->update($changes);
+        $snapshot = $payment->request_snapshot;
+        $key = $payment->attempt_key;
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        // Return a response so any forbidden request is recorded even if the command catches errors.
+        Http::fake(['*' => Http::response([], 503)]);
+        $this->artisan('payments:reconcile-snippe')->assertExitCode(in_array($condition, ['leased', 'rate_limited', 'definite_rejection'], true) ? 0 : 1);
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('commerce_payments', 1);
+        $this->assertDatabaseCount('commerce_orders', 1);
+        $this->assertSame($snapshot, $payment->fresh()->request_snapshot);
+        $this->assertSame($key, $payment->fresh()->attempt_key);
+        $this->assertNull($payment->fresh()->provider_payment_reference);
+        $this->assertSame(5, app(InventoryAvailabilityService::class)->onHand($variant));
+        $this->assertSame(3, app(InventoryAvailabilityService::class)->availableToSell($variant));
+        $this->assertDatabaseHas('inventory_reservations', ['status' => 'active']);
+        $this->assertSame('unpaid', $order->fresh()->payment_status);
+        if ($condition === 'definite_rejection') {
+            $this->assertTrue($payment->fresh()->retrySafe());
+        } else {
+            $this->assertSame($order->id, $payment->fresh()->active_order_id);
+            $this->assertFalse($payment->fresh()->retrySafe());
+        }
+        if ($condition === 'ambiguous') {
+            $this->assertSame('initiation_outcome_unknown', $payment->fresh()->reconciliation_issue);
+            $this->assertSame('http_503', $payment->fresh()->failure_code);
+            $this->actingAs($this->manager)->get(route('admin.commerce.orders.show', $order))->assertOk()->assertSee('The scheduler will not replay it.')->assertDontSee($key);
+            $this->get(route('checkout.confirmation', $order->confirmation_reference))->assertSee('Checking your payment')->assertDontSee('Payment not completed')->assertDontSee('Try Mobile Money again');
+        }
+        if (in_array($condition, ['unrecorded', 'local_failure'], true)) {
+            $this->assertSame('initiation_not_recorded', $payment->fresh()->reconciliation_issue);
+        }
+        if ($condition === 'sticky') {
+            $this->assertSame('evidence_mismatch', $payment->fresh()->reconciliation_issue);
+        }
+        if ($condition === 'stale') {
+            $this->assertSame('idempotency_window_elapsed', $payment->fresh()->reconciliation_issue);
+        }
+    }
+
+    public function test_explicit_operator_recovery_is_authorized_audited_and_reuses_snapshot_and_key(): void
+    {
+        [$order, $payment] = $this->checkout(503);
+        $snapshot = $payment->request_snapshot;
+        $key = $payment->attempt_key;
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        Http::fake(['https://api.snippe.sh/v1/payments' => function ($request) use ($snapshot, $key) {
+            $this->assertSame(0, DB::transactionLevel());
+            $this->assertSame($snapshot, $request->data());
+            $this->assertSame($key, $request->header('Idempotency-Key')[0]);
+
+            // Lost response twice still never switches to a fresh charge identity.
+            return Http::response([], 503);
+        }]);
+        $command = ['payment' => $payment->id, '--actor' => $this->manager->id, '--reason' => 'Reviewed ambiguous attempt with provider', '--execute' => true];
+        $this->artisan('payments:recover-snippe-initiation', array_diff_key($command, ['--execute' => true]))->assertExitCode(1);
+        $unprivileged = User::factory()->create();
+        $this->artisan('payments:recover-snippe-initiation', array_replace($command, ['--actor' => $unprivileged->id]))->assertExitCode(1);
+        Http::assertNothingSent();
+        foreach ([1, 2] as $attempt) {
+            $payment->refresh()->update(['next_reconcile_at' => null]);
+            $this->artisan('payments:recover-snippe-initiation', $command)->assertExitCode(1);
+            Http::assertSentCount($attempt);
+            $this->assertDatabaseCount('commerce_payments', 1);
+            $this->assertSame($key, $payment->fresh()->attempt_key);
+            $this->assertSame($order->id, $payment->fresh()->active_order_id);
+        }
+        $audits = AuditRecord::query()->where('action', 'commerce.payment.initiation_recovery_requested')->get();
+        $this->assertCount(2, $audits);
+        $this->assertSame($this->manager->id, $audits->first()->actor_user_id);
+        $this->assertSame('Reviewed ambiguous attempt with provider', $audits->first()->reason);
+        $this->assertStringNotContainsString($key, $audits->toJson());
+    }
+
+    public function test_recovery_respects_leases_delays_sticky_review_and_expired_window(): void
+    {
+        [$order, $payment] = $this->checkout(503);
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        Http::fake();
+        $command = ['payment' => $payment->id, '--actor' => $this->manager->id, '--reason' => 'Investigated original request', '--execute' => true];
+        // Existing delay prevents immediate replay.
+        $this->artisan('payments:recover-snippe-initiation', $command)->assertExitCode(1);
+        $payment->update(['next_reconcile_at' => null, 'io_lease_until' => now()->addMinute(), 'io_lease_token' => 'other']);
+        $this->artisan('payments:recover-snippe-initiation', $command)->assertExitCode(1);
+        $this->assertSame('other', $payment->fresh()->io_lease_token);
+        $payment->refresh()->update(['io_lease_until' => null, 'io_lease_token' => null, 'reconciliation_issue' => 'evidence_mismatch']);
+        $this->artisan('payments:recover-snippe-initiation', $command)->assertExitCode(1);
+        $this->assertSame('evidence_mismatch', $payment->fresh()->reconciliation_issue);
+        $payment->refresh()->update(['reconciliation_issue' => null, 'request_started_at' => now()->subHours(24)]);
+        $this->artisan('payments:recover-snippe-initiation', $command)->assertExitCode(1);
+        $this->assertSame('idempotency_window_elapsed', $payment->fresh()->reconciliation_issue);
+        $this->assertSame($order->id, $payment->fresh()->active_order_id);
+        $this->assertDatabaseHas('inventory_reservations', ['status' => 'active']);
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('commerce_payments', 1);
+    }
+
+    public function test_recovery_can_bind_original_attempt_and_repeated_execution_never_posts_again(): void
+    {
+        [$order, $payment] = $this->checkout(503);
+        $payment->update(['next_reconcile_at' => null]);
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        Http::fake(['https://api.snippe.sh/v1/payments' => function ($request) use ($payment) {
+            $this->assertSame($payment->attempt_key, $request->header('Idempotency-Key')[0]);
+            $this->assertSame($payment->request_snapshot, $request->data());
+
+            return Http::response(['data' => $this->evidence('pending')]);
+        }]);
+        $command = ['payment' => $payment->id, '--actor' => $this->manager->id, '--reason' => 'Investigated original request', '--execute' => true];
+        $this->artisan('payments:recover-snippe-initiation', $command)->assertExitCode(0);
+        $payment->refresh()->update(['next_reconcile_at' => null]);
+        $this->artisan('payments:recover-snippe-initiation', $command)->assertExitCode(1);
+        Http::assertSentCount(1);
+        $this->assertSame('pi_mobile', $payment->fresh()->provider_payment_reference);
+        $this->assertDatabaseCount('commerce_payments', 1);
+        $this->assertSame('unpaid', $order->fresh()->payment_status);
+    }
+
+    public function test_customer_retry_cannot_replay_an_ambiguous_initiation_even_when_due(): void
+    {
+        [$order, $payment] = $this->checkout(503);
+        $payment->update(['next_reconcile_at' => null]);
+        Http::swap(new Factory);
+        Http::preventStrayRequests();
+        Http::fake();
+        $this->post(route('snippe.retry', $order->confirmation_reference))->assertRedirect();
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('commerce_payments', 1);
+        $this->assertDatabaseHas('inventory_reservations', ['status' => 'active']);
     }
 
     private function product(string $title, string $slug, bool $active, array $extra = []): Product

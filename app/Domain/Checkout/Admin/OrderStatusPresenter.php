@@ -40,11 +40,16 @@ final class OrderStatusPresenter
     public function issue(?string $code): string
     {
         return match ($code) {
+            'initiation_not_recorded' => 'No provider reference or initiation timestamp is recorded. The scheduler will not send a payment request. Review this saved attempt; stock remains reserved.',
+            'initiation_outcome_unknown' => 'An initiation was recorded but its outcome is unknown. The scheduler will not replay it. Review Snippe before an authorized recovery using this same attempt.',
+            'idempotency_window_elapsed' => 'The safe initiation replay window has elapsed. Do not replay or create a replacement payment without resolving the original with Snippe.',
+            'https_required' => 'The saved callback URL is not HTTPS. Review the application origin; the saved request cannot be changed or sent as-is.',
             'cancellation_unconfirmed' => 'Cancellation could not be confirmed with Snippe. Check payment status before retrying; stock remains reserved.',
             'evidence_mismatch', 'session_mismatch' => 'Payment information from Snippe does not match this Order. Review the payment in Snippe before taking further action.',
             'reservation_mismatch', 'incompatible_lifecycle' => 'The payment cannot be applied to the current Order or stock commitment. Review the payment and inventory history.',
             'session_outcome_unknown' => 'Session creation has an unresolved outcome. Review Snippe before retrying; stock remains reserved.',
             'http_401', 'http_403', 'configuration' => 'Snippe access needs configuration review. The saved Order remains available.',
+            'network_unknown' => 'The provider connection had an uncertain result. This does not prove payment failed.',
             'payment_attempt_failed' => 'The payment attempt failed. The hosted Session may still allow the customer to retry.',
             default => 'Payment verification needs review. Check Snippe and the recorded references before taking further action.',
         };

@@ -18,6 +18,7 @@ use App\Domain\Media\Models\MediaAsset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class HomepageNewArrivalsManagementTest extends TestCase
@@ -34,7 +35,7 @@ final class HomepageNewArrivalsManagementTest extends TestCase
         app(ProvisionRegisteredAccess::class)->handle();
         $this->manager = User::factory()->create(['email_verified_at' => now()]);
         app(ControlledRoleMutation::class)->run(fn () => $this->manager->assignRole(RoleRegistry::CMS_MANAGER));
-        $this->category = ProductCategory::query()->create(['name' => 'New', 'slug' => 'new', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $this->category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'New', 'slug' => 'new', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
     }
 
     public function test_editor_and_searchable_picker_are_authorized_and_show_source_feedback(): void

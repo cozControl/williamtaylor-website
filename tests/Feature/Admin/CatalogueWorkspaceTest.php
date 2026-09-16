@@ -11,6 +11,7 @@ use App\Domain\Identity\Support\RoleRegistry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class CatalogueWorkspaceTest extends TestCase
@@ -51,7 +52,7 @@ final class CatalogueWorkspaceTest extends TestCase
 
     public function test_catalogue_workspace_uses_canonical_counts_and_real_attention_rules(): void
     {
-        $category = ProductCategory::query()->create(['name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
         $complete = Product::query()->create(['stable_key' => 'complete', 'slug' => 'complete', 'product_type' => 'apparel', 'catalogue_status' => 'ready', 'base_price_minor' => 10000, 'currency' => 'TZS', 'created_by' => $this->manager->id]);
         $complete->categories()->attach($category, ['is_primary' => true, 'position' => 0]);
         ProductVariant::query()->create(['id' => (string) Str::ulid(), 'product_id' => $complete->id, 'sku' => 'COMPLETE-1', 'combination_fingerprint' => hash('sha256', 'complete'), 'position' => 0, 'created_by' => $this->manager->id]);
@@ -89,7 +90,7 @@ final class CatalogueWorkspaceTest extends TestCase
 
     public function test_product_index_filters_by_search_and_category(): void
     {
-        $category = ProductCategory::query()->create(['name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Shirts', 'slug' => 'shirts', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
         $shirt = Product::query()->create(['stable_key' => 'linen-shirt', 'slug' => 'linen-shirt', 'product_type' => 'apparel', 'catalogue_status' => 'draft', 'currency' => 'TZS', 'created_by' => $this->manager->id]);
         $shirt->categories()->attach($category, ['is_primary' => true, 'position' => 0]);
         Product::query()->create(['stable_key' => 'wool-coat', 'slug' => 'wool-coat', 'product_type' => 'apparel', 'catalogue_status' => 'draft', 'currency' => 'TZS', 'created_by' => $this->manager->id]);

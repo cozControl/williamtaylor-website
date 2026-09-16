@@ -19,6 +19,7 @@ use App\Domain\Media\Models\MediaUsage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class HomepageExploreCollectionsManagementTest extends TestCase
@@ -35,7 +36,7 @@ final class HomepageExploreCollectionsManagementTest extends TestCase
         app(ProvisionRegisteredAccess::class)->handle();
         $this->manager = User::factory()->create(['email_verified_at' => now()]);
         app(ControlledRoleMutation::class)->run(fn () => $this->manager->assignRole(RoleRegistry::CMS_MANAGER));
-        $this->category = ProductCategory::query()->create([
+        $this->category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id,
             'name' => 'Explore',
             'slug' => 'explore',
             'is_visible' => true,
@@ -215,7 +216,7 @@ final class HomepageExploreCollectionsManagementTest extends TestCase
         $this->get(route('home'))->assertOk()
             ->assertSeeText('William Taylor')
             ->assertSeeText('New Arrivals')
-            ->assertSeeText("William's Hot Sale")
+            ->assertSee('data-homepage-hot-sale', false)
             ->assertSeeText('The Future of Style')
             ->assertSeeText('LIMITED EDITION')
             ->assertSeeText('Explore the Collection')
@@ -285,9 +286,17 @@ final class HomepageExploreCollectionsManagementTest extends TestCase
             ->assertSeeText('USING STOREFRONT DEFAULT')
             ->assertSeeText('Selected Collections below are not currently published because managed content is off.');
         $response = $this->get(route('home'))->assertOk()
-            ->assertSee(route('collections.show', $collection), false)
-            ->assertSee('html/mens-wear.html', false)
+            ->assertSeeText("Men's Wear")
             ->assertDontSee('<template id="homepage-explore-collections-projection">', false);
+        $dom = new \DOMDocument;
+        @$dom->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($dom);
+        $section = $xpath->query('//main//section[.//h2[normalize-space()="Explore the Collection"]]')->item(0);
+        $this->assertNotNull($section);
+        $this->assertStringNotContainsString(route('collections.show', $collection), $dom->saveHTML($section));
+        $this->assertSame(3, $xpath->query('.//a[@href="'.route('collections.index').'"]', $section)->length);
+        // A public Collection can still appear independently in the canonical Shop footer.
+        $this->assertGreaterThan(0, $xpath->query('//footer//a[@href="'.route('collections.show', $collection).'"]')->length);
         $this->assertFalse(app(HomepageExploreCollectionsPresenter::class)->present()['managed']);
     }
 

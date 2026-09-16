@@ -8,6 +8,7 @@ use App\Domain\Catalogue\Models\Collection;
 use App\Domain\Catalogue\Models\Product;
 use App\Domain\Catalogue\Models\ProductCategory;
 use App\Domain\Catalogue\Support\CollectionStateFingerprint;
+use App\Domain\Catalogue\Support\StorefrontShopNavigationPresenter;
 use App\Domain\Homepage\Models\HomepageHero;
 use App\Domain\Homepage\Support\HomepageSectionVisibility;
 use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
@@ -25,6 +26,7 @@ use App\Domain\SiteContent\Support\SiteContentFingerprint;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class StorefrontShopNavigationTest extends TestCase
@@ -41,7 +43,7 @@ final class StorefrontShopNavigationTest extends TestCase
         app(ProvisionRegisteredAccess::class)->handle();
         $this->manager = User::factory()->create(['email_verified_at' => now()]);
         app(ControlledRoleMutation::class)->run(fn () => $this->manager->assignRole(RoleRegistry::CMS_MANAGER));
-        $this->category = ProductCategory::query()->create([
+        $this->category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id,
             'name' => 'Explore',
             'slug' => 'explore',
             'is_visible' => true,
@@ -67,21 +69,22 @@ final class StorefrontShopNavigationTest extends TestCase
         $dom = new \DOMDocument;
         @$dom->loadHTML($html);
         $xpath = new \DOMXPath($dom);
-        foreach (['public-shop-dropdown', 'public-mobile-shop-links'] as $id) {
-            $nodes = $xpath->query('//*[@id="root"]//*[@id="'.$id.'"]/a');
-            $this->assertSame(['All Collections', 'Early Collection', 'Late Collection', 'New Arrivals', 'Pre-Order', 'Limited Edition'], array_map(fn ($node) => trim($node->textContent), iterator_to_array($nodes)));
-            $this->assertSame([route('collections.index'), route('collections.show', $early), route('collections.show', $late), route('collections.show', $arrival), route('preorders.index'), route('limited-edition.index')], array_map(fn ($node) => $node->getAttribute('href'), iterator_to_array($nodes)));
-        }
+        $navigation = app(StorefrontShopNavigationPresenter::class)->present();
+        $entries = [$navigation['all_collections'], ...$navigation['collections'], ...$navigation['special']];
+        $this->assertSame(['All Collections', 'Early Collection', 'Late Collection', 'New Arrivals', 'Pre-Order', 'Limited Edition'], array_column($entries, 'label'));
+        $this->assertSame([route('collections.index'), route('collections.show', $early), route('collections.show', $late), route('collections.show', $arrival), route('preorders.index'), route('limited-edition.index')], array_column($entries, 'url'));
+        $this->assertCount(0, $xpath->query('//*[@id="root"]//header//*[@data-shop-navigation]'));
         $cards = $xpath->query('//*[@data-collection-card]');
         $this->assertCount(3, $cards);
         $this->assertStringContainsString('Early Collection', $cards[0]->textContent);
         $this->assertStringContainsString('canonical alt', $xpath->query('//*[@data-collection-card]//img')->item(0)->getAttribute('alt'));
         $response->assertDontSee(route('collections.show', $hidden), false)->assertDontSee(route('collections.show', $archived), false);
-        $this->get(route('collections.show', $early))->assertOk()->assertSee('aria-current="page"', false);
+        $this->get(route('collections.show', $early))->assertOk();
+        $this->assertTrue(app(StorefrontShopNavigationPresenter::class)->present()['collections'][0]['active']);
         $arrival->forceFill(['slug' => 'fresh-this-week'])->save();
         app(ReviseCollection::class)->handle($this->manager, $early, app(CollectionStateFingerprint::class)->identity($early), ['title' => 'Renamed Collection', 'short_description' => 'Renamed description.']);
         app(UpdateCollectionVisibility::class)->handle($this->manager, $early, 'ready');
-        $this->get(route('collections.index'))->assertSeeText('Renamed Collection')->assertSee(route('collections.show', 'fresh-this-week'), false)->assertDontSee(route('collections.show', 'fresh-selection'), false);
+        $this->get(route('collections.index'))->assertSeeText('Renamed Collection')->assertDontSee(route('collections.show', 'fresh-selection'), false);
         $early->forceFill(['catalogue_status' => 'draft'])->save();
         $this->get(route('collections.index'))->assertDontSeeText('Renamed Collection');
         $this->get(route('collections.show', $early))->assertNotFound();
@@ -93,7 +96,7 @@ final class StorefrontShopNavigationTest extends TestCase
         $arrival = $this->collection('New Arrivals', [], true);
         $product = $this->product('Navigation Product', 'navigation-product', true);
         foreach ([route('home'), route('collections.index'), route('collections.show', $arrival), route('preorders.index'), route('limited-edition.index'), route('products.show', $product)] as $url) {
-            $response = $this->get($url)->assertOk()->assertSee('data-canonical-shop-header', false)->assertSee('data-shop-navigation="desktop"', false)->assertSee('data-shop-navigation="mobile"', false)->assertSee('public-shop-header-template', false);
+            $response = $this->get($url)->assertOk()->assertSee('data-canonical-shop-header', false)->assertDontSee('data-shop-navigation="desktop"', false)->assertDontSee('data-shop-navigation="mobile"', false)->assertSee('public-shop-header-template', false);
             $dom = new \DOMDocument;
             @$dom->loadHTML($response->getContent());
             $xpath = new \DOMXPath($dom);
@@ -113,7 +116,7 @@ final class StorefrontShopNavigationTest extends TestCase
         $this->get(route('admin.collections.edit', $collection))->assertOk()->assertSeeText('Storefront order');
     }
 
-    public function test_published_editorial_links_survive_and_legacy_commerce_links_are_suppressed(): void
+    public function test_published_editorial_data_survives_without_rendering_header_links(): void
     {
         config()->set('public_site_content.enabled', true);
         $resource = app(EnsureSiteContent::class)->handle($this->manager, 'primary_navigation', null, 'Navigation');
@@ -128,40 +131,41 @@ final class StorefrontShopNavigationTest extends TestCase
         $workflow->publish($this->manager, $resource, $fingerprint());
         $savedPayload = $resource->fresh()->currentDraftRevision->payload;
         app()->forgetInstance(ResolvePublicSiteChrome::class);
-        $this->get(route('collections.index'))->assertOk()->assertSeeText('Browse')->assertSeeText('Our Story')->assertSeeText('Editorial')->assertDontSeeText('Legacy Unisex')->assertDontSeeText('Old Limited');
+        $this->get(route('collections.index'))->assertOk()->assertDontSeeText('Browse')->assertDontSeeText('Our Story')->assertDontSeeText('Editorial')->assertDontSeeText('Legacy Unisex')->assertDontSeeText('Old Limited');
+        $navigation = app(StorefrontShopNavigationPresenter::class)->present();
+        $this->assertSame('Browse', $navigation['label']);
+        $this->assertSame(['Our Story', 'Editorial'], array_map(fn ($item) => $item->link->label, $navigation['editorial']));
         $this->assertSame($savedPayload, $resource->fresh()->currentDraftRevision->payload);
     }
 
-    /** @param list<Product> $products */
-    public function test_header_links_follow_homepage_visibility_on_desktop_mobile_and_sync_template(): void
+    public function test_navigation_data_still_follows_visibility_without_rendering_in_minimal_header(): void
     {
         $arrival = $this->collection('New Arrivals', [], true);
         HomepageHero::query()->updateOrCreate(['id' => HomepageHero::SINGLETON_ID], [...HomepageHero::defaults(), 'new_arrivals_collection_id' => $arrival->id, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
-        $sections = ['explore-collections' => 'Collections', 'new-arrivals' => 'New Arrivals', 'future-style' => 'Pre-Order', 'limited-edition' => 'Limited Edition'];
-        foreach ($sections as $section => $label) {
-            app(HomepageSectionVisibility::class)->setVisible($this->manager, $section, false);
-            foreach (['home', 'collections.index'] as $route) {
-                $html = $this->get(route($route))->assertOk()->getContent();
-                $dom = new \DOMDocument;
-                @$dom->loadHTML($html);
-                $xpath = new \DOMXPath($dom);
-                foreach (['desktop', 'mobile'] as $surface) {
-                    $links = $xpath->query('//*[@data-shop-navigation="'.$surface.'"]/a');
-                    $labels = array_map(fn ($node) => trim($node->textContent), iterator_to_array($links));
-                    $this->assertNotContains($label, $labels);
-                }
-            }
-            app(HomepageSectionVisibility::class)->setVisible($this->manager, $section, true);
-            $html = $this->get(route('home'))->assertOk()->getContent();
-            $dom = new \DOMDocument;
-            @$dom->loadHTML($html);
-            $xpath = new \DOMXPath($dom);
-            foreach (['desktop', 'mobile'] as $surface) {
-                $links = $xpath->query('//*[@data-shop-navigation="'.$surface.'"]/a');
-                $labels = array_map(fn ($node) => trim($node->textContent), iterator_to_array($links));
-                $this->assertContains($label, $labels);
+        foreach (['explore-collections' => 'Collections', 'new-arrivals' => 'New Arrivals', 'future-style' => 'Pre-Order', 'limited-edition' => 'Limited Edition'] as $section => $label) {
+            foreach ([false, true] as $visible) {
+                app(HomepageSectionVisibility::class)->setVisible($this->manager, $section, $visible);
+                $this->get(route('home'))->assertOk()->assertDontSee('data-shop-navigation=', false);
+                $labels = array_column(app(StorefrontShopNavigationPresenter::class)->present()['top_links'], 'label');
+                $this->assertSame($visible, in_array($label, $labels, true));
             }
         }
+    }
+
+    public function test_search_uses_canonical_product_visibility_and_preserves_zero_stock_discovery(): void
+    {
+        $ready = $this->product('Searchable Oxford', 'searchable-oxford', true);
+        $hidden = $this->product('Searchable Hidden', 'searchable-hidden', false);
+        $archived = $this->product('Searchable Archived', 'searchable-archived', true);
+        $archived->update(['archived_at' => now()]);
+        $this->get(route('search', ['q' => 'Searchable']))->assertOk()
+            ->assertSee('Searchable Oxford')->assertSee(route('products.show', $ready), false)
+            ->assertDontSee('Searchable Hidden')->assertDontSee('Searchable Archived');
+        $this->get(route('search', ['q' => 'No match']))->assertOk()->assertSee('No products found');
+        $this->get(route('search', ['q' => '%']))->assertOk()->assertSee('No products found');
+        $this->get(route('search'))->assertOk()->assertDontSee('data-storefront-product-card', false);
+        $this->getJson(route('search', ['q' => ['invalid']]))->assertUnprocessable();
+        $this->getJson(route('search', ['q' => str_repeat('x', 101)]))->assertUnprocessable();
     }
 
     private function collection(string $name, array $products, bool $visible, string $description = 'Canonical Collection description.', ?string $altOverride = null): Collection

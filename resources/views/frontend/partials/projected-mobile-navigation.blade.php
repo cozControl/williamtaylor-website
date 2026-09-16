@@ -17,10 +17,10 @@
    @endforeach
    @foreach($shopNavigation['editorial'] as $item)
     @if($item->visibility !== 'desktop')
-     <a class="block px-6 py-3.5 font-body text-lg uppercase text-wt-cream hover:text-wt-gold" href="{{ $item->link->url }}" @if($item->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $item->link->label }}</a>
+     <a class="block px-6 py-3.5 font-body text-lg uppercase text-wt-cream hover:text-wt-gold" href="{{ app(\App\Domain\Catalogue\Support\StorefrontShopNavigationPresenter::class)->canonicalCollectionLink($item->link->url) }}" @if($item->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $item->link->label }}</a>
      @foreach($item->children as $child)
       @if($child->visibility !== 'desktop')
-       <a class="block px-10 py-2.5 font-label text-xs uppercase text-wt-cream/60 hover:text-wt-gold" href="{{ $child->link->url }}" @if($child->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $child->link->label }}</a>
+       <a class="block px-10 py-2.5 font-label text-xs uppercase text-wt-cream/60 hover:text-wt-gold" href="{{ app(\App\Domain\Catalogue\Support\StorefrontShopNavigationPresenter::class)->canonicalCollectionLink($child->link->url) }}" @if($child->link->newTab) target="_blank" rel="noopener noreferrer" @endif>{{ $child->link->label }}</a>
       @endif
      @endforeach
     @endif

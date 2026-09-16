@@ -117,6 +117,7 @@
         @endphp
         <x-admin.homepage-section-summary section-key="client-stories" position="10" title="Client Stories" :summary="count($clientStories['stories']).' visible client stories ready for the storefront'" :status="$clientStories['managed'] ? ($clientStories['attention_count'] ? 'Needs attention' : (count($clientStories['stories']) ? 'Configured' : 'No visible stories')) : 'Using storefront default'" :tone="$clientStories['managed'] ? ($clientStories['attention_count'] ? 'attention' : 'configured') : 'default'" :href="route('admin.homepage.client-stories.edit')" action-label="Manage Client Stories" />
 
+        <x-admin.homepage-section-summary section-key="follow-the-journey" position="11" title="Follow the Journey" summary="Show or hide the existing Instagram gallery. Links and media are preserved." status="Using storefront content" tone="default" />
 
     </div>
 </x-admin.layout>

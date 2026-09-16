@@ -20,6 +20,7 @@ use App\Domain\Media\Models\MediaAsset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Tests\Support\CategoryOwner;
 use Tests\TestCase;
 
 final class HomepageLimitedEditionManagementTest extends TestCase
@@ -40,7 +41,7 @@ final class HomepageLimitedEditionManagementTest extends TestCase
         $this->approver = User::factory()->create(['email_verified_at' => now()]);
         app(ControlledRoleMutation::class)->run(fn () => $this->manager->assignRole(RoleRegistry::CMS_MANAGER));
         app(ControlledRoleMutation::class)->run(fn () => $this->approver->assignRole(RoleRegistry::SUPER_ADMINISTRATOR));
-        $this->category = ProductCategory::query()->create(['name' => 'Limited Edition', 'slug' => 'limited-edition-products', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $this->category = ProductCategory::query()->create(['collection_id' => CategoryOwner::for($this->manager->id)->id, 'name' => 'Limited Edition', 'slug' => 'limited-edition-products', 'is_visible' => true, 'position' => 0, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
     }
 
     public function test_campaign_workspace_distinguishes_types_and_enforces_type_specific_fields(): void

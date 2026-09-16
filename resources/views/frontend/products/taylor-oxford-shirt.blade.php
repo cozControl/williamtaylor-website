@@ -32,7 +32,7 @@
         <span class="text-gray-300">
          /
         </span>
-        <a class="text-gray-400 hover:text-wt-oxblood transition-colors uppercase" href="{{ ($oxfordProduct['category']['slug'] ?? null) ? url('/shop?category='.$oxfordProduct['category']['slug']) : '/collections/mens-wear' }}">
+        <a class="text-gray-400 hover:text-wt-oxblood transition-colors uppercase" href="{{ $oxfordProduct['category']['url'] ?? route('collections.index') }}">
          {{ $oxfordProduct['category']['name'] ?? "Men's Shirts" }}
         </a>
         <span class="text-gray-300">

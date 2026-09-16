@@ -27,8 +27,8 @@
         </section>
 
         <section class="admin-panel admin-form-grid"><div class="admin-section-heading"><p>Categories & merchandising</p><h2>Storefront classification</h2></div>
-            <label>Primary Category<select name="primary_category_id" required><option value="">Choose Category</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected(old('primary_category_id', $primaryCategory?->id) === $category->id)>{{ $category->parent?->name ? $category->parent->name.' → ' : '' }}{{ $category->name }}</option>@endforeach</select></label>
-            <fieldset><legend>Additional Categories</legend>@foreach($categories as $category)<label><input type="checkbox" name="category_ids[]" value="{{ $category->id }}" @checked(in_array($category->id, old('category_ids', $product->categories->pluck('id')->all()), true))> {{ $category->name }}</label>@endforeach</fieldset>
+            <label>Primary Category<select name="primary_category_id" required><option value="">Choose Category</option>@foreach($categories as $category)<option value="{{ $category->id }}" @selected(old('primary_category_id', $primaryCategory?->id) === $category->id)>{{ $category->parent?->name ? $category->parent->name.' → ' : '' }}{{ $category->name }} ({{ $category->collection->currentDraftRevision?->title ?? $category->collection->slug }})</option>@endforeach</select></label>
+            <fieldset><legend>Additional Categories</legend>@foreach($categories as $category)<label><input type="checkbox" name="category_ids[]" value="{{ $category->id }}" @checked(in_array($category->id, old('category_ids', $product->categories->pluck('id')->all()), true))> {{ $category->name }} ({{ $category->collection->currentDraftRevision?->title ?? $category->collection->slug }})</label>@endforeach</fieldset>
         </section>
 
         <section class="admin-panel"><div class="admin-section-heading"><p>Media</p><h2>Primary image and gallery</h2><p>Only ready images are shown. Removing an association preserves the Media Asset.</p></div>
