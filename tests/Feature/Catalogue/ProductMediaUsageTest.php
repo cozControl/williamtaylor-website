@@ -13,6 +13,7 @@ use App\Domain\Catalogue\Actions\SyncProductCatalogueStatus;
 use App\Domain\Catalogue\Actions\UpdateProductMediaUsage;
 use App\Domain\Catalogue\Exceptions\StaleCatalogueState;
 use App\Domain\Catalogue\Models\Product;
+use App\Domain\Catalogue\Models\ProductCategory;
 use App\Domain\Catalogue\Support\CatalogueReadinessEvaluator;
 use App\Domain\Catalogue\Support\ProductMediaAccessibility;
 use App\Domain\Catalogue\Support\ProductMediaRoleRegistry;
@@ -149,6 +150,7 @@ final class ProductMediaUsageTest extends TestCase
 
         $asset = $this->image('Front view');
         $usage = $this->assign($product, $asset, 'primary');
+        $this->assertSame([], app(CatalogueReadinessEvaluator::class)->evaluate($product->fresh())->failureCodes);
         $this->assertSame('ready', app(SyncProductCatalogueStatus::class)->handle($this->actor, $product->fresh()));
 
         $asset->update(['state' => MediaAssetState::Archived, 'archived_at' => now()]);
@@ -176,8 +178,13 @@ final class ProductMediaUsageTest extends TestCase
         app(CreateProductRevision::class)->handle($this->actor, $product, 0, ['title' => 'Tailored jacket', 'features' => []]);
         $product = $product->fresh();
         $variant = app(CreateProductVariant::class)->handle($this->actor, $product, $this->state($product), []);
+        $variant->update(['sku' => 'SKU-'.$variant->id]);
         $product = $product->fresh();
         app(SetDefaultProductVariant::class)->handle($this->actor, $product, $variant, $this->state($product));
+
+        $product->update(['base_price_minor' => 10000]);
+        $category = ProductCategory::create(['name' => 'Test category', 'slug' => 'category-'.$product->id, 'is_visible' => true, 'created_by' => $this->actor->id, 'updated_by' => $this->actor->id]);
+        $product->categories()->attach($category->id, ['is_primary' => true, 'position' => 0]);
 
         return $product->fresh();
     }

@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Domain\Checkout\Enums\OrderStatus;
 use App\Domain\Checkout\Models\Order;
+use App\Domain\Payments\MobileMoneyPayment;
 use App\Domain\Payments\Models\Payment;
 use App\Domain\Payments\Snippe\ProcessSnippeWebhook;
 use App\Domain\Payments\Snippe\SnippeException;
 use App\Domain\Payments\Snippe\StartSnippePayment;
 use App\Domain\Payments\Snippe\VerifySnippeWebhook;
+use App\Domain\Payments\Support\CheckoutPaymentState;
 use Illuminate\Http\Request;
 
 final class SnippePaymentController
@@ -16,15 +18,26 @@ final class SnippePaymentController
     public function initiate(Order $order): mixed
     {
         try {
-            $payment = app(StartSnippePayment::class)->start($order);
-            if ($payment->active_order_id !== null && $payment->provider_checkout_url !== null && ! $payment->expires_at?->isPast() && $payment->reconciliation_issue === null && in_array($payment->last_provider_status, ['pending', 'active'], true)) {
-                return redirect()->away($payment->provider_checkout_url)->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
+            $payment = Payment::query()->where('order_id', $order->id)->latest('id')->first();
+            if ($payment?->method === 'mobile_money') {
+                app(MobileMoneyPayment::class)->start($order);
+            } elseif ($payment) {
+                // Historical hosted records remain reconcilable, without creating new Sessions.
+                app(StartSnippePayment::class)->refresh($payment);
             }
         } catch (SnippeException|\InvalidArgumentException) {
-            // The Order is already committed. Never show it as a failed Order.
+            // The committed Order and reservation remain available.
         }
 
-        return redirect()->route('checkout.confirmation', $order->confirmation_reference)->with('payment_notice', "Your order has been saved. We couldn't open the secure payment page right now. Please check its status or try payment again.")->header('Cache-Control', 'private, no-store');
+        return redirect()->route('checkout.confirmation', $order->confirmation_reference)->header('Cache-Control', 'private, no-store');
+    }
+
+    public function status(string $reference): mixed
+    {
+        $order = Order::query()->where('confirmation_reference', $reference)->firstOrFail();
+        $payment = $order->payments()->latest('id')->first();
+
+        return response()->json(CheckoutPaymentState::for($order, $payment))->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer')->header('X-Robots-Tag', 'noindex, nofollow');
     }
 
     public function retry(string $reference): mixed

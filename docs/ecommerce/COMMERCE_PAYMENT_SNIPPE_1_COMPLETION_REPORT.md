@@ -1,5 +1,7 @@
 # COMMERCE-PAYMENT-SNIPPE-1 completion report
 
+> Historical hosted integration report. New checkout payments now use [PAYMENTS-SNIPPE-1 Direct Mobile Money](PAYMENTS_SNIPPE_1_MOBILE_MONEY_REPORT.md). Use the current [setup guide](SNIPPE_CHECKOUT_SETUP.md) for deployment.
+
 Date: 2026-09-10
 
 **COMMERCE-PAYMENT-SNIPPE-1 IMPLEMENTATION READY FOR GENERAL INSPECTION**

@@ -10,7 +10,7 @@ final class ReconcileSnippePayments extends Command
 {
     protected $signature = 'payments:reconcile-snippe {--limit=10}';
 
-    protected $description = 'Reconcile a bounded batch of outstanding Snippe Sessions without exposing customer payloads';
+    protected $description = 'Reconcile a bounded batch of outstanding Snippe payments without exposing customer payloads';
 
     public function handle(StartSnippePayment $service): int
     {

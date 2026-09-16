@@ -1338,7 +1338,7 @@
            <line x1="17.5" x2="17.51" y1="6.5" y2="6.5">
            </line>
           </svg>
-          Follow @williamtaylor
+          Follow William Taylor Brand
          </a>
         </div>
        </div>
@@ -1419,6 +1419,15 @@
  if (!dataNode || !root) return;
  const data = JSON.parse(dataNode.textContent);
  const hiddenSections = JSON.parse(document.getElementById('homepage-hidden-sections')?.textContent || '{}');
+ // Keep native anchor navigation ahead of the imported router's delegated handlers.
+ // Capture on document because the imported runtime also captures events on root.
+ const preserveHeroNavigation = event => {
+  const link = event.target instanceof Element ? event.target.closest('[data-homepage-hero-actions] a') : null;
+  if (!link || !root.contains(link)) return;
+  event.stopImmediatePropagation();
+ };
+ document.addEventListener('click', preserveHeroNavigation, true);
+ document.addEventListener('auxclick', preserveHeroNavigation, true);
  const setText = (node, value) => { if (node && node.textContent.trim() !== value) node.textContent = value; };
  const setAttribute = (node, name, value) => { if (node && node.getAttribute(name) !== value) node.setAttribute(name, value); };
  const synchronizeHero = () => {
@@ -1528,6 +1537,13 @@
   if (!current || current.hasAttribute('data-homepage-client-stories')) return;
   current.replaceWith(projected.cloneNode(true));
  };
+ const synchronizeFollowLabel = () => {
+  const section = [...root.querySelectorAll('h2')].find(node => node.textContent.trim() === 'Follow the Journey')?.closest('section');
+  const button = section?.querySelector('a.btn-outline');
+  if (!button) return;
+  const label = [...button.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().startsWith('Follow'));
+  if (label && label.textContent.trim() !== 'Follow William Taylor Brand') label.textContent = ' Follow William Taylor Brand';
+ };
  const synchronizeVisibility = () => {
   const sharedContainers = new Set();
   Object.entries(hiddenSections).forEach(([key, section]) => {
@@ -1549,7 +1565,7 @@
    sharedContainers.forEach(container => container.remove());
   }
  };
- const synchronize = () => { synchronizeVisibility(); synchronizeHero(); synchronizeNewArrivals(); synchronizeHotSale(); synchronizeFutureStyle(); synchronizeLimitedEdition(); synchronizeExploreCollections(); synchronizeSummerEdit(); synchronizeDelivery(); synchronizeHandbags(); synchronizeClientStories(); };
+ const synchronize = () => { synchronizeVisibility(); synchronizeHero(); synchronizeNewArrivals(); synchronizeHotSale(); synchronizeFutureStyle(); synchronizeLimitedEdition(); synchronizeExploreCollections(); synchronizeSummerEdit(); synchronizeDelivery(); synchronizeHandbags(); synchronizeClientStories(); synchronizeFollowLabel(); };
  const observer = new MutationObserver(synchronize);
  observer.observe(root, {childList: true, subtree: true});
  window.addEventListener('load', () => requestAnimationFrame(() => requestAnimationFrame(synchronize)), {once: true});

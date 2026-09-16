@@ -12,6 +12,7 @@ use App\Domain\Checkout\Models\Order;
 use App\Domain\Inventory\Models\InventoryBalance;
 use App\Domain\Inventory\Models\StockLocation;
 use App\Domain\Inventory\Services\InventoryReservationService;
+use App\Domain\Payments\MobileMoneyPayment;
 use App\Domain\Payments\Snippe\SnippeMoney;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -64,15 +65,9 @@ final class PlaceOrderService
                 }
                 if (config('snippe.enabled')) {
                     try {
-                        if (count($summary['lines']) > 50) {
-                            throw new \InvalidArgumentException;
-                        }
                         SnippeMoney::tzs($summary['subtotal_minor'], 'TZS');
-                        foreach ($summary['lines'] as $line) {
-                            SnippeMoney::tzs($line['unit_price_minor'], 'TZS', false);
-                        }
                     } catch (\InvalidArgumentException) {
-                        throw ValidationException::withMessages(['cart' => 'This bag cannot currently use online payment. Please review the items and quantities.']);
+                        throw ValidationException::withMessages(['cart' => 'Mobile Money requires a total of at least TZS 500 in whole shillings. Please review your bag.']);
                     }
                 }
                 $sequence = DB::table('commerce_order_numbers')->insertGetId([]);
@@ -100,6 +95,9 @@ final class PlaceOrderService
                 $this->reservations->reserveMany($storedLines, $location);
                 if ($total !== $order->subtotal_minor || $total !== $order->total_minor) {
                     throw new \LogicException('Order totals do not reconcile.');
+                }
+                if (config('snippe.enabled')) {
+                    app(MobileMoneyPayment::class)->prepare($order, $data['payer_phone'] ?? $data['phone']);
                 }
                 app(RecordAuditEvent::class)->handle('commerce.order.placed', $order, null, null, ['order_number' => $order->order_number, 'line_count' => count($summary['lines']), 'quantity' => $summary['item_count'], 'total_minor' => $total, 'currency' => 'TZS', 'inventory_status' => 'reserved']);
 

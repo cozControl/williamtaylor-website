@@ -11,7 +11,6 @@ use App\Domain\Homepage\Models\HomepageHero;
 use App\Domain\Media\Contracts\MediaProvider;
 use App\Domain\Media\Models\MediaUsage;
 use App\Domain\Media\Queries\ReadyImagePickerQuery;
-use Illuminate\Support\Facades\Schema;
 
 final class HomepageHandbagsPresenter
 {
@@ -23,10 +22,10 @@ final class HomepageHandbagsPresenter
     public function present(): array
     {
         $result = [...HomepageHero::handbagsDefaults(), 'managed' => false, 'eligible' => false, 'collection' => null, 'products' => [], 'slides' => [], 'cta_url' => null, 'ready_count' => 0, 'attention_count' => 0];
-        if (! Schema::hasColumns('homepage_heroes', ['handbags_managed', 'handbags_collection_id'])) {
+        if (! app(HomepageRenderSnapshot::class)->hasColumns(['handbags_managed', 'handbags_collection_id'])) {
             return $result;
         }
-        $homepage = HomepageHero::find(HomepageHero::SINGLETON_ID);
+        $homepage = app(HomepageRenderSnapshot::class)->hero();
         if ($homepage === null) {
             return $result;
         }

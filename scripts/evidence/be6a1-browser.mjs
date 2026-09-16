@@ -110,11 +110,11 @@ function inspectProcess(pid) {
             `$process = Get-CimInstance Win32_Process -Filter "ProcessId = ${numericPid}"`,
             'if ($null -eq $process) { [pscustomobject]@{ alive = $false; pid = ' + numericPid + ' } | ConvertTo-Json -Compress }',
             'else { [pscustomobject]@{ alive = $true; pid = [int]$process.ProcessId; parentPid = [int]$process.ParentProcessId; creationDate = [string]$process.CreationDate; executablePath = [string]$process.ExecutablePath; commandLine = [string]$process.CommandLine } | ConvertTo-Json -Compress }',
-        ].join('; ');
+        ].join('\n');
         const raw = JSON.parse(execFileSync(
             'powershell.exe',
-            ['-NoProfile', '-NonInteractive', '-Command', command],
-            { encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] },
+            ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(command, 'utf16le').toString('base64')],
+            { encoding: 'utf8', windowsHide: true, timeout: 15_000, stdio: ['ignore', 'pipe', 'ignore'] },
         ).trim());
         return {
             pid: numericPid,
@@ -181,6 +181,7 @@ async function availablePort() {
 function processEnvironment(appUrl, projection = false, about = {}) {
     return {
         ...process.env,
+        XDEBUG_MODE: 'off',
         APP_ENV: 'testing',
         APP_DEBUG: 'false',
         APP_KEY: appKey,
@@ -201,9 +202,10 @@ function processEnvironment(appUrl, projection = false, about = {}) {
 }
 
 function runPhp(args, environment) {
-    return execFileSync('php', args, {
+    return execFileSync('php', ['-d', 'xdebug.mode=off', ...args], {
         cwd: root,
         env: environment,
+        timeout: 120_000,
         encoding: 'utf8',
         windowsHide: true,
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -463,7 +465,7 @@ async function waitForHealthy(url, expectedNonce, timeout = 30_000) {
     const started = Date.now();
     while (Date.now() - started < timeout) {
         try {
-            const response = await fetch(url, { redirect: 'manual' });
+            const response = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(Math.min(5_000, Math.max(1, timeout - (Date.now() - started)))) });
             if (
                 response.status < 500
                 && response.headers.get('x-be6a1-readiness') === expectedNonce
@@ -880,15 +882,31 @@ async function semanticSnapshot(page, expected) {
     if (!snapshot.keyStyleEntries.length) result.push('key-style-evidence-empty');
     if (!snapshot.rasterSensitiveRegionEntries.length) result.push('raster-sensitive-region-evidence-empty');
     return result;
-}async function waitForReadyAndStable(page, expected) {
+}
+async function waitForReadyAndStable(page, expected) {
+    let timer;
+    try {
+        return await Promise.race([
+            collectReadyAndStable(page, expected),
+            new Promise((_, reject) => {
+                timer = setTimeout(() => reject(new Error('Storefront readiness exceeded 90 seconds; renderer or animation-frame evaluation did not complete.')), 90_000);
+            }),
+        ]);
+    } finally {
+        clearTimeout(timer);
+    }
+}
+async function collectReadyAndStable(page, expected) {
     const timeline = [];
     const started = Date.now();
     let consecutive = 0;
     let previous = null;
     let previousBuffer = null;
     await page.evaluate(async () => {
-        const pause = () => new Promise((resolveFrame) =>
-            requestAnimationFrame(() => requestAnimationFrame(resolveFrame)));
+        const pause = () => new Promise((resolveFrame) => {
+            const timer = setTimeout(resolveFrame, 250);
+            requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(timer); resolveFrame(); }));
+        });
         let priorHeight = 0;
         for (let sweep = 0; sweep < 3; sweep++) {
             const height = document.documentElement.scrollHeight;
@@ -945,8 +963,10 @@ async function semanticSnapshot(page, expected) {
             for (const animation of document.getAnimations()) {
                 try { animation.finish(); } catch { animation.cancel(); }
             }
-            await new Promise((resolveFrame) =>
-                requestAnimationFrame(() => requestAnimationFrame(resolveFrame)));
+            await new Promise((resolveFrame) => {
+                const timer = setTimeout(resolveFrame, 250);
+                requestAnimationFrame(() => requestAnimationFrame(() => { clearTimeout(timer); resolveFrame(); }));
+            });
         });
         const snapshot = await semanticSnapshot(page, expected);
         const buffer = canonicalPng(await page.screenshot({
@@ -1575,6 +1595,7 @@ async function adminMatrices(browser, baseUrl, fixture, network) {
                 state === 'ordinary' ? 'forbidden' :
                 state === 'adminOnly' ? (path === '/admin' ? 'allowed' : 'forbidden') :
                 'allowed';
+            await json('security-progress.json', { path, state, completed: routeMatrix.length, at: new Date().toISOString() });
             const visit = await navigateState(browser, baseUrl, cookie, path, expected, `admin:${state}:${path}`, network, requestLog);
             routeMatrix.push(visit.result);
             await closeContext(visit.context, `admin:${state}:${path}`);
@@ -2517,6 +2538,7 @@ async function main() {
     const staticOrigin = `http://127.0.0.1:${staticPort}`;
     const laravelOrigin = `http://127.0.0.1:${laravelPort}`;
     const environment = processEnvironment(laravelOrigin, false);
+    await json('startup-progress.json', { step: 'database', at: new Date().toISOString() });
     await writeFile(database, '');
     runPhp(['artisan', 'migrate:fresh', '--force'], environment);
     const fixture = JSON.parse(runPhp(['scripts/evidence/be6a1-fixture.php'], environment));
@@ -2525,6 +2547,7 @@ async function main() {
         actors: fixture.actors,
         resources: fixture.resources,
     });
+    await json('startup-progress.json', { step: 'servers', at: new Date().toISOString() });
     const staticServer = startServer(
         'php',
         ['-S', `127.0.0.1:${staticPort}`, '-t', join(root, 'public', 'website'), join(root, 'scripts', 'fidelity', 'static-router.php')],
@@ -2542,6 +2565,7 @@ async function main() {
         waitForHealthy(`${laravelOrigin}/`, readinessNonce),
     ]);
 
+    await json('startup-progress.json', { step: 'browser', at: new Date().toISOString() });
     let stageBrowserSession = null;
     if (['security', 'preview', 'visual'].includes(stage)) {
         stageBrowserSession = await launchIsolatedBrowser(stage);

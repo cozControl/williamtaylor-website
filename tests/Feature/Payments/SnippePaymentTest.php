@@ -81,9 +81,13 @@ final class SnippePaymentTest extends TestCase
         app(InventoryLedgerService::class)->post($this->manager, $product->defaultVariant, StockLocation::main(), MovementType::Receipt, 5, 'Payment fixture');
         auth()->forgetGuards();
         $this->postJson('/cart/items', ['variant_id' => $product->defaultVariant->id, 'quantity' => 2])->assertOk();
-        $this->get('/checkout')->assertOk()->assertSee('Continue to secure payment');
+        // Historical hosted records remain supported; new public checkout uses Mobile Money.
+        config(['snippe.enabled' => false]);
+        $this->get('/checkout')->assertOk()->assertSee('Place Order');
         $response = $this->post('/checkout', ['submission' => array_key_last(session('checkout_attempts')), 'name' => 'Guest', 'email' => 'guest@example.test', 'phone' => '+255712345678', 'address' => 'Private address', 'city' => 'Dar', 'region' => 'Dar']);
-        $response->assertRedirect($failureStatus === null ? 'https://snippe.me/checkout/test' : route('checkout.confirmation', Order::query()->sole()->confirmation_reference));
+        $response->assertRedirect(route('checkout.confirmation', Order::query()->sole()->confirmation_reference));
+        config(['snippe.enabled' => true]);
+        app(StartSnippePayment::class)->start(Order::query()->sole());
 
         return [Order::query()->sole(), Payment::query()->sole(), $product->defaultVariant];
     }
@@ -222,7 +226,7 @@ final class SnippePaymentTest extends TestCase
 
             return Http::response(['data' => [['reference' => 'sess_test', 'status' => 'pending', 'amount' => 250000, 'currency' => 'TZS', 'checkout_url' => 'https://snippe.me/checkout/test', 'metadata' => ['payment_attempt' => $payment->attempt_key, 'order_id' => $order->id]]]]);
         }]);
-        $this->post(route('snippe.retry', $order->confirmation_reference))->assertRedirect('https://snippe.me/checkout/test');
+        app(StartSnippePayment::class)->start($order);
         $this->assertDatabaseCount('commerce_payments', 1);
         $this->assertDatabaseCount('commerce_orders', 1);
         $this->assertSame('sess_test', $payment->fresh()->provider_session_reference);
@@ -263,7 +267,7 @@ final class SnippePaymentTest extends TestCase
         Http::fake(['*' => function ($request) {
             return Http::response(['data' => ['reference' => 'sess_retry', 'status' => 'pending', 'amount' => 250000, 'currency' => 'TZS', 'checkout_url' => 'https://snippe.me/checkout/retry', 'metadata' => $request['metadata']]], 201);
         }]);
-        $this->post(route('snippe.retry', $order->confirmation_reference))->assertRedirect('https://snippe.me/checkout/retry');
+        app(StartSnippePayment::class)->start($order);
         $this->assertDatabaseCount('commerce_orders', 1);
         $this->assertDatabaseCount('commerce_payments', 2);
         $this->assertDatabaseCount('inventory_reservations', 1);

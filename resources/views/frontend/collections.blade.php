@@ -17,6 +17,8 @@
   </section>
  </main>
  @include('frontend.partials.footer')
+ @include('frontend.partials.mobile-bottom-navigation')
+ @include('frontend.partials.whatsapp-action')
 </div></div>
 <style>.wt-all-collections-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}@media(min-width:768px){.wt-all-collections-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}</style>
 @endsection

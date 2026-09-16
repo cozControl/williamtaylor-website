@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class PublicTemplatePagesTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_supplied_public_pages_render_from_named_laravel_routes(): void
     {
         $pages = [
@@ -27,7 +30,12 @@ class PublicTemplatePagesTest extends TestCase
                 ->assertOk()
                 ->assertSeeText($heading)
                 ->assertSee('/website/css/index-X8-QjRMe.css', false)
-                ->assertSee('/website/js/index-DxdnTNDA.js', false);
+                ->assertSee('/website/js/cart.js', false);
+            if (in_array($route, ['products.index', 'gift-cards.index', 'wishlist.index'], true)) {
+                $this->get(route($route))->assertSee('/website/js/index-DxdnTNDA.js', false);
+            } else {
+                $this->get(route($route))->assertDontSee('/website/js/index-DxdnTNDA.js', false);
+            }
         }
     }
 

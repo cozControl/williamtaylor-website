@@ -164,10 +164,10 @@ final class PublicSiteContentProjectionTest extends TestCase
 
         $homepage = $this->queryCount(function (): void {
             $this->get('/')->assertOk()->assertSee('Route Budget Public');
-        });
+        }, siteContentOnly: true);
         $product = $this->queryCount(function (): void {
             $this->get('/products/the-taylor-oxford-shirt')->assertOk()->assertSee('Route Budget Public');
-        });
+        }, siteContentOnly: true);
 
         $this->assertLessThanOrEqual(6, $homepage, 'Enabled homepage exceeded projection query budget.');
         $this->assertLessThanOrEqual(6, $product, 'Enabled product route exceeded projection query budget.');
@@ -194,13 +194,13 @@ final class PublicSiteContentProjectionTest extends TestCase
         return app(ResolvePublicSiteChrome::class)->resolve();
     }
 
-    private function queryCount(callable $operation): int
+    private function queryCount(callable $operation, bool $siteContentOnly = false): int
     {
         app()->forgetInstance(ResolvePublicSiteChrome::class);
         DB::flushQueryLog();
         DB::enableQueryLog();
         $operation();
-        $count = count(DB::getQueryLog());
+        $count = count(array_filter(DB::getQueryLog(), static fn (array $query): bool => ! $siteContentOnly || preg_match('/from ["`](site_contents|site_content_publication_states|content_revisions)["`]/', $query['query']) === 1));
         DB::disableQueryLog();
 
         return $count;

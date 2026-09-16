@@ -20,6 +20,7 @@ use App\Domain\Media\Enums\MediaAssetState;
 use App\Domain\Media\Enums\MediaResourceType;
 use App\Domain\Media\Models\MediaAsset;
 use App\Domain\Payments\Models\Payment;
+use App\Domain\Payments\Snippe\StartSnippePayment;
 use App\Models\User;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\DB;
@@ -81,9 +82,13 @@ final class CancelUnpaidOrderTest extends TestCase
         app(InventoryLedgerService::class)->post($this->manager, $product->defaultVariant, StockLocation::main(), MovementType::Receipt, 5, 'Payment fixture');
         auth()->forgetGuards();
         $this->postJson('/cart/items', ['variant_id' => $product->defaultVariant->id, 'quantity' => 2])->assertOk();
-        $this->get('/checkout')->assertOk()->assertSee('Continue to secure payment');
+        // Historical hosted records remain supported; new public checkout uses Mobile Money.
+        config(['snippe.enabled' => false]);
+        $this->get('/checkout')->assertOk()->assertSee('Place Order');
         $response = $this->post('/checkout', ['submission' => array_key_last(session('checkout_attempts')), 'name' => 'Guest', 'email' => 'guest@example.test', 'phone' => '+255712345678', 'address' => 'Private address', 'city' => 'Dar', 'region' => 'Dar']);
-        $response->assertRedirect($failureStatus === null ? 'https://snippe.me/checkout/test' : route('checkout.confirmation', Order::query()->sole()->confirmation_reference));
+        $response->assertRedirect(route('checkout.confirmation', Order::query()->sole()->confirmation_reference));
+        config(['snippe.enabled' => true]);
+        app(StartSnippePayment::class)->start(Order::query()->sole());
 
         return [Order::query()->sole(), Payment::query()->sole(), $product->defaultVariant];
     }

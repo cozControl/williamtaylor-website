@@ -23,7 +23,7 @@ final class PreOrderCampaignPresenter
             ->with(['approvedRevision', 'currentDraftRevision', 'products.product.currentDraftRevision', 'claims', 'cardMedia.asset'])->orderBy('starts_at')->orderBy('id')->lazy(20)
             ->map(fn (Campaign $campaign) => $this->present($campaign))->filter();
 
-        return ($limit === null ? $items : $items->take($limit))->values()->all();
+        return array_values(($limit === null ? $items : $items->take($limit))->all());
     }
 
     /** @return array<string, mixed>|null */

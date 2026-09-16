@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\View;
+use Tests\Support\StorefrontMarkup;
 use Tests\TestCase;
 
 class SharedFrontendRegionsTest extends TestCase
@@ -22,13 +23,13 @@ class SharedFrontendRegionsTest extends TestCase
         }
 
         $response = $this->get(route('home'))->assertOk();
-        $html = $response->getContent();
+        $html = StorefrontMarkup::active($response->getContent());
 
         $this->assertSame(1, substr_count($html, '<html lang="en">'));
         $this->assertSame(1, substr_count($html, '<head>'));
         $this->assertSame(1, substr_count($html, '<body>'));
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
-        $this->assertSame(1, substr_count($html, '<header class="fixed top-0 left-0 right-0 z-40">'));
+        $this->assertSame(1, substr_count($html, '<header data-canonical-shop-header class="fixed top-0 left-0 right-0 z-40">'));
         $this->assertSame(1, substr_count($html, '<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">'));
         $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
         $this->assertSame(1, substr_count($html, '<footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">'));

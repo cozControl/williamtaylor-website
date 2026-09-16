@@ -37,6 +37,16 @@ final class HomepageSectionVisibilityTest extends TestCase
         HomepageHero::create(['id' => HomepageHero::SINGLETON_ID, ...HomepageHero::defaults(), 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
     }
 
+    public function test_homepage_presenters_share_one_snapshot_and_release_it_after_rendering(): void
+    {
+        DB::enableQueryLog();
+        $this->get(route('home'))->assertOk();
+        $heroReads = collect(DB::getQueryLog())->filter(fn (array $query): bool => str_starts_with($query['query'], 'select * from "homepage_heroes"'));
+        $this->assertCount(1, $heroReads);
+        DB::disableQueryLog();
+        $this->assertFalse(request()->attributes->has('homepage.render_snapshot'));
+    }
+
     public function test_defaults_registry_workspace_editors_and_single_settings_query(): void
     {
         $registry = HomepageSectionRegistry::all();

@@ -2,11 +2,15 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Tests\Support\StorefrontMarkup;
 use Tests\TestCase;
 
 class CatalogueFrontendPagesTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_collections_and_shop_routes_are_named_and_public_for_guests(): void
     {
         $this->assertSame('/collections', route('collections.index', absolute: false));
@@ -21,19 +25,20 @@ class CatalogueFrontendPagesTest extends TestCase
     public function test_catalogue_pages_preserve_assets_and_single_shared_regions(): void
     {
         foreach (['collections.index', 'products.index'] as $routeName) {
-            $html = $this->get(route($routeName))->assertOk()->getContent();
+            $html = StorefrontMarkup::active($this->get(route($routeName))->assertOk()->getContent());
 
             $this->assertSame(1, substr_count($html, '<html lang="en">'));
             $this->assertSame(1, substr_count($html, '<head>'));
             $this->assertSame(1, substr_count($html, '<body>'));
             $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
-            $this->assertSame(1, substr_count($html, '<header class="fixed top-0 left-0 right-0 z-40">'));
+            $this->assertSame(1, substr_count($html, '<header data-canonical-shop-header class="fixed top-0 left-0 right-0 z-40">'));
             $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
             $this->assertSame(1, substr_count($html, '<footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">'));
             $this->assertSame(1, substr_count($html, '<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">'));
             $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
             $this->assertSame(1, substr_count($html, '/website/css/index-X8-QjRMe.css'));
-            $this->assertSame(1, substr_count($html, '/website/js/index-DxdnTNDA.js'));
+            $this->assertSame($routeName === 'products.index' ? 1 : 0, substr_count($html, '/website/js/index-DxdnTNDA.js'));
+            $this->assertSame(1, substr_count($html, '/website/js/cart.js'));
             $this->assertStringNotContainsString('src="images/', $html);
             $this->assertStringNotContainsString('href="css/', $html);
             $this->assertStringNotContainsString('src="js/', $html);

@@ -5,7 +5,6 @@ namespace App\Domain\Homepage\Support;
 use App\Domain\Campaign\Models\Campaign;
 use App\Domain\Campaign\Support\PreOrderCampaignPresenter;
 use App\Domain\Homepage\Models\HomepageHero;
-use Illuminate\Support\Facades\Schema;
 
 final class HomepageFutureStylePresenter
 {
@@ -15,10 +14,10 @@ final class HomepageFutureStylePresenter
     public function present(): array
     {
         $fallback = [...HomepageHero::futureStyleDefaults(), 'managed' => false, 'campaigns' => []];
-        if (! Schema::hasColumns('homepage_heroes', ['future_style_managed', 'future_style_campaign_2_id'])) {
+        if (! app(HomepageRenderSnapshot::class)->hasColumns(['future_style_managed', 'future_style_campaign_2_id'])) {
             return [...$fallback, 'campaigns' => $this->campaigns->all(2)];
         }
-        $homepage = HomepageHero::query()->whereKey(HomepageHero::SINGLETON_ID)->first();
+        $homepage = app(HomepageRenderSnapshot::class)->hero();
         $ids = $homepage === null ? [] : [$homepage->future_style_campaign_1_id, $homepage->future_style_campaign_2_id];
         $content = $homepage?->future_style_managed ? $homepage->only(array_keys(HomepageHero::futureStyleDefaults())) : [];
         if (! array_filter($ids)) {

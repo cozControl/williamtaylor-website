@@ -4,6 +4,7 @@ namespace App\Domain\Catalogue\Support;
 
 use App\Domain\Catalogue\Models\Collection;
 use App\Domain\Homepage\Models\HomepageHero;
+use App\Domain\Homepage\Support\HomepageSectionVisibility;
 use App\Domain\PublicProjection\Data\PublicNavigationItemView;
 use App\Domain\PublicProjection\Services\ResolvePublicSiteChrome;
 use Illuminate\Support\Facades\Schema;
@@ -17,6 +18,7 @@ final class StorefrontShopNavigationPresenter
             return request()->attributes->get('storefront.shop_navigation');
         }
         $items = [];
+        $visibility = app(HomepageSectionVisibility::class)->resolve();
         $newArrivals = null;
         if (Schema::hasColumns('collections', ['navigation_order'])) {
             $selectedId = Schema::hasColumns('homepage_heroes', ['new_arrivals_collection_id']) ? HomepageHero::whereKey(HomepageHero::SINGLETON_ID)->value('new_arrivals_collection_id') : null;
@@ -34,7 +36,15 @@ final class StorefrontShopNavigationPresenter
         $all = $this->entry('All Collections', route('collections.index'), request()->routeIs('collections.index'));
         $preorder = $this->entry('Pre-Order', route('preorders.index'), request()->routeIs('preorders.*'));
         $limited = $this->entry('Limited Edition', route('limited-edition.index'), request()->routeIs('limited-edition.*'));
-        $special = array_values(array_filter([$newArrivals, $preorder, $limited]));
+        $special = array_values(array_filter([
+            $visibility['new-arrivals'] ? $newArrivals : null,
+            $visibility['future-style'] ? $preorder : null,
+            $visibility['limited-edition'] ? $limited : null,
+        ]));
+        $topLinks = $special;
+        if ($visibility['explore-collections']) {
+            array_unshift($topLinks, [...$all, 'label' => 'Collections']);
+        }
         $editorial = [];
         $shopLabel = 'Shop';
         foreach (app(ResolvePublicSiteChrome::class)->resolve()->navigation->items ?? [] as $item) {
@@ -53,7 +63,7 @@ final class StorefrontShopNavigationPresenter
             }
             $editorial[] = new PublicNavigationItemView($item->key, $item->link, $item->visibility, $this->editorialItems($item->children));
         }
-        $result = ['label' => $shopLabel, 'active' => request()->routeIs('collections.*', 'preorders.*', 'limited-edition.*'), 'all_collections' => $all, 'collections' => $items, 'new_arrivals' => $newArrivals, 'pre_order' => $preorder, 'limited_edition' => $limited, 'special' => $special, 'editorial' => $editorial];
+        $result = ['label' => $shopLabel, 'active' => request()->routeIs('collections.*', 'preorders.*', 'limited-edition.*'), 'all_collections' => $all, 'collections' => $items, 'new_arrivals' => $newArrivals, 'pre_order' => $preorder, 'limited_edition' => $limited, 'special' => $special, 'top_links' => $topLinks, 'editorial' => $editorial];
         request()->attributes->set('storefront.shop_navigation', $result);
 
         return $result;

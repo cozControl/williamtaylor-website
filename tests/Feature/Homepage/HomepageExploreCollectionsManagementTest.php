@@ -284,9 +284,11 @@ final class HomepageExploreCollectionsManagementTest extends TestCase
         $this->get(route('admin.homepage.explore-collections.edit'))
             ->assertSeeText('USING STOREFRONT DEFAULT')
             ->assertSeeText('Selected Collections below are not currently published because managed content is off.');
-        $this->get(route('home'))->assertOk()->assertDontSeeText('Unpublished Selection')
+        $response = $this->get(route('home'))->assertOk()
+            ->assertSee(route('collections.show', $collection), false)
             ->assertSee('html/mens-wear.html', false)
             ->assertDontSee('<template id="homepage-explore-collections-projection">', false);
+        $this->assertFalse(app(HomepageExploreCollectionsPresenter::class)->present()['managed']);
     }
 
     /** @param list<Product> $products */

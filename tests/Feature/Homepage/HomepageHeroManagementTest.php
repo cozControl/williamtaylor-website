@@ -2,7 +2,10 @@
 
 namespace Tests\Feature\Homepage;
 
+use App\Domain\Catalogue\Models\Collection;
+use App\Domain\Catalogue\Models\CollectionRevision;
 use App\Domain\Homepage\Models\HomepageHero;
+use App\Domain\Homepage\Support\HomepageHeroPresenter;
 use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
 use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\RoleRegistry;
@@ -45,7 +48,7 @@ final class HomepageHeroManagementTest extends TestCase
             ->assertSeeTextInOrder(['Homepage', 'Site settings', 'Pages', 'Navigation', 'Announcements', 'Media library']);
     }
 
-    public function test_homepage_workspace_lists_exactly_six_sections_in_storefront_order(): void
+    public function test_homepage_workspace_lists_ten_registered_sections_in_storefront_order(): void
     {
         $response = $this->actingAs($this->manager)->get(route('admin.homepage.edit'))->assertOk()
             ->assertSee('data-admin-ui-revision="ecom-home-2e"', false)
@@ -80,7 +83,7 @@ final class HomepageHeroManagementTest extends TestCase
             ->assertDontSeeText('projection')
             ->assertDontSeeText('presenter');
 
-        $this->assertSame(6, substr_count($response->getContent(), 'data-homepage-section='));
+        $this->assertSame(10, substr_count($response->getContent(), 'data-homepage-section='));
         $this->assertDatabaseHas('homepage_heroes', ['id' => HomepageHero::SINGLETON_ID]);
     }
 
@@ -211,6 +214,42 @@ final class HomepageHeroManagementTest extends TestCase
             ->assertSeeText($defaults['primary_cta_label'])
             ->assertSeeText($defaults['secondary_cta_label'])
             ->assertSee('/website/images/306170464_Screenshot2026-07-10at215946.png', false);
+    }
+
+    public function test_both_hero_actions_can_select_collections_and_follow_current_urls(): void
+    {
+        $collections = [];
+        foreach (['Tailoring', 'Accessories'] as $title) {
+            $collection = Collection::query()->create(['collection_type' => 'manual', 'slug' => Str::slug($title), 'catalogue_status' => 'ready', 'created_by' => $this->manager->id]);
+            $revision = CollectionRevision::query()->create(['collection_id' => $collection->id, 'revision_number' => 1, 'title' => $title, 'short_description' => $title, 'checksum' => hash('sha256', $title), 'created_by' => $this->manager->id, 'created_at' => now()]);
+            $collection->update(['current_draft_revision_id' => $revision->id]);
+            $collections[] = $collection;
+        }
+        [$primary, $secondary] = $collections;
+        $response = $this->actingAs($this->manager)->get(route('admin.homepage.hero.edit'))->assertOk();
+        $this->assertSame(2, substr_count($response->getContent(), 'value="collection:'.$primary->id.'"'));
+        $this->assertSame(2, substr_count($response->getContent(), 'value="collection:'.$secondary->id.'"'));
+        $hero = HomepageHero::query()->sole();
+        $payload = [...HomepageHero::defaults(), 'lock_version' => $hero->lock_version, 'primary_cta_destination' => 'collection:'.$primary->id, 'secondary_cta_destination' => 'collection:'.$secondary->id];
+        $this->put(route('admin.homepage.hero.update'), $payload)->assertSessionHasNoErrors()->assertRedirect(route('admin.homepage.hero.edit'));
+        $this->assertDatabaseHas('homepage_heroes', ['id' => $hero->id, 'primary_cta_destination' => 'collection:'.$primary->id, 'secondary_cta_destination' => 'collection:'.$secondary->id]);
+        $primary->update(['slug' => 'new-tailoring']);
+        $projection = app(HomepageHeroPresenter::class)->present();
+        $this->assertSame(route('collections.show', 'new-tailoring'), $projection['primary_cta_url']);
+        $this->assertSame(route('collections.show', $secondary->slug), $projection['secondary_cta_url']);
+        $this->get(route('home'))->assertOk()->assertSee('href="'.$projection['primary_cta_url'].'"', false)->assertSee('href="'.$projection['secondary_cta_url'].'"', false);
+
+        $primary->update(['archived_at' => now()]);
+        $secondary->update(['catalogue_status' => 'draft']);
+        $projection = app(HomepageHeroPresenter::class)->present();
+        $this->assertSame(route('collections.index'), $projection['primary_cta_url']);
+        $this->assertSame(route('collections.index'), $projection['secondary_cta_url']);
+        $this->get(route('admin.homepage.hero.edit'))->assertOk()->assertSeeText('Choose an available Collection')->assertDontSee('value="collection:'.$primary->id.'"', false)->assertDontSee('value="collection:'.$secondary->id.'"', false);
+        $payload['lock_version'] = $hero->fresh()->lock_version;
+        $this->put(route('admin.homepage.hero.update'), $payload)->assertSessionHasErrors(['primary_cta_destination', 'secondary_cta_destination']);
+        $payload['primary_cta_destination'] = 'collection:'.Str::ulid();
+        $payload['secondary_cta_destination'] = 'https://example.com';
+        $this->put(route('admin.homepage.hero.update'), $payload)->assertSessionHasErrors(['primary_cta_destination', 'secondary_cta_destination']);
     }
 
     private function image(): MediaAsset

@@ -10,8 +10,8 @@
    @endforeach
   </div>
  </div>
- @foreach([$shopNavigation['all_collections'], ...$shopNavigation['special']] as $entry)
-  <a class="font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200" href="{{ $entry['url'] }}" @if($entry['active']) aria-current="page" @endif>{{ $loop->first ? 'Collections' : $entry['label'] }}</a>
+ @foreach($shopNavigation['top_links'] as $entry)
+  <a class="font-label text-xs tracking-widest uppercase text-wt-cream hover:text-wt-gold transition-colors duration-200" href="{{ $entry['url'] }}" @if($entry['active']) aria-current="page" @endif>{{ $entry['label'] }}</a>
  @endforeach
  @foreach($shopNavigation['editorial'] as $item)
   @if($item->visibility !== 'mobile')

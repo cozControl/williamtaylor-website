@@ -12,8 +12,8 @@
      <a href="{{ $entry['url'] }}" @if($entry['active']) aria-current="page" @endif class="block px-10 py-2.5 font-label text-xs tracking-wider uppercase text-wt-cream/60 hover:text-wt-gold">{{ $entry['label'] }}</a>
     @endforeach
    </div>
-   @foreach([$shopNavigation['all_collections'], ...$shopNavigation['special']] as $entry)
-    <a class="block px-6 py-3.5 font-body text-lg uppercase text-wt-cream hover:text-wt-gold" href="{{ $entry['url'] }}" @if($entry['active']) aria-current="page" @endif>{{ $loop->first ? 'Collections' : $entry['label'] }}</a>
+   @foreach($shopNavigation['top_links'] as $entry)
+    <a class="block px-6 py-3.5 font-body text-lg uppercase text-wt-cream hover:text-wt-gold" href="{{ $entry['url'] }}" @if($entry['active']) aria-current="page" @endif>{{ $entry['label'] }}</a>
    @endforeach
    @foreach($shopNavigation['editorial'] as $item)
     @if($item->visibility !== 'desktop')

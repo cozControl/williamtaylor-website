@@ -26,11 +26,11 @@ class AdminNavigationRegistryTest extends TestCase
     {
         $items = app(AdminNavigationRegistry::class)->all();
 
-        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'catalogue', 'products', 'product-categories', 'collections', 'campaigns', 'orders', 'users', 'roles', 'audit'], array_column($items, 'key'));
+        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'catalogue', 'products', 'product-categories', 'collections', 'campaigns', 'inventory', 'orders', 'demo-orders', 'users', 'roles', 'audit'], array_column($items, 'key'));
         $groups = app(AdminNavigationRegistry::class)->groupedVisibleFor($this->superAdministrator());
-        $this->assertSame(['Overview', 'Catalogue', 'Website', 'Administration'], array_keys($groups));
-        $this->assertSame(['catalogue', 'products', 'product-categories', 'collections', 'campaigns'], array_column($groups['Catalogue'], 'key'));
-        $this->assertSame(['catalogue', 'products', 'categories', 'collections', 'campaigns'], array_column($groups['Catalogue'], 'icon'));
+        $this->assertSame(['Overview', 'Catalogue', 'Commerce', 'Website', 'Administration'], array_keys($groups));
+        $this->assertSame(['catalogue', 'products', 'product-categories', 'collections', 'campaigns', 'inventory'], array_column($groups['Catalogue'], 'key'));
+        $this->assertSame(['catalogue', 'products', 'categories', 'collections', 'campaigns', 'catalogue'], array_column($groups['Catalogue'], 'icon'));
 
         foreach ($items as $item) {
             $this->assertTrue(Route::has($item->routeName));
@@ -51,10 +51,11 @@ class AdminNavigationRegistryTest extends TestCase
         $this->assertSame([], $registry->visibleFor(null));
         $this->assertSame([], $registry->visibleFor($ordinary));
         $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'catalogue', 'products', 'product-categories', 'collections', 'campaigns', 'audit'], array_column($registry->visibleFor($cms), 'key'));
-        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'catalogue', 'products', 'product-categories', 'collections', 'campaigns', 'users', 'roles', 'audit'], array_column($registry->visibleFor($super), 'key'));
+        $this->assertSame(['dashboard', 'homepage', 'settings', 'pages', 'navigation', 'announcements', 'media', 'catalogue', 'products', 'product-categories', 'collections', 'campaigns', 'inventory', 'orders', 'users', 'roles', 'audit'], array_column($registry->visibleFor($super), 'key'));
 
         config(['demo.enabled' => true, 'demo.allowed_environments' => ['testing']]);
         $this->assertContains('orders', array_column($registry->visibleFor($super), 'key'));
+        $this->assertContains('demo-orders', array_column($registry->visibleFor($super), 'key'));
     }
 
     public function test_media_library_navigation_and_route_remain_permission_aware(): void

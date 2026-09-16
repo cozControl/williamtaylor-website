@@ -18,7 +18,7 @@ final class OrderStatusPresenter
     {
         $key = $value instanceof BackedEnum ? (string) $value->value : $value;
 
-        return ($this->orders() + ['unpaid' => 'Unpaid', 'paid' => 'Paid', 'pending' => 'Pending', 'processing' => 'Processing', 'active' => 'Active', 'completed' => 'Completed', 'failed' => 'Failed', 'expired' => 'Expired', 'unfulfilled' => 'Unfulfilled', 'consumed' => 'Consumed', 'released' => 'Released'])[$key ?? ''] ?? 'Not recorded';
+        return ($this->orders() + ['created' => 'Created', 'initiating' => 'Initiating', 'attention_required' => 'Needs attention', 'voided' => 'Voided', 'unpaid' => 'Unpaid', 'paid' => 'Paid', 'pending' => 'Pending', 'processing' => 'Processing', 'active' => 'Active', 'completed' => 'Completed', 'failed' => 'Failed', 'expired' => 'Expired', 'unfulfilled' => 'Unfulfilled', 'consumed' => 'Consumed', 'released' => 'Released'])[$key ?? ''] ?? 'Not recorded';
     }
 
     public function tone(BackedEnum|string|null $value): string
@@ -27,7 +27,7 @@ final class OrderStatusPresenter
 
         return match ($key) {
             'paid', 'confirmed', 'completed', 'consumed' => 'success',
-            'failed', 'attention' => 'attention',
+            'failed', 'attention', 'attention_required' => 'attention',
             default => 'neutral',
         };
     }

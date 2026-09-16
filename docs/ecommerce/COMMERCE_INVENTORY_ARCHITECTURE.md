@@ -133,3 +133,14 @@ For a bound Session, the existing Payment I/O lease coordinates the operation. A
 Final unpaid cancellation locks Order, sorted Payments, Products, Variants, MAIN, balances and reservations. Provider final state, release, immutable staff cancellation record and audit share one local transaction. Without a Payment, the same service releases validated reservations under that lock order without inventing a Payment record. Order becomes Cancelled/unpaid/unfulfilled; historical failed Payments remain unchanged, and verified expired Sessions retain Expired payment state. No movement or stock projection update occurs: on hand 5 / reserved 2 / available 3 becomes on hand 5 / reserved 0 / available 5.
 
 Duplicate cancellation returns existing final state without replacing reason/actor or duplicating audit. Paid, consumed or issued Orders cannot use this operation. A late paid event after release follows the existing needs-attention path; it cannot reopen the Order or issue stock. Customer retries remain server-blocked for cancelled Orders, guest confirmation shows an honest terminal state, and no Cart is recreated. Refunds, returns, restocking and fulfillment remain outside this phase.
+
+
+## PAYMENTS-SNIPPE-1 direct Mobile Money (2026-09-15)
+
+New checkout uses the existing production Order/line/reservation architecture and `commerce_payments`, with `method=mobile_money`. The local payment attempt and encrypted immutable request are prepared inside Order placement. Order commit and Cart clearing precede all provider I/O. Canonical Variant price and available-to-sell revalidation remain mandatory.
+
+Direct completion requires authenticated payment-status GET and exact reference/amount/currency/lifecycle validation. Existing `SnippePaymentLifecycle` and `InventoryLedgerService::issueReserved` atomically confirm the Order, consume reservations, and append the single Order-line issue. Verified failed, expired, or voided direct payments close the unpaid Order and release reservations without changing on hand. Another purchase needs fresh checkout and stock validation. Active Mobile Money cannot use the hosted Session cancellation operation.
+
+Timeouts, ambiguous creation, and provider inconsistencies never release stock. Mismatches require review. Direct webhook receipts are committed before provider checks and survive processing failures; Order/payment/inventory changes still roll back together. Historical Session records retain their original method and reconciliation contract. The direct flow supersedes hosted-checkout requirements above for newly placed Orders.
+
+See [PAYMENTS-SNIPPE-1 report](PAYMENTS_SNIPPE_1_MOBILE_MONEY_REPORT.md) and [setup](SNIPPE_CHECKOUT_SETUP.md).

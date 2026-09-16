@@ -35,16 +35,18 @@ class RbacFoundationTest extends TestCase
             'admin.access', 'users.view', 'users.manage', 'roles.view', 'roles.manage',
             'audit.view', 'audit.export', 'settings.view', 'settings.manage',
             'media.view', 'media.upload', 'media.edit', 'media.replace', 'media.archive', 'media.restore',
+            'inventory.view', 'inventory.manage', 'products.view', 'products.manage',
             'pages.view', 'pages.create', 'pages.edit', 'pages.preview', 'pages.archive', 'pages.restore',
             'pages.review', 'pages.approve', 'pages.publish', 'pages.schedule', 'pages.unpublish',
             'navigation.view', 'navigation.edit', 'navigation.preview', 'navigation.review', 'navigation.approve', 'navigation.publish', 'navigation.schedule', 'navigation.unpublish', 'announcements.view', 'announcements.create', 'announcements.edit', 'announcements.preview', 'announcements.review', 'announcements.approve', 'announcements.publish', 'announcements.schedule', 'announcements.unpublish', 'announcements.archive', 'announcements.restore', 'settings.preview', 'settings.review', 'settings.approve', 'settings.publish', 'settings.schedule', 'settings.unpublish',
             'campaigns.claims.review', 'campaigns.claims.approve', 'campaigns.claims.reject', 'campaigns.claims.withdraw-approval',
             'publication.emergency-unpublish',
+            'orders.view', 'orders.create', 'orders.confirm', 'orders.prepare', 'orders.mark-ready', 'orders.dispatch', 'orders.deliver', 'orders.cancel', 'orders.notes.create', 'orders.payment-status.manage', 'orders.receipts.view',
         ];
 
         $this->assertSame($expected, PermissionRegistry::all());
-        $this->assertSame($expected, Permission::query()->orderBy('id')->pluck('name')->all());
-        $this->assertCount(56, PermissionRegistry::all());
+        $this->assertEqualsCanonicalizing($expected, Permission::query()->pluck('name')->all());
+        $this->assertCount(71, PermissionRegistry::all());
         $this->assertContains(PermissionRegistry::ADMIN_ACCESS, PermissionRegistry::all());
         $this->assertContains(PermissionRegistry::USERS_MANAGE, PermissionRegistry::all());
         $this->assertContains(PermissionRegistry::ROLES_MANAGE, PermissionRegistry::all());

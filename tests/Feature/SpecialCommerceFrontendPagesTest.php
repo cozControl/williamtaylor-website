@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\Route;
+use Tests\Support\StorefrontMarkup;
 use Tests\TestCase;
 
 class SpecialCommerceFrontendPagesTest extends TestCase
@@ -25,9 +26,9 @@ class SpecialCommerceFrontendPagesTest extends TestCase
     public function test_special_commerce_pages_preserve_assets_and_single_regions(): void
     {
         foreach (['preorders.index', 'limited-edition.index', 'gift-cards.index'] as $routeName) {
-            $html = $this->get(route($routeName))->assertOk()->getContent();
+            $html = StorefrontMarkup::active($this->get(route($routeName))->assertOk()->getContent());
 
-            foreach (['<html lang="en">', '<head>', '<body>', 'aria-label="Close announcement"', '<header class="fixed top-0 left-0 right-0 z-40">', 'Sign the Ledger', '<footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">', '<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">', 'aria-label="Chat on WhatsApp"', '/website/css/index-X8-QjRMe.css'] as $needle) {
+            foreach (['<html lang="en">', '<head>', '<body>', 'aria-label="Close announcement"', '<header data-canonical-shop-header class="fixed top-0 left-0 right-0 z-40">', 'Sign the Ledger', '<footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">', '<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">', 'aria-label="Chat on WhatsApp"', '/website/css/index-X8-QjRMe.css'] as $needle) {
                 $this->assertSame(1, substr_count($html, $needle), "Unexpected region count for {$needle} on {$routeName}");
             }
             $this->assertSame(in_array($routeName, ['preorders.index', 'limited-edition.index'], true) ? 0 : 1, substr_count($html, '/website/js/index-DxdnTNDA.js'));
@@ -40,9 +41,9 @@ class SpecialCommerceFrontendPagesTest extends TestCase
 
     public function test_each_page_preserves_its_supplied_form_count_and_controls(): void
     {
-        $preorder = $this->get(route('preorders.index'))->assertOk()->getContent();
-        $limited = $this->get(route('limited-edition.index'))->assertOk()->getContent();
-        $giftCards = $this->get(route('gift-cards.index'))->assertOk()->getContent();
+        $preorder = StorefrontMarkup::active($this->get(route('preorders.index'))->assertOk()->getContent());
+        $limited = StorefrontMarkup::active($this->get(route('limited-edition.index'))->assertOk()->getContent());
+        $giftCards = StorefrontMarkup::active($this->get(route('gift-cards.index'))->assertOk()->getContent());
 
         $this->assertSame(2, substr_count($preorder, '<form'));
         $this->assertSame(2, substr_count($preorder, 'type="submit"'));
@@ -51,7 +52,8 @@ class SpecialCommerceFrontendPagesTest extends TestCase
         $this->assertStringNotContainsString('Only 8 left', $limited);
         $this->assertStringNotContainsString('Only 30 Made', $limited);
         $this->assertSame(2, substr_count($giftCards, '<form'));
-        $this->assertSame(9, substr_count($giftCards, 'type="button"'));
+        preg_match('/<main\b[^>]*>(.*?)<\/main>/s', $giftCards, $main);
+        $this->assertSame(9, substr_count($main[1], 'type="button"'));
         $this->assertSame(5, substr_count($giftCards, 'required=""'));
         $this->assertSame(1, substr_count($giftCards, '<textarea'));
         $this->assertStringContainsString('Purchase Gift Card', $giftCards);

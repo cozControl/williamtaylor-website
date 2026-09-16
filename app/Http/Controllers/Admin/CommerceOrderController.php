@@ -107,7 +107,7 @@ final class CommerceOrderController extends Controller
             $timeline[] = ['at' => $order->cancelled_at, 'label' => 'Order cancelled · '.($cancelledBy ?? 'Staff')];
         }
         foreach ($payments as $index => $payment) {
-            foreach (['created_at' => 'Payment attempt recorded', 'request_started_at' => 'Payment Session requested', 'failed_at' => 'Payment failed', 'completed_at' => 'Payment completed'] as $field => $label) {
+            foreach (['created_at' => 'Payment attempt recorded', 'request_started_at' => 'Payment requested', 'failed_at' => 'Payment failed', 'completed_at' => 'Payment completed'] as $field => $label) {
                 if ($payment->$field !== null) {
                     $timeline[] = ['at' => $payment->$field, 'label' => $label.' · Attempt '.($index + 1)];
                 }
@@ -159,7 +159,7 @@ final class CommerceOrderController extends Controller
     {
         abort_unless($payment->order_id === $order->id, 404);
         // A bound reference is immutable. This guard excludes refresh()'s Session-creation branch.
-        abort_unless($payment->provider === 'snippe' && $payment->provider_session_reference !== null && $payment->active_order_id === $order->id, 409);
+        abort_unless($payment->provider === 'snippe' && ($payment->provider_session_reference !== null || ($payment->method === 'mobile_money' && $payment->provider_payment_reference !== null)) && $payment->active_order_id === $order->id, 409);
         $message = 'Snippe payment checks are unavailable until the integration is enabled and configured.';
         if (config('snippe.enabled') && filled(config('snippe.api_key'))) {
             if ($payment->io_lease_until?->isFuture() || $payment->next_reconcile_at?->isFuture()) {

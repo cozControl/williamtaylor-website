@@ -18,10 +18,10 @@ final class HomepageClientStoriesPresenter
     public function present(): array
     {
         $result = [...HomepageHero::clientStoriesDefaults(), 'managed' => false, 'stories' => [], 'positions' => [], 'attention_count' => 0];
-        if (! Schema::hasColumns('homepage_heroes', ['client_stories_managed']) || ! Schema::hasTable('homepage_client_stories')) {
+        if (! app(HomepageRenderSnapshot::class)->hasColumns(['client_stories_managed']) || ! Schema::hasTable('homepage_client_stories')) {
             return $result;
         }
-        $homepage = HomepageHero::find(HomepageHero::SINGLETON_ID);
+        $homepage = app(HomepageRenderSnapshot::class)->hero();
         if ($homepage === null) {
             return $result;
         }

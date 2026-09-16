@@ -31,7 +31,7 @@
             <div class="admin-section-heading"><p>Primary action</p><h2>Shop New Arrivals</h2></div>
             <div class="admin-form-grid">
                 <x-admin.field label="Label" for="hero-primary-label" :error="$errors->first('primary_cta_label')"><input id="hero-primary-label" name="primary_cta_label" value="{{ old('primary_cta_label', $hero->primary_cta_label) }}" maxlength="80" required></x-admin.field>
-                <x-admin.field label="Destination" for="hero-primary-destination" :error="$errors->first('primary_cta_destination')"><select id="hero-primary-destination" name="primary_cta_destination">@foreach($destinations as $value => $label)<option value="{{ $value }}" @selected(old('primary_cta_destination', $hero->primary_cta_destination) === $value)>{{ $label }}</option>@endforeach</select></x-admin.field>
+                <x-admin.field label="Destination" for="hero-primary-destination" :error="$errors->first('primary_cta_destination')"><select id="hero-primary-destination" name="primary_cta_destination">@if(! array_key_exists(old('primary_cta_destination', $hero->primary_cta_destination), $destinations))<option value="" selected disabled>Choose an available Collection</option>@endif@foreach($destinations as $value => $label)<option value="{{ $value }}" @selected(old('primary_cta_destination', $hero->primary_cta_destination) === $value)>{{ $label }}</option>@endforeach</select></x-admin.field>
             </div>
         </section>
 
@@ -39,7 +39,7 @@
             <div class="admin-section-heading"><p>Secondary action</p><h2>Explore Collections</h2></div>
             <div class="admin-form-grid">
                 <x-admin.field label="Label" for="hero-secondary-label" :error="$errors->first('secondary_cta_label')"><input id="hero-secondary-label" name="secondary_cta_label" value="{{ old('secondary_cta_label', $hero->secondary_cta_label) }}" maxlength="80" required></x-admin.field>
-                <x-admin.field label="Destination" for="hero-secondary-destination" :error="$errors->first('secondary_cta_destination')"><select id="hero-secondary-destination" name="secondary_cta_destination">@foreach($destinations as $value => $label)<option value="{{ $value }}" @selected(old('secondary_cta_destination', $hero->secondary_cta_destination) === $value)>{{ $label }}</option>@endforeach</select></x-admin.field>
+                <x-admin.field label="Destination" for="hero-secondary-destination" :error="$errors->first('secondary_cta_destination')"><select id="hero-secondary-destination" name="secondary_cta_destination">@if(! array_key_exists(old('secondary_cta_destination', $hero->secondary_cta_destination), $destinations))<option value="" selected disabled>Choose an available Collection</option>@endif@foreach($destinations as $value => $label)<option value="{{ $value }}" @selected(old('secondary_cta_destination', $hero->secondary_cta_destination) === $value)>{{ $label }}</option>@endforeach</select></x-admin.field>
             </div>
         </section>
 

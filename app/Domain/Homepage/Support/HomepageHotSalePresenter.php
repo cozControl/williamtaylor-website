@@ -7,7 +7,6 @@ use App\Domain\Media\Contracts\MediaProvider;
 use App\Domain\Media\Enums\MediaAssetState;
 use App\Domain\Media\Enums\MediaResourceType;
 use App\Domain\Media\Models\MediaUsage;
-use Illuminate\Support\Facades\Schema;
 
 final class HomepageHotSalePresenter
 {
@@ -17,11 +16,11 @@ final class HomepageHotSalePresenter
     public function present(): array
     {
         $fallback = [...HomepageHero::hotSaleDefaults(), 'managed' => false, 'tiles' => []];
-        if (! Schema::hasColumns('homepage_heroes', ['hot_sale_managed', 'hot_sale_heading'])) {
+        if (! app(HomepageRenderSnapshot::class)->hasColumns(['hot_sale_managed', 'hot_sale_heading'])) {
             return $fallback;
         }
 
-        $homepage = HomepageHero::query()->whereKey(HomepageHero::SINGLETON_ID)->first();
+        $homepage = app(HomepageRenderSnapshot::class)->hero();
         if ($homepage === null || ! $homepage->hot_sale_managed) {
             return $fallback;
         }

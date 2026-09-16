@@ -5,7 +5,6 @@ namespace App\Domain\Homepage\Support;
 use App\Domain\Campaign\Models\Campaign;
 use App\Domain\Campaign\Support\LimitedEditionCampaignPresenter;
 use App\Domain\Homepage\Models\HomepageHero;
-use Illuminate\Support\Facades\Schema;
 
 final class HomepageLimitedEditionPresenter
 {
@@ -17,10 +16,10 @@ final class HomepageLimitedEditionPresenter
     public function present(): array
     {
         $fallback = [...HomepageHero::limitedEditionDefaults(), 'managed' => false, 'campaigns' => []];
-        if (! Schema::hasColumns('homepage_heroes', ['limited_edition_managed', 'limited_edition_campaign_3_id'])) {
+        if (! app(HomepageRenderSnapshot::class)->hasColumns(['limited_edition_managed', 'limited_edition_campaign_3_id'])) {
             return [...$fallback, 'campaigns' => $this->campaigns->all(self::CAPACITY)];
         }
-        $homepage = HomepageHero::query()->whereKey(HomepageHero::SINGLETON_ID)->first();
+        $homepage = app(HomepageRenderSnapshot::class)->hero();
         $ids = $homepage === null ? [] : collect(range(1, self::CAPACITY))->map(fn (int $position) => $homepage->{"limited_edition_campaign_{$position}_id"})->all();
         $content = $homepage?->limited_edition_managed ? $homepage->only(array_keys(HomepageHero::limitedEditionDefaults())) : [];
         if (! array_filter($ids)) {

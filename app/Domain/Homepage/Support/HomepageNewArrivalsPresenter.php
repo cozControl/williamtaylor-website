@@ -7,7 +7,6 @@ use App\Domain\Catalogue\Models\CollectionProduct;
 use App\Domain\Catalogue\Support\ProductCardPresenter;
 use App\Domain\Catalogue\Support\ProductPresenter;
 use App\Domain\Homepage\Models\HomepageHero;
-use Illuminate\Support\Facades\Schema;
 
 final class HomepageNewArrivalsPresenter
 {
@@ -19,11 +18,11 @@ final class HomepageNewArrivalsPresenter
     public function present(): array
     {
         $fallback = [...HomepageHero::newArrivalsDefaults(), 'managed' => false, 'collection_id' => null, 'collection_name' => null, 'cta_url' => route('products.index', ['sort' => 'newest']), 'products' => [], 'total_count' => 0, 'ready_count' => 0, 'attention_count' => 0];
-        if (! Schema::hasColumns('homepage_heroes', ['new_arrivals_collection_id', 'new_arrivals_heading'])) {
+        if (! app(HomepageRenderSnapshot::class)->hasColumns(['new_arrivals_collection_id', 'new_arrivals_heading'])) {
             return $fallback;
         }
 
-        $homepage = HomepageHero::query()->whereKey(HomepageHero::SINGLETON_ID)->first();
+        $homepage = app(HomepageRenderSnapshot::class)->hero();
         if ($homepage === null || $homepage->new_arrivals_collection_id === null) {
             return $fallback;
         }

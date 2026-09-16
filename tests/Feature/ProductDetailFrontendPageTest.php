@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\Route;
+use Tests\Support\StorefrontMarkup;
 use Tests\TestCase;
 
 class ProductDetailFrontendPageTest extends TestCase
@@ -16,19 +17,20 @@ class ProductDetailFrontendPageTest extends TestCase
             ->assertSeeText('The Taylor Oxford Shirt')
             ->assertSeeText('TZS 285,000')
             ->assertSee('/website/css/index-X8-QjRMe.css', false)
-            ->assertSee('/website/js/index-DxdnTNDA.js', false);
+            ->assertDontSee('/website/js/index-DxdnTNDA.js', false)
+            ->assertSee('/website/js/cart.js', false);
     }
 
     public function test_product_detail_reuses_shared_regions_once_and_preserves_static_controls(): void
     {
-        $html = $this->get(route('products.taylor-oxford-shirt'))->assertOk()->getContent();
+        $html = StorefrontMarkup::active($this->get(route('products.taylor-oxford-shirt'))->assertOk()->getContent());
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));
         $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
         $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
         $this->assertSame(1, substr_count($html, 'Add to Cart'));
-        $this->assertSame(1, substr_count($html, 'Buy Now'));
+        $this->assertSame(1, preg_match_all('/>\s*Buy Now\s*<\/button>/', $html));
         $this->assertSame(1, substr_count($html, 'Add to Wishlist'));
         $this->assertSame(1, substr_count($html, 'Reviews (20)'));
         $this->assertSame(1, substr_count($html, '<form'));
@@ -36,12 +38,14 @@ class ProductDetailFrontendPageTest extends TestCase
         $this->assertSame(0, substr_count($html, 'wire:'));
     }
 
-    public function test_product_detail_registers_canonical_dynamic_route_without_commerce_mutations(): void
+    public function test_product_detail_registers_canonical_product_and_cart_routes(): void
     {
         $this->assertTrue(Route::has('products.show'));
-        $this->assertFalse(Route::has('cart.store'));
+        $this->assertTrue(Route::has('cart.store'));
+        $this->assertSame(['POST'], Route::getRoutes()->getByName('cart.store')->methods());
         $this->assertFalse(Route::has('wishlist.store'));
-        $this->assertFalse(Route::has('checkout.store'));
+        $this->assertTrue(Route::has('checkout.store'));
+        $this->assertSame(['POST'], Route::getRoutes()->getByName('checkout.store')->methods());
         $this->assertFalse(Route::has('orders.store'));
     }
 
@@ -56,19 +60,20 @@ class ProductDetailFrontendPageTest extends TestCase
             ->assertSeeText('TZS 195,000')
             ->assertSee('/website/images/db23eed31_image.jpg', false)
             ->assertSee('/website/css/index-X8-QjRMe.css', false)
-            ->assertSee('/website/js/index-DxdnTNDA.js', false);
+            ->assertDontSee('/website/js/index-DxdnTNDA.js', false)
+            ->assertSee('/website/js/cart.js', false);
     }
 
     public function test_fe_2e_polo_reuses_shared_regions_and_keeps_commerce_controls_presentational(): void
     {
-        $html = $this->get(route('products.mercerized-cotton-polo'))->assertOk()->getContent();
+        $html = StorefrontMarkup::active($this->get(route('products.mercerized-cotton-polo'))->assertOk()->getContent());
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));
         $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
         $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
         $this->assertSame(1, substr_count($html, 'Add to Cart'));
-        $this->assertSame(1, substr_count($html, 'Buy Now'));
+        $this->assertSame(1, preg_match_all('/>\s*Buy Now\s*<\/button>/', $html));
         $this->assertSame(1, substr_count($html, 'Add to Wishlist'));
         $this->assertSame(1, substr_count($html, 'Reviews (7)'));
         $this->assertSame(1, substr_count($html, '<form'));
@@ -87,19 +92,20 @@ class ProductDetailFrontendPageTest extends TestCase
             ->assertSeeText('TZS 1,250,000')
             ->assertSee('/website/images/da608a583_image.jpg', false)
             ->assertSee('/website/css/index-X8-QjRMe.css', false)
-            ->assertSee('/website/js/index-DxdnTNDA.js', false);
+            ->assertDontSee('/website/js/index-DxdnTNDA.js', false)
+            ->assertSee('/website/js/cart.js', false);
     }
 
     public function test_fe_2f_linen_suit_reuses_shared_regions_and_keeps_commerce_controls_presentational(): void
     {
-        $html = $this->get(route('products.dar-es-salaam-linen-suit'))->assertOk()->getContent();
+        $html = StorefrontMarkup::active($this->get(route('products.dar-es-salaam-linen-suit'))->assertOk()->getContent());
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));
         $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
         $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
         $this->assertSame(1, substr_count($html, 'Add to Cart'));
-        $this->assertSame(1, substr_count($html, 'Buy Now'));
+        $this->assertSame(1, preg_match_all('/>\s*Buy Now\s*<\/button>/', $html));
         $this->assertSame(1, substr_count($html, 'Add to Wishlist'));
         $this->assertSame(1, substr_count($html, 'Reviews (6)'));
         $this->assertSame(1, substr_count($html, '<form'));
@@ -127,12 +133,13 @@ class ProductDetailFrontendPageTest extends TestCase
             ->assertSeeText('XXL')
             ->assertSeeText('3XL')
             ->assertSee('/website/css/index-X8-QjRMe.css', false)
-            ->assertSee('/website/js/index-DxdnTNDA.js', false);
+            ->assertDontSee('/website/js/index-DxdnTNDA.js', false)
+            ->assertSee('/website/js/cart.js', false);
     }
 
     public function test_fe_2g_chinos_reuses_shared_regions_and_keeps_commerce_controls_presentational(): void
     {
-        $html = $this->get(route('products.slim-tapered-chinos'))->assertOk()->getContent();
+        $html = StorefrontMarkup::active($this->get(route('products.slim-tapered-chinos'))->assertOk()->getContent());
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));
@@ -143,7 +150,7 @@ class ProductDetailFrontendPageTest extends TestCase
         $this->assertSame(1, substr_count($html, 'lucide lucide-minus'));
         $this->assertSame(1, substr_count($html, 'lucide lucide-plus'));
         $this->assertSame(1, substr_count($html, 'Add to Cart'));
-        $this->assertSame(1, substr_count($html, 'Buy Now'));
+        $this->assertSame(1, preg_match_all('/>\s*Buy Now\s*<\/button>/', $html));
         $this->assertSame(1, substr_count($html, 'Add to Wishlist'));
         $this->assertSame(1, substr_count($html, 'Reviews (26)'));
         $this->assertSame(1, substr_count($html, '<form'));
@@ -169,12 +176,13 @@ class ProductDetailFrontendPageTest extends TestCase
             ->assertSeeText('XXL')
             ->assertSee('/website/images/81f56a965_image.jpg', false)
             ->assertSee('/website/css/index-X8-QjRMe.css', false)
-            ->assertSee('/website/js/index-DxdnTNDA.js', false);
+            ->assertDontSee('/website/js/index-DxdnTNDA.js', false)
+            ->assertSee('/website/js/cart.js', false);
     }
 
     public function test_fe_2h_overcoat_reuses_shared_regions_and_keeps_preorder_controls_presentational(): void
     {
-        $html = $this->get(route('products.executive-overcoat'))->assertOk()->getContent();
+        $html = StorefrontMarkup::active($this->get(route('products.executive-overcoat'))->assertOk()->getContent());
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));
@@ -184,7 +192,7 @@ class ProductDetailFrontendPageTest extends TestCase
         $this->assertSame(1, substr_count($html, 'lucide lucide-plus'));
         $this->assertSame(1, substr_count($html, 'Reserve Your Piece'));
         $this->assertSame(0, substr_count($html, 'Add to Cart'));
-        $this->assertSame(1, substr_count($html, 'Buy Now'));
+        $this->assertSame(1, preg_match_all('/>\s*Buy Now\s*<\/button>/', $html));
         $this->assertSame(1, substr_count($html, 'Add to Wishlist'));
         $this->assertSame(1, substr_count($html, 'Reviews (9)'));
         $this->assertSame(0, substr_count($html, 'Colour:'));

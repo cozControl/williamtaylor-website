@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Tests\Support\StorefrontMarkup;
 use Tests\TestCase;
 
 class AccountFrontendPagesTest extends TestCase
@@ -23,7 +24,7 @@ class AccountFrontendPagesTest extends TestCase
 
     public function test_login_preserves_existing_fortify_contract_without_storefront_regions(): void
     {
-        $html = $this->get(route('login'))->assertOk()->getContent();
+        $html = StorefrontMarkup::active($this->get(route('login'))->assertOk()->getContent());
 
         $this->assertSame(1, substr_count($html, '<form'));
         $this->assertSame(1, substr_count($html, 'action="'.route('login.store').'"'));
@@ -36,7 +37,7 @@ class AccountFrontendPagesTest extends TestCase
 
     public function test_wishlist_reuses_exact_shared_regions_once_and_remains_empty_static_presentation(): void
     {
-        $html = $this->get(route('wishlist.index'))->assertOk()->getContent();
+        $html = StorefrontMarkup::active($this->get(route('wishlist.index'))->assertOk()->getContent());
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));

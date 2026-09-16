@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Domain\Content\Models\ContentRevision;
+use App\Domain\Homepage\Support\HomepageViewData;
 use App\Domain\PublicProjection\Services\ResolvePublicSiteChrome;
 use App\Domain\SiteContent\Actions\EnsureSiteContent;
 use App\Domain\SiteContent\Models\SiteContent;
@@ -115,7 +116,7 @@ final class SiteContentController extends Controller
         abort_unless($revision->resource_type === SiteContent::class && $revision->resource_id === $siteContentResource->getKey(), 404);
         $chrome->preview($siteContentResource, $revision);
 
-        return response(view('welcome'))
+        return response(view('welcome', app(HomepageViewData::class)->resolve()))
             ->header('Cache-Control', 'private, no-store, max-age=0')
             ->header('X-Robots-Tag', 'noindex, nofollow');
     }

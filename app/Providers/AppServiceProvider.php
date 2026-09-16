@@ -8,6 +8,8 @@ use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Domain\Identity\Support\RoleRegistry;
 use App\Domain\Media\Contracts\MediaProvider;
+use App\Domain\Payments\Contracts\PaymentGateway;
+use App\Domain\Payments\Snippe\SnippePaymentGateway;
 use App\Domain\Payments\Support\CommerceLifecycleMutation;
 use App\Domain\PublicProjection\Services\ResolvePublicSiteChrome;
 use App\Domain\Publishing\Contracts\PublicationPolicy;
@@ -30,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(PaymentGateway::class, SnippePaymentGateway::class);
         $this->app->singleton(CommerceLifecycleMutation::class);
         $this->app->singleton(ControlledRoleMutation::class);
         $this->app->singleton(RichTextSanitizer::class, SymfonyRichTextSanitizer::class);

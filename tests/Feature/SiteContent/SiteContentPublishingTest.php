@@ -127,6 +127,13 @@ final class SiteContentPublishingTest extends TestCase
         $this->actingAs($this->cms)->get(html_entity_decode($matches[1]))
             ->assertOk()->assertHeader('X-Robots-Tag', 'noindex, nofollow')
             ->assertSee('Shop')->assertSee('2026 Collection')->assertDontSee('admin-sidebar', false);
+        $render = html_entity_decode($matches[1]);
+        $this->actingAs(User::factory()->create())->get($render)->assertForbidden();
+        $expired = URL::temporarySignedRoute('preview.site-content.render', now()->subMinute(), [$primary, $primary->currentDraftRevision]);
+        $this->actingAs($this->cms)->get($expired)->assertForbidden();
+        $this->get(route('preview.site-content.render', [$primary, $primary->currentDraftRevision]))->assertForbidden();
+        $wrongRender = URL::temporarySignedRoute('preview.site-content.render', now()->addMinute(), [$primary, $footer->currentDraftRevision]);
+        $this->get($wrongRender)->assertNotFound();
         $mismatch = URL::temporarySignedRoute('preview.site-content.show', now()->addMinute(), [$primary, $footer->currentDraftRevision]);
         $this->actingAs($this->cms)->get($mismatch)->assertNotFound();
     }

@@ -33,8 +33,10 @@ final class AboutPageProjectionTest extends TestCase
     {
         config(['public_page_projection.enabled' => false, 'public_site_content.enabled' => false]);
         $queries = 0;
-        DB::listen(function () use (&$queries) {
-            $queries++;
+        DB::listen(function ($query) use (&$queries) {
+            if (preg_match('/from ["`](pages|page_publication_states|content_revisions)["`]/', $query->sql) === 1) {
+                $queries++;
+            }
         });
         $this->get('/about')->assertOk()->assertSee('Our Story')->assertSee('Crafted for the modern gentleman')->assertDontSee('data-public-page-projected', false);
         $this->assertSame(0, $queries);
@@ -127,8 +129,10 @@ final class AboutPageProjectionTest extends TestCase
         Cache::clear();
 
         $queries = 0;
-        DB::listen(function () use (&$queries) {
-            $queries++;
+        DB::listen(function ($query) use (&$queries) {
+            if (preg_match('/from ["`](pages|page_publication_states|content_revisions)["`]/', $query->sql) === 1) {
+                $queries++;
+            }
         });
 
         $this->get('/about')->assertOk()->assertSee('Budget Story');

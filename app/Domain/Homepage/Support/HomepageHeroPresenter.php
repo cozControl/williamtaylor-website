@@ -5,7 +5,6 @@ namespace App\Domain\Homepage\Support;
 use App\Domain\Homepage\Models\HomepageHero;
 use App\Domain\Media\Contracts\MediaProvider;
 use App\Domain\Media\Models\MediaUsage;
-use Illuminate\Support\Facades\Schema;
 
 final class HomepageHeroPresenter
 {
@@ -16,7 +15,7 @@ final class HomepageHeroPresenter
     /** @return array<string, mixed> */
     public function present(): array
     {
-        $hero = Schema::hasTable('homepage_heroes') ? HomepageHero::query()->whereKey(HomepageHero::SINGLETON_ID)->first() : null;
+        $hero = app(HomepageRenderSnapshot::class)->hero();
         $content = $hero?->only(array_keys(HomepageHero::defaults())) ?? HomepageHero::defaults();
         $usage = $hero === null ? null : MediaUsage::query()->with('asset')
             ->where('owner_type', HomepageHero::class)

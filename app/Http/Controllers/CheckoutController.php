@@ -6,6 +6,7 @@ use App\Domain\Cart\CartService;
 use App\Domain\Checkout\Models\Order;
 use App\Domain\Checkout\PlaceOrderService;
 use App\Domain\Payments\Models\Payment;
+use App\Domain\Payments\Support\TanzanianPhone;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -27,7 +28,12 @@ final class CheckoutController
         if (is_string($request->input('phone'))) {
             $request->merge(['phone' => preg_replace('/[ ()-]/', '', trim($request->input('phone')))]);
         }
+        if (config('snippe.enabled')) {
+            $payer = $request->validate(['payer_phone' => 'required|string|max:32']);
+            $request->merge(['payer_phone' => TanzanianPhone::normalize($payer['payer_phone'])]);
+        }
         $data = $request->validate([
+            'payer_phone' => config('snippe.enabled') ? 'required|string|max:16' : 'exclude',
             'submission' => 'required|string|size:64', 'name' => 'required|string|max:160',
             'email' => 'required|email|max:254', 'phone' => ['required', 'string', 'max:16', 'regex:/^\+?[0-9]{7,15}$/'],
             'address' => 'required|string|max:500', 'city' => 'required|string|max:120', 'region' => 'required|string|max:120', 'postal' => 'nullable|string|max:20',

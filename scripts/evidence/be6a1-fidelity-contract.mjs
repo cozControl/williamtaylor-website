@@ -68,7 +68,8 @@ export const SUBPIXEL_MORPHOLOGY_LIMITS = Object.freeze({
 });
 
 export const BROWSER_LAUNCH_ARGS = [
-    '--deterministic-mode',
+    // Chromium begin-frame control enabled by deterministic-mode deadlocks Playwright screenshots.
+    // Determinism is verified by repeated raster captures below, not this incompatible flag.
     '--disable-gpu',
     '--disable-lcd-text',
     '--disable-skia-runtime-opts',

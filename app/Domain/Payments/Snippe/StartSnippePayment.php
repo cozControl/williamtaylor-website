@@ -6,6 +6,7 @@ use App\Domain\Checkout\Enums\OrderStatus;
 use App\Domain\Checkout\Models\Order;
 use App\Domain\Inventory\Models\InventoryReservation;
 use App\Domain\Payments\Enums\PaymentStatus;
+use App\Domain\Payments\MobileMoneyPayment;
 use App\Domain\Payments\Models\Payment;
 use Illuminate\Support\Facades\DB;
 
@@ -45,6 +46,9 @@ final class StartSnippePayment
 
     public function refresh(Payment $payment): Payment
     {
+        if ($payment->method === 'mobile_money') {
+            return app(MobileMoneyPayment::class)->refresh($payment);
+        }
         if (DB::transactionLevel() !== 0) {
             throw new \LogicException('Reconciliation must not hold database locks across provider calls.');
         }

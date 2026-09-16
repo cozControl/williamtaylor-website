@@ -15,6 +15,8 @@ use App\Domain\Catalogue\Actions\RestoreProductBadge;
 use App\Domain\Catalogue\Actions\SetDefaultProductVariant;
 use App\Domain\Catalogue\Models\Product;
 use App\Domain\Catalogue\Models\ProductBadge;
+use App\Domain\Catalogue\Models\ProductCategory;
+use App\Domain\Catalogue\Support\CatalogueReadinessEvaluator;
 use App\Domain\Catalogue\Support\ProductBadgeRegistry;
 use App\Domain\Catalogue\Support\ProductBadgeSetFingerprint;
 use App\Domain\Catalogue\Support\ProductStateFingerprint;
@@ -235,11 +237,16 @@ final class MerchandisingFoundationTest extends TestCase
         app(CreateProductRevision::class)->handle($this->actor, $product, 0, ['title' => 'Test Product', 'features' => []]);
         $product = $product->fresh();
         $variant = app(CreateProductVariant::class)->handle($this->actor, $product, app(ProductStateFingerprint::class)->for($product), []);
+        $variant->update(['sku' => 'SKU-'.$variant->id]);
         $product = $product->fresh();
         app(SetDefaultProductVariant::class)->handle($this->actor, $product, $variant, app(ProductStateFingerprint::class)->for($product));
         $product = $product->fresh();
         app(AssignProductMedia::class)->handle($this->actor, $product, $this->image(), app(ProductStateFingerprint::class)->for($product), 'primary');
         $product = $product->fresh();
+        $product->update(['base_price_minor' => 10000]);
+        $category = ProductCategory::create(['name' => 'Test category', 'slug' => 'category-'.$product->id, 'is_visible' => true, 'created_by' => $this->actor->id, 'updated_by' => $this->actor->id]);
+        $product->categories()->attach($category->id, ['is_primary' => true, 'position' => 0]);
+        $this->assertSame([], app(CatalogueReadinessEvaluator::class)->evaluate($product->fresh())->failureCodes);
         $product->forceFill(['catalogue_status' => 'ready'])->save();
 
         return $product->fresh();

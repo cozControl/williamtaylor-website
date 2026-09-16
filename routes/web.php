@@ -15,6 +15,7 @@ use App\Http\Controllers\StorefrontProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomepageController::class)->name('home');
+Route::get('checkout/payment-status/{reference}', [SnippePaymentController::class, 'status'])->where('reference', '[a-f0-9]{64}')->middleware('throttle:30,1')->name('checkout.payment-status');
 Route::post('webhooks/snippe', [SnippePaymentController::class, 'webhook'])->name('snippe.webhook');
 Route::get('checkout/snippe/return/{reference}', [SnippePaymentController::class, 'returned'])->where('reference', '[a-f0-9]{64}')->name('snippe.return');
 Route::post('checkout/snippe/retry/{reference}', [SnippePaymentController::class, 'retry'])->where('reference', '[a-f0-9]{64}')->block()->middleware('throttle:10,1')->name('snippe.retry');

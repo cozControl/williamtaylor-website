@@ -56,7 +56,7 @@ final class SnippeClient
     /** @param array<string, mixed> $payload
      * @return array<string|int, mixed>
      */
-    private function request(string $method, string $path, array $payload = [], ?string $key = null, bool $dataRequired = true): array
+    public function request(string $method, string $path, array $payload = [], ?string $key = null, bool $dataRequired = true, bool $retryGet = true): array
     {
         if (DB::transactionLevel() !== 0) {
             throw new \LogicException('Provider calls must be outside database transactions.');
@@ -74,7 +74,7 @@ final class SnippeClient
                 }
                 $response = $request->send($method, $base.$path, $method === 'GET' ? [] : ['json' => $payload]);
             } catch (ConnectionException) {
-                if ($method === 'GET' && $attempt < 2) {
+                if ($method === 'GET' && $retryGet && $attempt < 2) {
                     usleep(100000 * (2 ** $attempt));
 
                     continue;
@@ -85,11 +85,11 @@ final class SnippeClient
                 $delay = max(60, min(3600, (int) $response->header('Retry-After')));
                 $reset = $response->header('X-Ratelimit-Reset');
                 if (ctype_digit($reset)) {
-                    $delay = max($delay, min(3600, (int) $reset - time()));
+                    $delay = max($delay, min(3600, (int) $reset));
                 }
                 throw new SnippeException('rate_limited', true, $delay);
             }
-            if ($response->serverError() && $method === 'GET' && $attempt < 2) {
+            if ($response->serverError() && $method === 'GET' && $retryGet && $attempt < 2) {
                 usleep(100000 * (2 ** $attempt));
 
                 continue;

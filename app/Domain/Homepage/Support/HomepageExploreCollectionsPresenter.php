@@ -24,11 +24,11 @@ final class HomepageExploreCollectionsPresenter
             'eligible_count' => 0,
             'attention_count' => 0,
         ];
-        if (! Schema::hasTable('collections') || ! Schema::hasColumns('homepage_heroes', ['explore_collections_managed', 'explore_collection_3_id'])) {
+        if (! Schema::hasTable('collections') || ! app(HomepageRenderSnapshot::class)->hasColumns(['explore_collections_managed', 'explore_collection_3_id'])) {
             return $fallback;
         }
 
-        $homepage = HomepageHero::query()->whereKey(HomepageHero::SINGLETON_ID)->first();
+        $homepage = app(HomepageRenderSnapshot::class)->hero();
         if ($homepage === null || ! $homepage->explore_collections_managed) {
             return $fallback;
         }

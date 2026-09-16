@@ -49,20 +49,23 @@
                     <div class="order-section-heading"><h3>Snippe · Attempt {{ $loop->iteration }} · {{ $payment->status->value === 'completed' ? 'Successful' : ($payment->active_order_id ? 'Current' : ($payment->status->value === 'failed' ? 'Failed' : 'Closed')) }}</h3>@include('admin.commerce.orders.badge', ['value' => $payment->status])</div>
                     @if($payment->reconciliation_issue)<div class="order-attention"><strong>Needs attention</strong><p>{{ $presenter->issue($payment->reconciliation_issue) }}</p></div>@elseif($payment->failure_code)<p>{{ $presenter->issue($payment->failure_code) }}</p>@endif
                     <dl class="order-fields">
-                        <dt>Session reference</dt><dd>{{ $payment->provider_session_reference ?? 'Not yet confirmed' }}</dd>
+                        <dt>Provider</dt><dd>{{ ucfirst($payment->provider) }}</dd>
+                        <dt>Method</dt><dd>{{ $payment->method === 'mobile_money' ? 'Mobile Money' : 'Hosted Session' }}</dd>
+                        @if($payment->method === 'mobile_money')<dt>Payer phone</dt><dd>{{ $payment->maskedPhone() }}</dd>@endif
+                        @if($payment->provider_session_reference)<dt>Session reference</dt><dd>{{ $payment->provider_session_reference }}</dd>@endif
                         <dt>Payment reference</dt><dd>{{ $payment->provider_payment_reference ?? 'Not recorded' }}</dd>
                         @if($payment->last_failure_reference)<dt>Failed payment reference</dt><dd>{{ $payment->last_failure_reference }}</dd>@endif
                         <dt>Last provider status</dt><dd>{{ $presenter->label($payment->last_provider_status) }}</dd>
-                        @foreach(['created_at' => 'Attempt recorded', 'request_started_at' => 'Session requested', 'completed_at' => 'Completed', 'failed_at' => 'Last failed', 'expires_at' => 'Session expiry'] as $field => $label)
+                        @foreach(['created_at' => 'Attempt recorded', 'request_started_at' => 'Payment requested', 'last_verified_at' => 'Last provider verification', 'expired_at' => 'Expired', 'completed_at' => 'Completed', 'failed_at' => 'Last failed', 'expires_at' => 'Provider expiry'] as $field => $label)
                             @if($payment->$field)<dt>{{ $label }}</dt><dd>{{ $presenter->date($payment->$field) }}</dd>@endif
                         @endforeach
                     </dl>
-                    @if($payment->active_order_id && $payment->provider_session_reference && $payment->provider === 'snippe')
+                    @if($payment->active_order_id && ($payment->provider_session_reference || $payment->provider_payment_reference) && $payment->provider === 'snippe')
                         @if(config('snippe.enabled') && filled(config('snippe.api_key')))
                             <form method="POST" action="{{ route('admin.commerce.orders.payments.check', [$order, $payment]) }}">@csrf<button class="admin-secondary-button">Check payment status</button></form>
                             <p class="inventory-muted">Checks verified Snippe status. Existing retry delays and in-progress checks are respected.</p>
                         @else<p class="inventory-muted">Payment checks are unavailable until Snippe is enabled and configured. Order history remains available.</p>@endif
-                    @elseif($payment->active_order_id)<p class="inventory-muted">Session outcome is unresolved. Automatic reconciliation and Snippe review must establish the existing Session before an Admin payment check is available.</p>@endif
+                    @elseif($payment->active_order_id)<p class="inventory-muted">Payment outcome is unresolved. Automatic reconciliation and Snippe review must establish the existing payment before an Admin payment check is available.</p>@endif
                 </article>
             @empty<p>No online payment attempt is recorded for this Order.</p>@endforelse
         </section>

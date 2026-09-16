@@ -4,7 +4,6 @@ namespace App\Domain\Homepage\Support;
 
 use App\Domain\Homepage\Models\HomepageHero;
 use App\Domain\PublicProjection\Services\ResolvePublicSiteChrome;
-use Illuminate\Support\Facades\Schema;
 
 final class HomepageDeliveryPresenter
 {
@@ -27,10 +26,10 @@ final class HomepageDeliveryPresenter
     public function present(): array
     {
         $data = [...HomepageHero::deliveryDefaults(), 'managed' => false, 'eligible' => false, 'url' => null];
-        if (! Schema::hasColumn('homepage_heroes', 'delivery_managed')) {
+        if (! app(HomepageRenderSnapshot::class)->hasColumns(['delivery_managed'])) {
             return $data;
         }
-        $homepage = HomepageHero::find(HomepageHero::SINGLETON_ID);
+        $homepage = app(HomepageRenderSnapshot::class)->hero();
         if ($homepage === null) {
             return $data;
         }

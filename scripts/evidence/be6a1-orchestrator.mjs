@@ -2192,6 +2192,21 @@ async function validateCurrentFinalization(manifest) {
 }
 
 async function main() {
+    const validationLock = join(root, 'storage', 'framework', 'validation-run.lock');
+    try {
+        await mkdir(validationLock);
+    } catch (error) {
+        throw new Error('Another validation run owns storage/framework/validation-run.lock. Wait for completion; investigate stale ownership before removal.', { cause: error });
+    }
+    try {
+        await writeFile(join(validationLock, 'owner.json'), JSON.stringify({ tool: 'fidelity', pid: process.pid }));
+        await runMain();
+    } finally {
+        await rm(validationLock, { recursive: true, force: true });
+    }
+}
+
+async function runMain() {
     if (!['all', 'prepare', 'finalize', 'validate', ...stages].includes(command)) {
         throw new Error(`Unknown BE-6A.1 stage: ${command}`);
     }

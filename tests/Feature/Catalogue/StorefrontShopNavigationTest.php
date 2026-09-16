@@ -9,6 +9,7 @@ use App\Domain\Catalogue\Models\Product;
 use App\Domain\Catalogue\Models\ProductCategory;
 use App\Domain\Catalogue\Support\CollectionStateFingerprint;
 use App\Domain\Homepage\Models\HomepageHero;
+use App\Domain\Homepage\Support\HomepageSectionVisibility;
 use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
 use App\Domain\Identity\Support\ControlledRoleMutation;
 use App\Domain\Identity\Support\RoleRegistry;
@@ -132,6 +133,37 @@ final class StorefrontShopNavigationTest extends TestCase
     }
 
     /** @param list<Product> $products */
+    public function test_header_links_follow_homepage_visibility_on_desktop_mobile_and_sync_template(): void
+    {
+        $arrival = $this->collection('New Arrivals', [], true);
+        HomepageHero::query()->updateOrCreate(['id' => HomepageHero::SINGLETON_ID], [...HomepageHero::defaults(), 'new_arrivals_collection_id' => $arrival->id, 'created_by' => $this->manager->id, 'updated_by' => $this->manager->id]);
+        $sections = ['explore-collections' => 'Collections', 'new-arrivals' => 'New Arrivals', 'future-style' => 'Pre-Order', 'limited-edition' => 'Limited Edition'];
+        foreach ($sections as $section => $label) {
+            app(HomepageSectionVisibility::class)->setVisible($this->manager, $section, false);
+            foreach (['home', 'collections.index'] as $route) {
+                $html = $this->get(route($route))->assertOk()->getContent();
+                $dom = new \DOMDocument;
+                @$dom->loadHTML($html);
+                $xpath = new \DOMXPath($dom);
+                foreach (['desktop', 'mobile'] as $surface) {
+                    $links = $xpath->query('//*[@data-shop-navigation="'.$surface.'"]/a');
+                    $labels = array_map(fn ($node) => trim($node->textContent), iterator_to_array($links));
+                    $this->assertNotContains($label, $labels);
+                }
+            }
+            app(HomepageSectionVisibility::class)->setVisible($this->manager, $section, true);
+            $html = $this->get(route('home'))->assertOk()->getContent();
+            $dom = new \DOMDocument;
+            @$dom->loadHTML($html);
+            $xpath = new \DOMXPath($dom);
+            foreach (['desktop', 'mobile'] as $surface) {
+                $links = $xpath->query('//*[@data-shop-navigation="'.$surface.'"]/a');
+                $labels = array_map(fn ($node) => trim($node->textContent), iterator_to_array($links));
+                $this->assertContains($label, $labels);
+            }
+        }
+    }
+
     private function collection(string $name, array $products, bool $visible, string $description = 'Canonical Collection description.', ?string $altOverride = null): Collection
     {
         $image = $this->image(Str::slug($name), $name.' canonical alt');

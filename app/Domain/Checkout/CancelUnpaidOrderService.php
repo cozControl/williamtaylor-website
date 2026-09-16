@@ -48,6 +48,9 @@ final class CancelUnpaidOrderService
             return 'This order is not eligible for unpaid cancellation.';
         }
         foreach ($payments as $payment) {
+            if ($payment->method === 'mobile_money' && ($payment->active_order_id !== null || $payment->reconciliation_issue !== null)) {
+                return 'Mobile Money must reach a verified final unpaid state before stock can be released.';
+            }
             if ($payment->provider !== 'snippe') {
                 return self::REVIEW;
             }

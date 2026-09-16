@@ -30,10 +30,10 @@ final class FactoryBaselineTest extends TestCase
         ]);
     }
 
-    public function test_inventory_manager_is_a_reserved_admin_shell_role_only(): void
+    public function test_inventory_manager_has_only_canonical_inventory_operating_permissions(): void
     {
-        $this->assertSame([PermissionRegistry::ADMIN_ACCESS], RoleRegistry::permissionBundles()[RoleRegistry::INVENTORY_MANAGER]);
-        $this->assertNotContains('inventory.view', PermissionRegistry::all());
+        $this->assertSame([PermissionRegistry::ADMIN_ACCESS, PermissionRegistry::PRODUCTS_VIEW, PermissionRegistry::INVENTORY_VIEW, PermissionRegistry::INVENTORY_MANAGE], RoleRegistry::permissionBundles()[RoleRegistry::INVENTORY_MANAGER]);
+        $this->assertContains('inventory.view', PermissionRegistry::all());
     }
 
     public function test_database_seeder_always_creates_the_administrator_but_keeps_factory_data_opt_in(): void
@@ -67,7 +67,7 @@ final class FactoryBaselineTest extends TestCase
             $this->assertSame([$identity['role']], $user->getRoleNames()->all());
         }
         $inventory = Role::findByName(RoleRegistry::INVENTORY_MANAGER);
-        $this->assertSame([PermissionRegistry::ADMIN_ACCESS], $inventory->permissions->pluck('name')->all());
+        $this->assertSame([PermissionRegistry::ADMIN_ACCESS, PermissionRegistry::PRODUCTS_VIEW, PermissionRegistry::INVENTORY_VIEW, PermissionRegistry::INVENTORY_MANAGE], $inventory->permissions->pluck('name')->all());
         $password = User::query()->where('email', 'admin@example.test')->sole()->password;
         $this->artisan('factory:install', ['--apply' => true])->assertSuccessful();
         $this->assertSame($password, User::query()->where('email', 'admin@example.test')->sole()->password);

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Domain\Admin\Navigation\AdminNavigationRegistry;
 use App\Domain\Audit\Models\AuditRecord;
 use App\Domain\Identity\Actions\AssignRoleToUser;
 use App\Domain\Identity\Actions\ProvisionRegisteredAccess;
@@ -10,6 +11,7 @@ use App\Domain\Identity\Exceptions\RoleMutationReasonRequiredException;
 use App\Domain\Identity\Exceptions\SelfLockoutException;
 use App\Domain\Identity\Queries\EffectiveUserAccessQuery;
 use App\Domain\Identity\Support\ControlledRoleMutation;
+use App\Domain\Identity\Support\PermissionMetadata;
 use App\Domain\Identity\Support\PermissionRegistry;
 use App\Domain\Identity\Support\RoleRegistry;
 use App\Livewire\Admin\Access\UserAccessDetail;
@@ -33,6 +35,20 @@ class AccessManagementTest extends TestCase
     {
         parent::setUp();
         app(ProvisionRegisteredAccess::class)->handle();
+    }
+
+    public function test_permission_metadata_covers_exactly_the_canonical_registry_and_navigation(): void
+    {
+        $metadata = PermissionMetadata::all();
+        $this->assertEqualsCanonicalizing(PermissionRegistry::all(), array_keys($metadata));
+        foreach (app(AdminNavigationRegistry::class)->all() as $item) {
+            $this->assertArrayHasKey($item->permission, $metadata);
+        }
+        foreach (RoleRegistry::permissionBundles() as $permissions) {
+            foreach ($permissions as $permission) {
+                $this->assertArrayHasKey($permission, $metadata);
+            }
+        }
     }
 
     public function test_users_and_roles_routes_enforce_full_view_boundaries(): void

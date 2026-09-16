@@ -5,7 +5,6 @@ namespace App\Domain\Homepage\Support;
 use App\Domain\Catalogue\Models\Collection;
 use App\Domain\Catalogue\Support\CollectionCardPresenter;
 use App\Domain\Homepage\Models\HomepageHero;
-use Illuminate\Support\Facades\Schema;
 
 final class HomepageSummerEditPresenter
 {
@@ -15,10 +14,10 @@ final class HomepageSummerEditPresenter
     public function present(): array
     {
         $result = [...HomepageHero::summerEditDefaults(), 'managed' => false, 'eligible' => false, 'destination' => null];
-        if (! Schema::hasColumn('homepage_heroes', 'summer_edit_managed')) {
+        if (! app(HomepageRenderSnapshot::class)->hasColumns(['summer_edit_managed'])) {
             return $result;
         }
-        $homepage = HomepageHero::find(HomepageHero::SINGLETON_ID);
+        $homepage = app(HomepageRenderSnapshot::class)->hero();
         if ($homepage === null) {
             return $result;
         }

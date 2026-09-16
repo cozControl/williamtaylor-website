@@ -18,6 +18,7 @@ use App\Domain\Media\Enums\MediaResourceType;
 use App\Domain\Media\Models\MediaAsset;
 use App\Domain\Orders\Actions\CreateDemoOrder;
 use App\Domain\Payments\Models\Payment;
+use App\Domain\Payments\Snippe\StartSnippePayment;
 use App\Models\User;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\DB;
@@ -79,9 +80,13 @@ final class CommerceOrderAdminTest extends TestCase
         app(InventoryLedgerService::class)->post($this->manager, $product->defaultVariant, StockLocation::main(), MovementType::Receipt, 5, 'Payment fixture');
         auth()->forgetGuards();
         $this->postJson('/cart/items', ['variant_id' => $product->defaultVariant->id, 'quantity' => 2])->assertOk();
-        $this->get('/checkout')->assertOk()->assertSee('Continue to secure payment');
+        // Historical hosted records remain supported; new public checkout uses Mobile Money.
+        config(['snippe.enabled' => false]);
+        $this->get('/checkout')->assertOk()->assertSee('Place Order');
         $response = $this->post('/checkout', ['submission' => array_key_last(session('checkout_attempts')), 'name' => 'Guest', 'email' => 'guest@example.test', 'phone' => '+255712345678', 'address' => 'Private address', 'city' => 'Dar', 'region' => 'Dar']);
-        $response->assertRedirect($failureStatus === null ? 'https://snippe.me/checkout/test' : route('checkout.confirmation', Order::query()->sole()->confirmation_reference));
+        $response->assertRedirect(route('checkout.confirmation', Order::query()->sole()->confirmation_reference));
+        config(['snippe.enabled' => true]);
+        app(StartSnippePayment::class)->start(Order::query()->sole());
 
         return [Order::query()->sole(), Payment::query()->sole(), $product->defaultVariant];
     }
@@ -259,7 +264,7 @@ final class CommerceOrderAdminTest extends TestCase
         $this->actingAs($this->manager)->get(route('admin.commerce.orders.index'))->assertOk()->assertSee('No customer orders yet.')->assertDontSee('Create Demo Order');
         [$order, $payment] = $this->order(503);
         $this->actingAs($this->manager)->post(route('admin.commerce.orders.payments.check', [$order, $payment]))->assertStatus(409);
-        $this->get(route('admin.commerce.orders.show', $order))->assertOk()->assertSee('Session outcome is unresolved')->assertDontSee('Check payment status');
+        $this->get(route('admin.commerce.orders.show', $order))->assertOk()->assertSee('Payment outcome is unresolved')->assertDontSee('Check payment status');
         Http::assertSentCount(1);
     }
 
@@ -269,7 +274,7 @@ final class CommerceOrderAdminTest extends TestCase
         Http::swap(new Factory);
         Http::preventStrayRequests();
         Http::fake(['*' => fn ($request) => Http::response(['data' => ['reference' => 'sess_retry', 'status' => 'pending', 'amount' => 250000, 'currency' => 'TZS', 'checkout_url' => 'https://snippe.me/checkout/retry', 'metadata' => $request['metadata']]], 201)]);
-        $this->post(route('snippe.retry', $order->confirmation_reference))->assertRedirect();
+        app(StartSnippePayment::class)->start($order);
         $current = Payment::query()->where('active_order_id', $order->id)->sole();
         $viewer = User::factory()->create(['email_verified_at' => now()]);
         $viewer->givePermissionTo('admin.access');
