@@ -2,23 +2,30 @@
 <template id="public-projected-whatsapp-template">@include('frontend.partials.whatsapp-action')</template>
 <script>
  (() => {
-  let synchronized = false;
+  const root = document.getElementById('root');
+  if (!root) return;
   const replaceFromTemplate = (selector, templateId) => {
    const current = document.querySelector(`#root ${selector}`);
    const template = document.getElementById(templateId);
    const replacement = template?.content.firstElementChild?.cloneNode(true);
    if (!current || !replacement) return false;
+   replacement.dataset.projectedChrome = 'true';
    current.replaceWith(replacement);
    return true;
   };
   const synchronize = () => {
-   if (synchronized || !document.querySelector('#root header') || !document.querySelector('#root footer')) return;
-   const footer = replaceFromTemplate('footer', 'public-projected-footer-template');
-   replaceFromTemplate('a[aria-label="Chat on WhatsApp"]', 'public-projected-whatsapp-template');
-   if (footer) { synchronized = true; observer.disconnect(); }
+   const footer = root.querySelector('footer');
+   if (footer && !footer.hasAttribute('data-canonical-storefront-footer')) {
+    replaceFromTemplate('footer', 'public-projected-footer-template');
+   }
+   const whatsapp = root.querySelector('a[aria-label="Chat on WhatsApp"]');
+   if (whatsapp && !whatsapp.hasAttribute('data-projected-chrome')) {
+    replaceFromTemplate('a[aria-label="Chat on WhatsApp"]', 'public-projected-whatsapp-template');
+   }
   };
   const observer = new MutationObserver(synchronize);
-  observer.observe(document.getElementById('root'), { childList: true, subtree: true });
+  observer.observe(root, { childList: true, subtree: true });
+  synchronize();
   window.addEventListener('load', () => requestAnimationFrame(() => requestAnimationFrame(synchronize)), { once: true });
  })();
 </script>

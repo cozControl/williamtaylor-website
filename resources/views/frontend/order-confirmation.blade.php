@@ -54,7 +54,7 @@
  <p>Delivery arrangements and any delivery charges remain pending.</p>
  @endif
  </section>
- <p>Need help? <a href="{{ $publicSiteChrome?->profile?->whatsApp ? 'https://wa.me/'.preg_replace('/\D+/', '', $publicSiteChrome->profile->whatsApp) : 'https://wa.me/255656464876' }}" rel="noopener noreferrer" target="_blank">Contact William Taylor</a> and quote your order reference.</p>
+ <p>Need help? <a href="{{ $storefrontContact->whatsAppUrl }}" rel="noopener noreferrer" target="_blank">Contact William Taylor</a> and quote your order reference.</p>
  <a href="{{ route('products.index') }}" class="btn-gold">Continue Shopping</a>
 </main>
 <script>

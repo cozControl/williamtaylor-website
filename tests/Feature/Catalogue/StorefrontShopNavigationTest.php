@@ -69,6 +69,17 @@ final class StorefrontShopNavigationTest extends TestCase
         $dom = new \DOMDocument;
         @$dom->loadHTML($html);
         $xpath = new \DOMXPath($dom);
+        foreach (['//*[@id="root"]//footer', '//*[@id="public-projected-footer-template"]//footer'] as $footerPath) {
+            $footerLinks = $xpath->query($footerPath.'//*[@data-catalogue-footer-links]//a');
+            $this->assertSame(['Early Collection', 'Late Collection', 'Fresh Selection'], array_map(fn ($link) => trim($link->textContent), iterator_to_array($footerLinks)));
+            $this->assertSame([route('collections.show', $early), route('collections.show', $late), route('collections.show', $arrival)], array_map(fn ($link) => $link->getAttribute('href'), iterator_to_array($footerLinks)));
+            $this->assertSame(['Shop', 'Pages', 'Visit'], array_map(fn ($heading) => trim($heading->textContent), iterator_to_array($xpath->query($footerPath.'//h4'))));
+            $this->assertCount(1, $xpath->query($footerPath.'//a[@aria-label="Instagram"]'));
+            $this->assertCount(0, $xpath->query($footerPath.'//a[contains(@href,"facebook.com") or contains(@href,"twitter.com") or contains(@href,"youtube.com")]'));
+            foreach ([route('about'), url('/html/contact.html'), url('/html/faq.html')] as $pageUrl) {
+                $this->assertCount(1, $xpath->query($footerPath.'//a[@href="'.$pageUrl.'"]'));
+            }
+        }
         $navigation = app(StorefrontShopNavigationPresenter::class)->present();
         $entries = [$navigation['all_collections'], ...$navigation['collections'], ...$navigation['special']];
         $this->assertSame(['All Collections', 'Early Collection', 'Late Collection', 'New Arrivals', 'Pre-Order', 'Limited Edition'], array_column($entries, 'label'));

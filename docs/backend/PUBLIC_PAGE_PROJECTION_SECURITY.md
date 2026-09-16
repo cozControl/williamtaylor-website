@@ -1,7 +1,0 @@
-# Public Page Projection Security
-
-Public projection trusts only the code-owned route registry and designated public revision relation. Query strings, sessions, cookies and preview signatures cannot select a revision. Revision ownership, Page type, template, schema, section cardinality, typed links, restricted rich text and Media state are revalidated. DTOs omit workflow, audit, provider-secret and revision-identity data. Unexpected errors activate static fallback and are logged without payload content.
-
-Internal revision identifiers and checksums remain available only to the server-side resolver, revision-aware cache identity, structured operational logging, tests, and disposable evidence inspection. They are absent from public HTML, live DOM, response headers and generated public JavaScript. The public evidence harness detects projection through the safe static route marker and visible content.
-
-BE-4H-B.2 evidence covers four independent feature-flag states at 1440x900, 768x1024 and 375x812. Response source, post-JavaScript DOM and headers contain no revision ULID, Page ID, publication-state ID, candidate/draft ID, revision checksum, workflow-transition ID or administrative credential.

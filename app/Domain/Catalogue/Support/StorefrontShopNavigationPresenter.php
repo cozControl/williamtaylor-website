@@ -18,6 +18,7 @@ final class StorefrontShopNavigationPresenter
             return request()->attributes->get('storefront.shop_navigation');
         }
         $items = [];
+        $footerCollections = [];
         $collectionUrls = [];
         $visibility = app(HomepageSectionVisibility::class)->resolve();
         $newArrivals = null;
@@ -28,6 +29,7 @@ final class StorefrontShopNavigationPresenter
                 $current = request()->route('collection');
                 $entry = $this->entry($collection->currentDraftRevision->title, route('collections.show', $collection->slug), request()->routeIs('collections.show') && $current instanceof Collection && $current->id === $collection->id);
                 $collectionUrls[$collection->slug] = $entry['url'];
+                $footerCollections[] = $entry;
                 if ($collection->id === $selectedId || ($selectedId === null && $collection->slug === 'new-arrivals')) {
                     $newArrivals = [...$entry, 'label' => 'New Arrivals'];
                 } else {
@@ -65,7 +67,7 @@ final class StorefrontShopNavigationPresenter
             }
             $editorial[] = new PublicNavigationItemView($item->key, $item->link, $item->visibility, $this->editorialItems($item->children));
         }
-        $result = ['label' => $shopLabel, 'active' => request()->routeIs('products.index', 'collections.*', 'preorders.*', 'limited-edition.*'), 'all_collections' => $all, 'collections' => $items, 'new_arrivals' => $newArrivals, 'pre_order' => $preorder, 'limited_edition' => $limited, 'special' => $special, 'top_links' => $topLinks, 'editorial' => $editorial, 'collection_urls' => $collectionUrls];
+        $result = ['label' => $shopLabel, 'active' => request()->routeIs('products.index', 'collections.*', 'preorders.*', 'limited-edition.*'), 'all_collections' => $all, 'collections' => $items, 'footer_collections' => $footerCollections, 'new_arrivals' => $newArrivals, 'pre_order' => $preorder, 'limited_edition' => $limited, 'special' => $special, 'top_links' => $topLinks, 'editorial' => $editorial, 'collection_urls' => $collectionUrls];
         request()->attributes->set('storefront.shop_navigation', $result);
 
         return $result;

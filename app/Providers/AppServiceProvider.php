@@ -11,6 +11,7 @@ use App\Domain\Media\Contracts\MediaProvider;
 use App\Domain\Payments\Contracts\PaymentGateway;
 use App\Domain\Payments\Snippe\SnippePaymentGateway;
 use App\Domain\Payments\Support\CommerceLifecycleMutation;
+use App\Domain\PublicProjection\Data\PublicContactView;
 use App\Domain\PublicProjection\Services\ResolvePublicSiteChrome;
 use App\Domain\Publishing\Contracts\PublicationPolicy;
 use App\Domain\Publishing\Support\CodeOwnedPublicationPolicy;
@@ -61,7 +62,9 @@ class AppServiceProvider extends ServiceProvider
     private function configurePublicSiteContent(): void
     {
         View::composer(['frontend.*', 'layouts.frontend'], function ($view): void {
-            $view->with('publicSiteChrome', app(ResolvePublicSiteChrome::class)->resolve());
+            $chrome = app(ResolvePublicSiteChrome::class)->resolve();
+            $view->with('publicSiteChrome', $chrome);
+            $view->with('storefrontContact', new PublicContactView($chrome->profile));
             $view->with('shopNavigation', app(StorefrontShopNavigationPresenter::class)->present());
         });
     }

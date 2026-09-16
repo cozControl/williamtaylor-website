@@ -72,6 +72,42 @@ final class PublicSiteContentProjectionTest extends TestCase
         $this->get('/')->assertOk()->assertDontSee('Governed Shop');
     }
 
+    public function test_storefront_contact_fallbacks_use_the_requested_email_and_phone(): void
+    {
+        foreach (['/', '/shop', '/gift-cards'] as $path) {
+            $this->get($path)->assertOk()
+                ->assertSee('mailto:hello@williamtaylor.co.tz', false)
+                ->assertSee('tel:+255724954876', false)
+                ->assertSee('+255 724 954 876')
+                ->assertSee('https://wa.me/255724954876', false)
+                ->assertDontSee('info@williamtaylor.co.tz')
+                ->assertDontSee('255656464876')
+                ->assertSee('website/js/storefront-contact.js', false);
+        }
+    }
+
+    public function test_published_site_settings_remain_the_contact_source_for_the_footer_and_imported_pages(): void
+    {
+        config()->set('public_site_content.enabled', false);
+        $resource = $this->resource('site_profile', 'Contact settings');
+        $payload = $resource->currentDraftRevision->payload;
+        $payload['contact']['email'] = 'atelier@example.test';
+        $payload['contact']['telephone'] = '+255711222333';
+        $payload['contact']['whatsapp'] = '+255744555666';
+        app(SaveSiteContentDraft::class)->handle($this->cms, $resource, $resource->current_draft_revision_id, $payload, 'Contact fixture');
+        app(SiteContentWorkflow::class)->makeCurrentDraftEffective($this->cms, $resource->fresh());
+        $this->freshChrome();
+
+        $this->get('/')->assertOk()
+            ->assertSee('mailto:atelier@example.test', false)
+            ->assertSee('tel:+255711222333', false)
+            ->assertSee('+255 711 222 333')
+            ->assertSee('https://wa.me/255744555666', false)
+            ->assertDontSee('hello@williamtaylor.co.tz')
+            ->assertSee('"email":"atelier@example.test"', false)
+            ->assertSee('"telephoneDisplay":"+255 711 222 333"', false);
+    }
+
     public function test_projection_cache_can_be_invalidated_without_flushing_unrelated_cache(): void
     {
         Cache::put('unrelated', 'preserved');

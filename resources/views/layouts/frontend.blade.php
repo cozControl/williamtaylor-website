@@ -21,6 +21,8 @@
  <body>
   @yield('content')
   @include('frontend.partials.projected-chrome-sync')
+  <script id="storefront-contact-details" type="application/json">@json($storefrontContact)</script>
+  <script src="{{ asset('website/js/storefront-contact.js') }}" defer></script>
   @include('frontend.partials.shop-navigation-script')
   @include('frontend.partials.purchase-boundary')
   @include('frontend.partials.cart-shell')
