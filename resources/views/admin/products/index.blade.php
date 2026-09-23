@@ -70,6 +70,15 @@
                                 @if($isPublic)
                                     <a href="{{ route('products.show', ['product' => $product->slug]) }}" target="_blank" rel="noopener">View storefront</a>
                                 @endif
+                                @can('products.manage')
+                                    @unless($product->archived_at)
+                                        <form method="POST" action="{{ route('admin.products.archive', $product) }}" onsubmit="return confirm('Delete this product? It will be removed from the storefront. Existing orders and history are preserved.');">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="admin-danger-button">Delete</button>
+                                        </form>
+                                    @endunless
+                                @endcan
                             </div>
                         </td>
                     </tr>

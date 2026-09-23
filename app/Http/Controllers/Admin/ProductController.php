@@ -362,6 +362,17 @@ final class ProductController
         return redirect()->route('admin.products.edit', $product)->with('status', 'Product updated successfully.');
     }
 
+    public function archive(Request $request, Product $product, ArchiveProduct $archive): RedirectResponse
+    {
+        try {
+            $archive->handle($request->user(), $product, app(ProductStateFingerprint::class)->for($product), 'Archived from Products list.');
+        } catch (StaleCatalogueState) {
+            return back()->withErrors(['product' => 'This Product was updated by another user. Refresh and try again.']);
+        }
+
+        return redirect()->route('admin.products.index')->with('status', 'Product archived.');
+    }
+
     /** @return array<string, mixed> */
     private function createRules(): array
     {

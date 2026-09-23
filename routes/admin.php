@@ -106,6 +106,7 @@ Route::prefix('admin')
         Route::post('/products', [ProductController::class, 'store'])->middleware('can:'.PermissionRegistry::PRODUCTS_MANAGE)->name('products.store');
         Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->middleware('can:'.PermissionRegistry::PRODUCTS_VIEW)->name('products.edit');
         Route::put('/products/{product}', [ProductController::class, 'update'])->middleware('can:'.PermissionRegistry::PRODUCTS_MANAGE)->name('products.update');
+        Route::patch('/products/{product}/archive', [ProductController::class, 'archive'])->middleware('can:'.PermissionRegistry::PRODUCTS_MANAGE)->name('products.archive');
         Route::get('/product-categories', [ProductCategoryController::class, 'index'])->middleware('can:'.PermissionRegistry::PRODUCTS_VIEW)->name('product-categories.index');
         Route::get('/product-categories/create', [ProductCategoryController::class, 'create'])->middleware('can:'.PermissionRegistry::PRODUCTS_MANAGE)->name('product-categories.create');
         Route::post('/product-categories', [ProductCategoryController::class, 'store'])->middleware('can:'.PermissionRegistry::PRODUCTS_MANAGE)->name('product-categories.store');
