@@ -33,6 +33,9 @@ try {
   assert.equal(geometry.controls, 3);
   assert.equal(geometry.background, 'rgb(72, 33, 37)');
   const footer = page.locator('#root footer');
+  assert.equal(await footer.locator('form input[type="email"]').count(), 0);
+  assert.doesNotMatch(await footer.innerText(), /Sign the Ledger/);
+  assert.equal(await page.locator('[data-homepage-hero-actions]').evaluate(el => getComputedStyle(el).top), width <= 767 ? '12px' : 'auto');
   assert.deepEqual(await footer.locator('h4').allTextContents().then(labels => labels.map(label => label.trim())), ['Shop', 'Pages', 'Visit']);
   assert.equal(await footer.locator('svg.lucide-instagram').count(), 1);
   assert.equal(await footer.locator('svg.lucide-facebook, svg.lucide-twitter, svg.lucide-youtube').count(), 0);

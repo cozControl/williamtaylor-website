@@ -42,11 +42,11 @@ class AccountFrontendPagesTest extends TestCase
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));
-        $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
+        $this->assertStringNotContainsString('Sign the Ledger', $html);
         $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
         $this->assertSame(1, substr_count($html, 'Your wishlist is empty'));
         $this->assertSame(0, substr_count($html, 'aria-label="Add to wishlist"'));
-        $this->assertSame(1, substr_count($html, '<form'));
+        $this->assertSame(0, substr_count($html, '<form'));
         $this->assertSame(0, substr_count($html, '<form action='));
     }
 }

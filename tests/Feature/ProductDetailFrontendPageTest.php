@@ -27,13 +27,13 @@ class ProductDetailFrontendPageTest extends TestCase
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));
-        $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
+        $this->assertStringNotContainsString('Sign the Ledger', $html);
         $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
         $this->assertSame(1, substr_count($html, 'Add to Cart'));
         $this->assertSame(1, preg_match_all('/>\s*Buy Now\s*<\/button>/', $html));
         $this->assertSame(1, substr_count($html, 'Add to Wishlist'));
         $this->assertSame(1, substr_count($html, 'Reviews (20)'));
-        $this->assertSame(1, substr_count($html, '<form'));
+        $this->assertSame(0, substr_count($html, '<form'));
         $this->assertSame(0, substr_count($html, '<form action='));
         $this->assertSame(0, substr_count($html, 'wire:'));
     }
@@ -70,13 +70,13 @@ class ProductDetailFrontendPageTest extends TestCase
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));
-        $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
+        $this->assertStringNotContainsString('Sign the Ledger', $html);
         $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
         $this->assertSame(1, substr_count($html, 'Add to Cart'));
         $this->assertSame(1, preg_match_all('/>\s*Buy Now\s*<\/button>/', $html));
         $this->assertSame(1, substr_count($html, 'Add to Wishlist'));
         $this->assertSame(1, substr_count($html, 'Reviews (7)'));
-        $this->assertSame(1, substr_count($html, '<form'));
+        $this->assertSame(0, substr_count($html, '<form'));
         $this->assertSame(0, substr_count($html, '<form action='));
         $this->assertSame(0, substr_count($html, 'wire:'));
     }
@@ -102,13 +102,13 @@ class ProductDetailFrontendPageTest extends TestCase
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));
-        $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
+        $this->assertStringNotContainsString('Sign the Ledger', $html);
         $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
         $this->assertSame(1, substr_count($html, 'Add to Cart'));
         $this->assertSame(1, preg_match_all('/>\s*Buy Now\s*<\/button>/', $html));
         $this->assertSame(1, substr_count($html, 'Add to Wishlist'));
         $this->assertSame(1, substr_count($html, 'Reviews (6)'));
-        $this->assertSame(1, substr_count($html, '<form'));
+        $this->assertSame(0, substr_count($html, '<form'));
         $this->assertSame(0, substr_count($html, '<form action='));
         $this->assertSame(0, substr_count($html, 'wire:'));
     }
@@ -143,7 +143,7 @@ class ProductDetailFrontendPageTest extends TestCase
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));
-        $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
+        $this->assertStringNotContainsString('Sign the Ledger', $html);
         $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
         $this->assertSame(1, substr_count($html, 'title="Sage"'));
         $this->assertSame(1, substr_count($html, 'title="Cream"'));
@@ -153,7 +153,7 @@ class ProductDetailFrontendPageTest extends TestCase
         $this->assertSame(1, preg_match_all('/>\s*Buy Now\s*<\/button>/', $html));
         $this->assertSame(1, substr_count($html, 'Add to Wishlist'));
         $this->assertSame(1, substr_count($html, 'Reviews (26)'));
-        $this->assertSame(1, substr_count($html, '<form'));
+        $this->assertSame(0, substr_count($html, '<form'));
         $this->assertSame(0, substr_count($html, '<form action='));
         $this->assertSame(0, substr_count($html, 'wire:'));
     }
@@ -186,7 +186,7 @@ class ProductDetailFrontendPageTest extends TestCase
 
         $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
         $this->assertSame(1, substr_count($html, '<footer'));
-        $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
+        $this->assertStringNotContainsString('Sign the Ledger', $html);
         $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
         $this->assertSame(1, substr_count($html, 'lucide lucide-minus'));
         $this->assertSame(1, substr_count($html, 'lucide lucide-plus'));
@@ -196,7 +196,7 @@ class ProductDetailFrontendPageTest extends TestCase
         $this->assertSame(1, substr_count($html, 'Add to Wishlist'));
         $this->assertSame(1, substr_count($html, 'Reviews (9)'));
         $this->assertSame(0, substr_count($html, 'Colour:'));
-        $this->assertSame(1, substr_count($html, '<form'));
+        $this->assertSame(0, substr_count($html, '<form'));
         $this->assertSame(0, substr_count($html, '<form action='));
         $this->assertSame(0, substr_count($html, 'wire:'));
     }

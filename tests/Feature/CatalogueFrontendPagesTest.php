@@ -32,8 +32,8 @@ class CatalogueFrontendPagesTest extends TestCase
             $this->assertSame(1, substr_count($html, '<body>'));
             $this->assertSame(1, substr_count($html, 'aria-label="Close announcement"'));
             $this->assertSame(1, substr_count($html, '<header data-canonical-shop-header data-smart-header="top"'));
-            $this->assertSame(1, substr_count($html, 'Sign the Ledger'));
-            $this->assertSame(1, substr_count($html, '<footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">'));
+            $this->assertStringNotContainsString('Sign the Ledger', $html);
+            $this->assertSame(1, substr_count($html, '<footer data-canonical-storefront-footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">'));
             $this->assertSame(1, substr_count($html, '<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">'));
             $this->assertSame(1, substr_count($html, 'aria-label="Chat on WhatsApp"'));
             $this->assertSame(1, substr_count($html, '/website/css/index-X8-QjRMe.css'));

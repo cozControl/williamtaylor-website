@@ -28,7 +28,9 @@ class SpecialCommerceFrontendPagesTest extends TestCase
         foreach (['preorders.index', 'limited-edition.index', 'gift-cards.index'] as $routeName) {
             $html = StorefrontMarkup::active($this->get(route($routeName))->assertOk()->getContent());
 
-            foreach (['<html lang="en">', '<head>', '<body>', 'aria-label="Close announcement"', '<header data-canonical-shop-header data-smart-header="top"', 'Sign the Ledger', '<footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">', '<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">', 'aria-label="Chat on WhatsApp"', '/website/css/index-X8-QjRMe.css'] as $needle) {
+            $this->assertStringNotContainsString('Sign the Ledger', $html);
+
+            foreach (['<html lang="en">', '<head>', '<body>', 'aria-label="Close announcement"', '<header data-canonical-shop-header data-smart-header="top"', '<footer data-canonical-storefront-footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">', '<div class="lg:hidden fixed bottom-0 left-0 right-0 z-40">', 'aria-label="Chat on WhatsApp"', '/website/css/index-X8-QjRMe.css'] as $needle) {
                 $this->assertSame(1, substr_count($html, $needle), "Unexpected region count for {$needle} on {$routeName}");
             }
             $this->assertSame(in_array($routeName, ['preorders.index', 'limited-edition.index'], true) ? 0 : 1, substr_count($html, '/website/js/index-DxdnTNDA.js'));
@@ -45,13 +47,13 @@ class SpecialCommerceFrontendPagesTest extends TestCase
         $limited = StorefrontMarkup::active($this->get(route('limited-edition.index'))->assertOk()->getContent());
         $giftCards = StorefrontMarkup::active($this->get(route('gift-cards.index'))->assertOk()->getContent());
 
-        $this->assertSame(2, substr_count($preorder, '<form'));
-        $this->assertSame(2, substr_count($preorder, 'type="submit"'));
-        $this->assertSame(1, substr_count($limited, '<form'));
+        $this->assertSame(1, substr_count($preorder, '<form'));
+        $this->assertSame(1, substr_count($preorder, 'type="submit"'));
+        $this->assertSame(0, substr_count($limited, '<form'));
         $this->assertSame(5, substr_count($limited, 'aria-label="Add to wishlist"'));
         $this->assertStringNotContainsString('Only 8 left', $limited);
         $this->assertStringNotContainsString('Only 30 Made', $limited);
-        $this->assertSame(2, substr_count($giftCards, '<form'));
+        $this->assertSame(1, substr_count($giftCards, '<form'));
         preg_match('/<main\b[^>]*>(.*?)<\/main>/s', $giftCards, $main);
         $this->assertSame(9, substr_count($main[1], 'type="button"'));
         $this->assertSame(5, substr_count($giftCards, 'required=""'));

@@ -45,6 +45,8 @@
 
    [data-homepage-hero-actions] {
     display: grid;
+    position: relative;
+    top: 12px;
     width: min(100%, 21rem);
     margin-inline: auto;
     gap: .75rem;

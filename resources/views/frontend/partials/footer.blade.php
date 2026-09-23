@@ -1,7 +1,6 @@
     <footer data-canonical-storefront-footer class="bg-wt-oxblood border-t border-wt-gold/30 pb-16 lg:pb-0 relative overflow-hidden">
      <div aria-hidden="true" class="absolute inset-0 pointer-events-none wt-footer-pattern" style='background-image: url("/website/images/eab6bab5d_bg.jpg"); background-size: auto;'>
      </div>
-     @include('frontend.partials.newsletter')
      <div class="max-w-screen-xl mx-auto px-6 lg:px-12 py-16 relative z-10">
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-10 lg:gap-8">
        <div class="col-span-2 md:col-span-3 lg:col-span-4">
